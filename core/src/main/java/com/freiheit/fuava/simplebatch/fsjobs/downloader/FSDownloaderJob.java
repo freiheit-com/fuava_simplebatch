@@ -30,14 +30,27 @@ public class FSDownloaderJob<Id, Data>  extends BatchJob<Id, Data> {
 
     public static final class ConfigurationImpl implements Configuration {
 
+    	private String downloadDirPath = "/tmp/downloading";
+    	private String controlFileEnding = ".ctl";
+    	
 		@Override
 		public String getDownloadDirPath() {
-			return "/tmp/downloading";
+			return downloadDirPath;
+		}
+		
+		public ConfigurationImpl setDownloadDirPath(String path) {
+			this.downloadDirPath = path;
+			return this;
 		}
 
 		@Override
 		public String getControlFileEnding() {
-			return ".csv";
+			return controlFileEnding;
+		}
+		
+		public ConfigurationImpl setControlFileEnding(String ending) {
+			this.controlFileEnding = ending;
+			return this;
 		}
     	
     }
