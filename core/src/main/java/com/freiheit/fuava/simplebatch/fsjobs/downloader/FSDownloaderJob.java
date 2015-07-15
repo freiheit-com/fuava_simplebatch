@@ -5,7 +5,9 @@ import java.util.Map;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
-import com.freiheit.fuava.simplebatch.persist.Persistence;
+import com.freiheit.fuava.simplebatch.persist.AbstractStringPersistenceAdapter;
+import com.freiheit.fuava.simplebatch.persist.FilePersistence;
+import com.freiheit.fuava.simplebatch.persist.PersistenceAdapter;
 import com.freiheit.fuava.simplebatch.process.Processor;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.google.common.base.Function;
@@ -26,6 +28,7 @@ public class FSDownloaderJob<Id, Data>  extends BatchJob<Id, Data> {
 
 	public static final class Builder<Id, Data> {
 		private final BatchJob.Builder<Id, Data> builder = BatchJob.builder();
+		private PersistenceAdapter<Id, Data> persistenceAdapter;
 
 
 		public Builder() {
@@ -112,16 +115,21 @@ public class FSDownloaderJob<Id, Data>  extends BatchJob<Id, Data> {
 		}
 
 
+		public Builder<Id, Data> setPersistenceAdapter(PersistenceAdapter<Id, Data> persistenceAdapter) {
+			this.persistenceAdapter = persistenceAdapter;
+			return this;
+		}
 
 		public FSDownloaderJob<Id, Data> build() {
 			return new FSDownloaderJob<Id, Data>(
 					builder.getProcessingBatchSize(), 
 					builder.getFetcher(), 
 					builder.getProcessor(), 
-					builder.getPersistence(),
+					this.persistenceAdapter == null ? new AbstractStringPersistenceAdapter<Id, Data>() {} : this.persistenceAdapter,
 					builder.getListeners()
 			);
 		}
+
 
 	}
 
@@ -130,10 +138,10 @@ public class FSDownloaderJob<Id, Data>  extends BatchJob<Id, Data> {
 			int processingBatchSize, 
 			Fetcher<Id> fetcher,
 			Processor<Id, Data> processor,
-			Persistence<Id, Data> persistence,
+			PersistenceAdapter<Id, Data> persistence,
 			List<ProcessingResultListener<Id, Data>> listeners
 			) {
-		super(processingBatchSize, fetcher, processor, persistence, listeners);
+		super(processingBatchSize, fetcher, processor, new FilePersistence<Id, Data>(persistence), listeners);
 	}
 
 	public static <Input, Output> Builder<Input, Output> downloaderBuilder() {

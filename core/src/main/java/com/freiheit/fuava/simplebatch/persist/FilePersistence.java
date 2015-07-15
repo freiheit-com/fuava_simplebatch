@@ -1,10 +1,9 @@
-package com.freiheit.fuava.simplebatch;
+package com.freiheit.fuava.simplebatch.persist;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 
-import com.freiheit.fuava.simplebatch.persist.Persistence;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Charsets;
 import com.google.common.base.MoreObjects;
@@ -15,11 +14,7 @@ import com.google.common.collect.ImmutableList;
  * @param <Input>
  * @param <Output>
  */
-public abstract class FilePersistence<Input, Output> implements Persistence<Input, Output> {
-
-    public abstract String contentAsString( Input id, Output content );
-
-    public abstract File newFile( File dir, Input id );
+public class FilePersistence<Input, Output> implements Persistence<Input, Output> {
 
     static class FileWriterOutputInfo {
     	private final File ctrlFile;
@@ -32,6 +27,12 @@ public abstract class FilePersistence<Input, Output> implements Persistence<Inpu
     		return MoreObjects.toStringHelper(this).add("Control File", ctrlFile).toString();
     	}
     }
+    
+    private PersistenceAdapter<Input, Output> adapter;
+    
+    public FilePersistence(PersistenceAdapter<Input, Output> adapter) {
+		this.adapter = adapter;
+	}
     
     @Override
     public Iterable<Result<Input, FileWriterOutputInfo>> persist( final Iterable<Result<Input, Output>> iterable) {
@@ -47,11 +48,13 @@ public abstract class FilePersistence<Input, Output> implements Persistence<Inpu
 
 	private Result<Input, FileWriterOutputInfo> writeResult(final File basedir, Result<Input, Output> r) {
 		Input input = r.getInput();
-		File f = newFile( basedir, input );
+		String itemDescription = adapter.getItemDescription(r);
+		
+		File f = new File( basedir, itemDescription);
 		try {
 		    try ( OutputStreamWriter fos = new OutputStreamWriter( new FileOutputStream( f ), Charsets.UTF_8.name() ) ) {
 		        if ( !r.isFailed() ) {
-		            fos.write( contentAsString( input, r.getOutput() ) );
+		        	adapter.write(fos, r.getOutput());
 		        }
 		        final File ctl = new File( basedir + "/" + String.valueOf( System.currentTimeMillis() ) + "_done.ctl" );
 		        try ( OutputStreamWriter fos2 =
