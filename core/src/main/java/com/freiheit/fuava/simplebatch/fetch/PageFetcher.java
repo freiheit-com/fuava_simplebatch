@@ -3,7 +3,7 @@ package com.freiheit.fuava.simplebatch.fetch;
 import com.freiheit.fuava.simplebatch.result.Result;
 
 public interface PageFetcher<T> {
-	static final class PagingInput {
+    public static final class PagingInput {
 		public final int from;
 		public final int pageSize;
 		public PagingInput(int from, int pageSize) {
@@ -12,7 +12,7 @@ public interface PageFetcher<T> {
 		}
 	}
 	
-    Result<PagingInput, T> fetch(
+    public Result<PagingInput, T> fetch(
     		int from, int pageSize
 	);
 }
