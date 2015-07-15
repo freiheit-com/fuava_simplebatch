@@ -6,8 +6,10 @@ import java.util.Map;
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.persist.AbstractStringPersistenceAdapter;
+import com.freiheit.fuava.simplebatch.persist.ControlFilePersistence;
 import com.freiheit.fuava.simplebatch.persist.FilePersistence;
 import com.freiheit.fuava.simplebatch.persist.PersistenceAdapter;
+import com.freiheit.fuava.simplebatch.persist.Persistences;
 import com.freiheit.fuava.simplebatch.process.Processor;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.google.common.base.Function;
@@ -22,7 +24,7 @@ import com.google.common.base.Supplier;
  */
 public class FSDownloaderJob<Id, Data>  extends BatchJob<Id, Data> {
 
-	public interface Configuration extends FilePersistence.Configuration {
+	public interface Configuration extends FilePersistence.Configuration, ControlFilePersistence.Configuration {
 		
 	}
 
@@ -52,7 +54,7 @@ public class FSDownloaderJob<Id, Data>  extends BatchJob<Id, Data> {
 			return this;
 		}
 		
-		public Builder<Id, Data> setDownloadingBatchSize(
+		public Builder<Id, Data> setDownloaderBatchSize(
 				int processingBatchSize) {
 			builder.setProcessingBatchSize(processingBatchSize);
 			return this;
@@ -132,7 +134,7 @@ public class FSDownloaderJob<Id, Data>  extends BatchJob<Id, Data> {
 		}
 
 
-		public Builder<Id, Data> setPersistenceAdapter(PersistenceAdapter<Id, Data> persistenceAdapter) {
+		public Builder<Id, Data> setFileWriterAdapter(PersistenceAdapter<Id, Data> persistenceAdapter) {
 			this.persistenceAdapter = persistenceAdapter;
 			return this;
 		}
@@ -160,12 +162,13 @@ public class FSDownloaderJob<Id, Data>  extends BatchJob<Id, Data> {
 			PersistenceAdapter<Id, Data> persistence,
 			List<ProcessingResultListener<Id, Data>> listeners
 			) {
-		super(processingBatchSize, fetcher, processor, new FilePersistence<Id, Data>(configuration, persistence), listeners);
+		super(processingBatchSize, fetcher, processor, 
+				
+				Persistences.compose(new ControlFilePersistence<A>(configuration), new FilePersistence<Id, Data>(configuration, persistence)), 
+				
+				listeners);
 	}
 
-	public static <Input, Output> Builder<Input, Output> downloaderBuilder() {
-		return new FSDownloaderJob.Builder<Input, Output>();
-	}
 
 
 }

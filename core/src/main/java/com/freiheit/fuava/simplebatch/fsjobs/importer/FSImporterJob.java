@@ -1,14 +1,16 @@
 package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.persist.FilePersistence;
 import com.freiheit.fuava.simplebatch.persist.Persistence;
+import com.freiheit.fuava.simplebatch.process.PrepareControlledFileProcessor;
 import com.freiheit.fuava.simplebatch.process.Processor;
+import com.freiheit.fuava.simplebatch.process.Processors;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -19,24 +21,65 @@ import com.google.common.base.Supplier;
  *
  * @param <Output>
  */
-public class FSImporterJob<Output>  extends BatchJob<File, Output> {
+public class FSImporterJob<Output>  extends BatchJob<ControlFile, Output> {
 	
 	public interface Configuration extends FilePersistence.Configuration {
-		
+		String getControlFileEnding();
+		String getArchivedDirPath();
+		String getProcessingDirPath();
 	}
 
     public static final class ConfigurationImpl implements Configuration {
 
+    	private String downloadDirPath;
+    	private String archivedDirPath;
+    	private String processingDirPath;
+    	private String controlFileEnding;
+    	
 		@Override
 		public String getDownloadDirPath() {
-			return "/tmp/downloading";
+			return downloadDirPath;
+		}
+		
+		public ConfigurationImpl setDownloadDirPath(String downloadDirPath) {
+			this.downloadDirPath = downloadDirPath;
+			return this;
+		}
+
+		@Override
+		public String getArchivedDirPath() {
+			return archivedDirPath;
+		}
+		
+		public ConfigurationImpl setArchivedDirPath(String archivedDirPath) {
+			this.archivedDirPath = archivedDirPath;
+			return this;
+		}
+
+		@Override
+		public String getProcessingDirPath() {
+			return processingDirPath;
+		}
+		
+		public ConfigurationImpl setProcessingDirPath(String processingDirPath) {
+			this.processingDirPath = processingDirPath;
+			return this;
+		}
+
+		public String getControlFileEnding() {
+			return controlFileEnding;
+		}
+		
+		public ConfigurationImpl setControlFileEnding(String controlFileEnding) {
+			this.controlFileEnding = controlFileEnding;
+			return this;
 		}
     	
     }
 
 
 	public static final class Builder<Output> {
-		private final BatchJob.Builder<File, Output> builder = BatchJob.builder();
+		private final BatchJob.Builder<ControlFile, Output> builder = BatchJob.builder();
 		private Configuration configuration;
 
 
@@ -50,64 +93,36 @@ public class FSImporterJob<Output>  extends BatchJob<File, Output> {
 		}
 		
 		
-		public Builder<Output> setProcessingBatchSize(
+		/**
+		 * The number of files to read (and subsequently persist) together  in one batch.
+		 */
+		public Builder<Output> setContentBatchSize(
 				int processingBatchSize) {
 			builder.setProcessingBatchSize(processingBatchSize);
 			return this;
 		}
 
 
-		public Builder<Output> setFetcher(
-				Fetcher<File> idsFetcher) {
-			builder.setFetcher(idsFetcher);
+		public Builder<Output> setFileInputStreamReader(Function<InputStream, Iterable<Output>> documentReader) {
+			builder.setReader(byIdsFetcher);
+			return this;
+		}
+
+		public <P> Builder<Output> setContentPersistence(Function<List<Output>, List<P>> documentReader) {
+			builder.setReader(byIdsFetcher);
 			return this;
 		}
 
 
-		public Builder<Output> setFetcher(
-				Iterable<File> idsFetcher) {
-			builder.setFetcher(idsFetcher);
-			return this;
-		}
 
-
-		public Builder<Output> setFetcher(
-				Supplier<Iterable<File>> idsFetcher) {
-			builder.setFetcher(idsFetcher);
-			return this;
-		}
-
-
-		public Builder<Output> setProcessor(
-				Processor<File, Output> byIdsFetcher) {
-			builder.setProcessor(byIdsFetcher);
-			return this;
-		}
-
-
-		public Builder<Output> setRetryableProcessor(
-				Function<List<File>, Map<File, Output>> retryableFunction) {
-			builder.setRetryableProcessor(retryableFunction);
-			return this;
-		}
-
-
-		public Builder<Output> setRetryableListProcessor(
-				Function<List<File>, List<Output>> retryableFunction) {
-			builder.setRetryableListProcessor(retryableFunction);
-			return this;
-		}
-
-
-		public Builder<Output> addListener(
-				ProcessingResultListener<File, Output> listener) {
+		public Builder<Output> addListener(ProcessingResultListener<ControlFile, Output> listener) {
 			builder.addListener(listener);
 			return this;
 		}
 
 
 		public Builder<Output> removeListener(
-				ProcessingResultListener<File, Output> listener) {
+				ProcessingResultListener<ControlFile, Output> listener) {
 			builder.removeListener(listener);
 			return this;
 		}
@@ -115,6 +130,49 @@ public class FSImporterJob<Output>  extends BatchJob<File, Output> {
 
 
 		public FSImporterJob<Output> build() {
+            new PrepareControlledFileProcessor<>( procDir, downloadDir ),
+	        //always the same!
+	        final Supplier<Iterable<ControlFile>> controlFileFilePagingFetcher = new DirectoryFileFetcher<ControlFile>(
+	        		downloadDir, ".ctl", 
+	        		new MakeControlFileFunction()
+			);
+    		//new ControlledFilePersistence()
+    		/*
+    		new Persistence<ControlFile, Iterable<ArticleCacheMiscData>>() {
+        @Override
+        public Iterable<? extends Result<ControlFile, ?>> persist(
+                final Iterable<Result<ControlFile, Iterable<ArticleCacheMiscData>>> iterable ) {
+
+            for ( final Result<ControlFile, Iterable<ArticleCacheMiscData>> r : iterable ) {
+                final ControlFile input = r.getInput();
+                final String pathname = procDir + "/" + input.getPathToControlledFile();
+
+                System.out.println( r.isFailed() );
+                System.out.println( r.getOutput() );
+                for ( final ArticleCacheMiscData articleCacheMiscData : r.getOutput() ) {
+                    try {
+                        miscDocumentWriter.writeMiscDocumentToDb( articleCacheMiscData );
+                        fileMover.moveFile( input.getFile(), archivedDir );
+                        fileMover.moveFile( new File( pathname ), archivedDir );
+                    } catch ( IOException | UpdateMiscDataFailedException e ) {
+                        try {
+                            fileMover.moveFile( input.getFile(), "/tmp/failed" );
+                            fileMover.moveFile( new File( pathname ), "/tmp/failed" );
+                        } catch ( FailedToMoveFileException e1 ) {
+                            throw new RuntimeException();
+                        }
+
+                        e.printStackTrace();
+                    } catch ( FailedToMoveFileException e ) {
+                        e.printStackTrace();
+                        throw new RuntimeException();
+                    }
+                }
+            }
+            return null;
+        }
+        */
+
 			return new FSImporterJob<Output>(
 					builder.getProcessingBatchSize(), 
 					builder.getFetcher(), 
@@ -133,7 +191,7 @@ public class FSImporterJob<Output>  extends BatchJob<File, Output> {
 			Persistence<File, Output, ?> persistence,
 			List<ProcessingResultListener<File, Output>> listeners
 	) {
-		super(processingBatchSize, fetcher, processor, persistence, listeners);
+		super(processingBatchSize, fetcher, Processors.compose(processor, new PrepareControlledFile()), persistence, listeners);
 	}
 
 	
