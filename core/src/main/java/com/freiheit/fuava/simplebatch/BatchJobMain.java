@@ -35,6 +35,17 @@ public class BatchJobMain {
 		ResultStatistics<Input, Output> statistics = batchJob.run();
 		final long endTimeMillis = System.currentTimeMillis();
 				
+		boolean allFailed = printStatistics(startTimeMillis, statistics, endTimeMillis);
+		
+		if (allFailed) {
+			System.exit(-1);
+		}
+		// will exit by itself
+	}
+
+	private static <Input, Output> boolean printStatistics(
+			final long startTimeMillis,
+			ResultStatistics<Input, Output> statistics, final long endTimeMillis) {
 		Counts fetchCounts = statistics.getFetchCounts();
 		Counts processingCounts = statistics.getProcessingCounts();
 		Counts persistCounts = statistics.getPersistCounts();
@@ -57,10 +68,6 @@ public class BatchJobMain {
 		printCounts(out, "Processing", processingCounts);
 		printCounts(out, "Persist", persistCounts);
 		out.append("Duration: ").append(Long.toString(endTimeMillis - startTimeMillis)).append(" ms ").append('\n');
-		
-		if (allFailed) {
-			System.exit(-1);
-		}
-		// will exit by itself
+		return allFailed;
 	}
 }
