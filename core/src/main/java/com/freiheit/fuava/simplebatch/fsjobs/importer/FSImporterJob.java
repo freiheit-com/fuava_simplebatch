@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
+import com.freiheit.fuava.simplebatch.persist.FilePersistence;
 import com.freiheit.fuava.simplebatch.persist.Persistence;
 import com.freiheit.fuava.simplebatch.process.Processor;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
@@ -19,15 +20,35 @@ import com.google.common.base.Supplier;
  * @param <Output>
  */
 public class FSImporterJob<Output>  extends BatchJob<File, Output> {
+	
+	public interface Configuration extends FilePersistence.Configuration {
+		
+	}
+
+    public static final class ConfigurationImpl implements Configuration {
+
+		@Override
+		public String getDownloadDirPath() {
+			return "/tmp/downloading";
+		}
+    	
+    }
 
 
 	public static final class Builder<Output> {
 		private final BatchJob.Builder<File, Output> builder = BatchJob.builder();
+		private Configuration configuration;
 
 
 		public Builder() {
 
 		}
+
+		public Builder<Output> setConfiguration(Configuration configuration) {
+			this.configuration = configuration;
+			return this;
+		}
+		
 		
 		public Builder<Output> setProcessingBatchSize(
 				int processingBatchSize) {
@@ -109,7 +130,7 @@ public class FSImporterJob<Output>  extends BatchJob<File, Output> {
 			int processingBatchSize, 
 			Fetcher<File> fetcher,
 			Processor<File, Output> processor,
-			Persistence<File, Output> persistence,
+			Persistence<File, Output, ?> persistence,
 			List<ProcessingResultListener<File, Output>> listeners
 	) {
 		super(processingBatchSize, fetcher, processor, persistence, listeners);

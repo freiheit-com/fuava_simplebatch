@@ -54,7 +54,7 @@ public class BatchJob<Input, Output> {
 		private int processingBatchSize;
 		private Fetcher<Input> fetcher;
 		private Processor<Input, Output> processor;
-		private Persistence<Input, Output> persistence;
+		private Persistence<Input, Output, ?> persistence;
 
 		private ArrayList<ProcessingResultListener<Input, Output>> listeners = new ArrayList<ProcessingResultListener<Input, Output>>();
 
@@ -138,11 +138,11 @@ public class BatchJob<Input, Output> {
 			return this;
 		}
 
-		public Builder<Input, Output> setPersistence( Persistence<Input, Output> writer ) {
+		public Builder<Input, Output> setPersistence( Persistence<Input, Output, ?> writer ) {
 			this.persistence = writer;
 			return this;
 		}
-		public Persistence<Input, Output> getPersistence() {
+		public Persistence<Input, Output, ?> getPersistence() {
 			return persistence;
 		}
 
@@ -168,7 +168,7 @@ public class BatchJob<Input, Output> {
 	private final int processingBatchSize;
 	private final Fetcher<Input> fetcher;
 	private final Processor<Input, Output> processor;
-	private final Persistence<Input, Output> persistence;
+	private final Persistence<Input, Output, ?> persistence;
 
 	private final List<ProcessingResultListener<Input, Output>> listeners;
 
@@ -176,7 +176,7 @@ public class BatchJob<Input, Output> {
 			int processingBatchSize, 
 			Fetcher<Input> fetcher, 
 			Processor<Input, Output> processor, 
-			Persistence<Input, Output> persistence,
+			Persistence<Input, Output, ?> persistence,
 			List<ProcessingResultListener<Input, Output>> listeners
 			) {
 		this.processingBatchSize = processingBatchSize;

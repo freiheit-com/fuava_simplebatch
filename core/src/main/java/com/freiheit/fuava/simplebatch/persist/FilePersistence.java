@@ -6,7 +6,7 @@ import java.io.OutputStreamWriter;
 
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Charsets;
-import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 
@@ -14,39 +14,34 @@ import com.google.common.collect.ImmutableList;
  * @param <Input>
  * @param <Output>
  */
-public class FilePersistence<Input, Output> implements Persistence<Input, Output> {
+public class FilePersistence<Input, Output> implements Persistence<Input, Output, FilePersistenceOutputInfo> {
 
-    static class FileWriterOutputInfo {
-    	private final File ctrlFile;
-    	public FileWriterOutputInfo(File ctrlFile) {
-    		this.ctrlFile = ctrlFile;
-		}
-    	
-    	@Override
-    	public String toString() {
-    		return MoreObjects.toStringHelper(this).add("Control File", ctrlFile).toString();
-    	}
+    public interface Configuration {
+    	String getDownloadDirPath();
     }
-    
+
+
     private PersistenceAdapter<Input, Output> adapter;
+	private Configuration configuration;
     
-    public FilePersistence(PersistenceAdapter<Input, Output> adapter) {
-		this.adapter = adapter;
+    public FilePersistence(Configuration configuration, PersistenceAdapter<Input, Output> adapter) {
+		this.configuration = Preconditions.checkNotNull(configuration);
+		this.adapter = Preconditions.checkNotNull(adapter);
 	}
     
     @Override
-    public Iterable<Result<Input, FileWriterOutputInfo>> persist( final Iterable<Result<Input, Output>> iterable) {
-    	ImmutableList.Builder<Result<Input, FileWriterOutputInfo>> b = ImmutableList.builder();
+    public Iterable<Result<Input, FilePersistenceOutputInfo>> persist( final Iterable<Result<Input, Output>> iterable) {
+    	ImmutableList.Builder<Result<Input, FilePersistenceOutputInfo>> b = ImmutableList.builder();
     	
         // FIXME: write mutliple entries in one file ?
-        final File basedir = new File( ( "/tmp/downloading" ) );
+        final File basedir = new File( configuration.getDownloadDirPath() );
         for ( Result<Input, Output> r : iterable ) {
             b.add(writeResult(basedir, r));
         }
         return b.build();
     }
 
-	private Result<Input, FileWriterOutputInfo> writeResult(final File basedir, Result<Input, Output> r) {
+	private Result<Input, FilePersistenceOutputInfo> writeResult(final File basedir, Result<Input, Output> r) {
 		Input input = r.getInput();
 		String itemDescription = adapter.getItemDescription(r);
 		
@@ -56,16 +51,11 @@ public class FilePersistence<Input, Output> implements Persistence<Input, Output
 		        if ( !r.isFailed() ) {
 		        	adapter.write(fos, r.getOutput());
 		        }
-		        final File ctl = new File( basedir + "/" + String.valueOf( System.currentTimeMillis() ) + "_done.ctl" );
-		        try ( OutputStreamWriter fos2 =
-		                new OutputStreamWriter( new FileOutputStream( ctl ), Charsets.UTF_8.name() ) ) {
-		            fos2.write( f.getName() );
-		        }
-		        return Result.success(input, new FileWriterOutputInfo(ctl));
+		        return Result.success(input, new FilePersistenceOutputInfo(f));
 		    }
 
 		} catch ( final Throwable t ) {
-			return Result.failed(input, t);
+			return Result.failed(input, "Failed writing to file " + f.getAbsolutePath(), t);
 		}
 	}
 }

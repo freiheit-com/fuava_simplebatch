@@ -22,17 +22,34 @@ import com.google.common.base.Supplier;
  */
 public class FSDownloaderJob<Id, Data>  extends BatchJob<Id, Data> {
 
-	public interface PersistenceSerialization {
+	public interface Configuration extends FilePersistence.Configuration {
 		
 	}
+
+    public static final class ConfigurationImpl implements Configuration {
+
+		@Override
+		public String getDownloadDirPath() {
+			return "/tmp/downloading";
+		}
+    	
+    }
+	
+	
 
 	public static final class Builder<Id, Data> {
 		private final BatchJob.Builder<Id, Data> builder = BatchJob.builder();
 		private PersistenceAdapter<Id, Data> persistenceAdapter;
+		private Configuration configuration;
 
 
 		public Builder() {
 
+		}
+		
+		public Builder<Id, Data> setConfiguration(Configuration configuration) {
+			this.configuration = configuration;
+			return this;
 		}
 		
 		public Builder<Id, Data> setDownloadingBatchSize(
@@ -125,6 +142,7 @@ public class FSDownloaderJob<Id, Data>  extends BatchJob<Id, Data> {
 					builder.getProcessingBatchSize(), 
 					builder.getFetcher(), 
 					builder.getProcessor(), 
+					this.configuration == null ? new ConfigurationImpl() : this.configuration,
 					this.persistenceAdapter == null ? new AbstractStringPersistenceAdapter<Id, Data>() {} : this.persistenceAdapter,
 					builder.getListeners()
 			);
@@ -138,10 +156,11 @@ public class FSDownloaderJob<Id, Data>  extends BatchJob<Id, Data> {
 			int processingBatchSize, 
 			Fetcher<Id> fetcher,
 			Processor<Id, Data> processor,
+			FilePersistence.Configuration configuration,
 			PersistenceAdapter<Id, Data> persistence,
 			List<ProcessingResultListener<Id, Data>> listeners
 			) {
-		super(processingBatchSize, fetcher, processor, new FilePersistence<Id, Data>(persistence), listeners);
+		super(processingBatchSize, fetcher, processor, new FilePersistence<Id, Data>(configuration, persistence), listeners);
 	}
 
 	public static <Input, Output> Builder<Input, Output> downloaderBuilder() {
