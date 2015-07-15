@@ -47,128 +47,181 @@ import com.google.common.collect.Iterables;
  * @param <Output>
  *            The data fetched instage two
  */
-public final class BatchJob<Input, Output> {
-    static final Logger LOG = LoggerFactory.getLogger( BatchJob.class );
+public class BatchJob<Input, Output> {
+	static final Logger LOG = LoggerFactory.getLogger( BatchJob.class );
 
-    private int processingBatchSize;
-    private Fetcher<Input> fetcher;
-    private Processor<Input, Output> processor;
-    private Persistence<Input, Output> persistence;
+	public static class Builder<Input, Output> {
+		private int processingBatchSize;
+		private Fetcher<Input> fetcher;
+		private Processor<Input, Output> processor;
+		private Persistence<Input, Output> persistence;
 
-	private ArrayList<ProcessingResultListener<Input, Output>> listeners = new ArrayList<ProcessingResultListener<Input, Output>>();
+		private ArrayList<ProcessingResultListener<Input, Output>> listeners = new ArrayList<ProcessingResultListener<Input, Output>>();
 
-	public BatchJob<Input, Output> setProcessingBatchSize( int processingBatchSize ) {
-        this.processingBatchSize = processingBatchSize;
-        return this;
-    }
+		public Builder() {
+		}
 
-    public BatchJob<Input, Output> setFetcher( Fetcher<Input> idsFetcher ) {
-        this.fetcher = idsFetcher;
-        return this;
-    }
+		public int getProcessingBatchSize() {
+			return processingBatchSize;
+		}
+		
+		public Builder<Input, Output> setProcessingBatchSize( int processingBatchSize ) {
+			this.processingBatchSize = processingBatchSize;
+			return this;
+		}
 
-    /**
-     * Overloaded version of {@link #setFetcher(Fetcher)}. If the Iterable throws exceptions, they will 
-     * be caught and translated into result instances.
-     * 
-     * @param idsFetcher
-     * @return
-     */
-    public BatchJob<Input, Output> setFetcher( Iterable<Input> idsFetcher ) {
-        this.fetcher = new FailsafeFetcherImpl<Input>(Suppliers.ofInstance(idsFetcher));
-        return this;
-    }
+		public Builder<Input, Output> setFetcher( Fetcher<Input> idsFetcher ) {
+			this.fetcher = idsFetcher;
+			return this;
+		}
 
-    /**
-     * Overloaded version of {@link #setFetcher(Fetcher)}. If the Iterable returned by the supplier throws exceptions, they will 
-     * be caught and translated into result instances.
-     * 
-     * @param idsFetcher
-     * @return
-     */
-    public BatchJob<Input, Output> setFetcher( Supplier<Iterable<Input>> idsFetcher ) {
-        this.fetcher = new FailsafeFetcherImpl<Input>(idsFetcher);
-        return this;
-    }
+		public Fetcher<Input> getFetcher() {
+			return fetcher;
+		}
+		
+		/**
+		 * Overloaded version of {@link #setFetcher(Fetcher)}. If the Iterable throws exceptions, they will 
+		 * be caught and translated into result instances.
+		 * 
+		 * @param idsFetcher
+		 * @return
+		 */
+		public Builder<Input, Output> setFetcher( Iterable<Input> idsFetcher ) {
+			this.fetcher = new FailsafeFetcherImpl<Input>(Suppliers.ofInstance(idsFetcher));
+			return this;
+		}
 
-    public BatchJob<Input, Output> setProcessor( Processor<Input, Output> byIdsFetcher ) {
-        this.processor = byIdsFetcher;
-        return this;
-    }
+		/**
+		 * Overloaded version of {@link #setFetcher(Fetcher)}. If the Iterable returned by the supplier throws exceptions, they will 
+		 * be caught and translated into result instances.
+		 * 
+		 * @param idsFetcher
+		 * @return
+		 */
+		public Builder<Input, Output> setFetcher( Supplier<Iterable<Input>> idsFetcher ) {
+			this.fetcher = new FailsafeFetcherImpl<Input>(idsFetcher);
+			return this;
+		}
 
-    /**
-     * Convenience alternative to {@link #setProcessor(Processor)} which works with a function of lists to maps, 
-     * that will be re-executed with singletons in case of exceptions. Thus, your implementation may need
-     * to handle transactions and rollbacks.
-     * 
-     */
-    public BatchJob<Input, Output> setRetryableProcessor( Function<List<Input>, Map<Input, Output>> retryableFunction) {
-        this.processor = new RetryingProcessor<Input, Output>(retryableFunction);
-        return this;
-    }
+		public Builder<Input, Output> setProcessor( Processor<Input, Output> byIdsFetcher ) {
+			this.processor = byIdsFetcher;
+			return this;
+		}
+		
+		public Processor<Input, Output> getProcessor() {
+			return processor;
+		}
 
-    /**
-     * Convenience alternative to {@link #setProcessor(Processor)} which works with a function of lists to lists, 
-     * that will be re-executed with singletons in case of exceptions. Thus, your implementation may need
-     * to handle transactions and rollbacks.
-     * 
-	 * The Function must produce on output item for each input item and keep the order.
-	 * Additionally, it must only be used for data where each input item is distinct and 
-	 * no duplicates exist within one input.
-     * 
-     */
-    public BatchJob<Input, Output> setRetryableListProcessor( Function<List<Input>, List<Output>> retryableFunction) {
-        this.processor = new RetryingProcessor<Input, Output>(new MapBuildingFunction<Input, Output>(retryableFunction));
-        return this;
-    }
+		/**
+		 * Convenience alternative to {@link #setProcessor(Processor)} which works with a function of lists to maps, 
+		 * that will be re-executed with singletons in case of exceptions. Thus, your implementation may need
+		 * to handle transactions and rollbacks.
+		 * 
+		 */
+		public Builder<Input, Output> setRetryableProcessor( Function<List<Input>, Map<Input, Output>> retryableFunction) {
+			this.processor = new RetryingProcessor<Input, Output>(retryableFunction);
+			return this;
+		}
 
-    public BatchJob<Input, Output> setPersistence( Persistence<Input, Output> writer ) {
-        this.persistence = writer;
-        return this;
-    }
-    
-    public BatchJob<Input, Output> addListener(ProcessingResultListener<Input, Output> listener) {
-    	this.listeners.add(listener);
-    	return this;
-    }
+		/**
+		 * Convenience alternative to {@link #setProcessor(Processor)} which works with a function of lists to lists, 
+		 * that will be re-executed with singletons in case of exceptions. Thus, your implementation may need
+		 * to handle transactions and rollbacks.
+		 * 
+		 * The Function must produce on output item for each input item and keep the order.
+		 * Additionally, it must only be used for data where each input item is distinct and 
+		 * no duplicates exist within one input.
+		 * 
+		 */
+		public Builder<Input, Output> setRetryableListProcessor( Function<List<Input>, List<Output>> retryableFunction) {
+			this.processor = new RetryingProcessor<Input, Output>(new MapBuildingFunction<Input, Output>(retryableFunction));
+			return this;
+		}
 
-    public BatchJob<Input, Output> removeListener(ProcessingResultListener<Input, Output> listener) {
-    	this.listeners.remove(listener);
-    	return this;
-    }
+		public Builder<Input, Output> setPersistence( Persistence<Input, Output> writer ) {
+			this.persistence = writer;
+			return this;
+		}
+		public Persistence<Input, Output> getPersistence() {
+			return persistence;
+		}
 
-    @CheckReturnValue
-    public final ResultStatistics<Input, Output> run() {
+		public Builder<Input, Output> addListener(ProcessingResultListener<Input, Output> listener) {
+			this.listeners.add(listener);
+			return this;
+		}
 
-    	ResultStatistics.Builder<Input, Output> resultBuilder = ResultStatistics.builder();
-    	
-    	DelegatingProcessingResultListener<Input, Output> listeners = new DelegatingProcessingResultListener<Input, Output>(
-    			ImmutableList.<ProcessingResultListener<Input, Output>>builder().add(resultBuilder).addAll(this.listeners).build()
-			);
-    	
-        final Iterable<Result<?, Input>> sourceIterable = fetcher.fetchAll();
+		public Builder<Input, Output> removeListener(ProcessingResultListener<Input, Output> listener) {
+			this.listeners.remove(listener);
+			return this;
+		}
+		
+		public ArrayList<ProcessingResultListener<Input, Output>> getListeners() {
+			return listeners;
+		}
+		
+		public BatchJob<Input, Output> build() {
+			return new BatchJob<Input, Output>(processingBatchSize, fetcher, processor, persistence, listeners);
+		}
+	}
 
-        for ( List<Result<?, Input>> sourceResults : Iterables.partition( sourceIterable, processingBatchSize ) ) {
-            
-            listeners.onFetchResults(sourceResults);
-            
-            final List<Input> processingInputs =
-                    FluentIterable.from( sourceResults ).filter( Result::isSuccess ).transform( Result::getOutput ).toList();
-            final Iterable<Result<Input, Output>> processingResults = processor.process( processingInputs );
+	private final int processingBatchSize;
+	private final Fetcher<Input> fetcher;
+	private final Processor<Input, Output> processor;
+	private final Persistence<Input, Output> persistence;
 
-            listeners.onProcessingResults(processingResults);
-            
-            final List<Result<Input, Output>> persistInputs = FluentIterable.from(processingResults).filter(Result::isSuccess).toList();
-            Iterable<? extends Result<Input, ?>> persistResults = persistence.persist( persistInputs );
-            
-            listeners.onPersistResults(persistResults);
-        }
+	private final List<ProcessingResultListener<Input, Output>> listeners;
 
-        resultBuilder.setListenerDelegationFailures(listeners.hasDelegationFailures());
-        
-        // TODO: persist the state of the downloader (offset or downloader), so it can be
-        //       provided the next time
-        //idsDownloader.getWriteableState();
-        return resultBuilder.build();
-    }
+	protected BatchJob(
+			int processingBatchSize, 
+			Fetcher<Input> fetcher, 
+			Processor<Input, Output> processor, 
+			Persistence<Input, Output> persistence,
+			List<ProcessingResultListener<Input, Output>> listeners
+			) {
+		this.processingBatchSize = processingBatchSize;
+		this.fetcher = fetcher;
+		this.processor = processor;
+		this.persistence = persistence;
+		this.listeners = ImmutableList.copyOf(listeners);
+	}
+
+	public static <Input, Output> Builder<Input, Output> builder() {
+		return new Builder<Input, Output>();
+	}
+	
+	@CheckReturnValue
+	public final ResultStatistics<Input, Output> run() {
+
+		ResultStatistics.Builder<Input, Output> resultBuilder = ResultStatistics.builder();
+
+		DelegatingProcessingResultListener<Input, Output> listeners = new DelegatingProcessingResultListener<Input, Output>(
+				ImmutableList.<ProcessingResultListener<Input, Output>>builder().add(resultBuilder).addAll(this.listeners).build()
+				);
+
+		final Iterable<Result<?, Input>> sourceIterable = fetcher.fetchAll();
+
+		for ( List<Result<?, Input>> sourceResults : Iterables.partition( sourceIterable, processingBatchSize ) ) {
+
+			listeners.onFetchResults(sourceResults);
+
+			final List<Input> processingInputs =
+					FluentIterable.from( sourceResults ).filter( Result::isSuccess ).transform( Result::getOutput ).toList();
+			final Iterable<Result<Input, Output>> processingResults = processor.process( processingInputs );
+
+			listeners.onProcessingResults(processingResults);
+
+			final List<Result<Input, Output>> persistInputs = FluentIterable.from(processingResults).filter(Result::isSuccess).toList();
+			Iterable<? extends Result<Input, ?>> persistResults = persistence.persist( persistInputs );
+
+			listeners.onPersistResults(persistResults);
+		}
+
+		resultBuilder.setListenerDelegationFailures(listeners.hasDelegationFailures());
+
+		// TODO: persist the state of the downloader (offset or downloader), so it can be
+		//       provided the next time
+		//idsDownloader.getWriteableState();
+		return resultBuilder.build();
+	}
 }
