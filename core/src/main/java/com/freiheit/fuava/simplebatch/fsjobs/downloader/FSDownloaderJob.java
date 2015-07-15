@@ -34,6 +34,11 @@ public class FSDownloaderJob<Id, Data>  extends BatchJob<Id, Data> {
 		public String getDownloadDirPath() {
 			return "/tmp/downloading";
 		}
+
+		@Override
+		public String getControlFileEnding() {
+			return ".csv";
+		}
     	
     }
 	
@@ -158,14 +163,15 @@ public class FSDownloaderJob<Id, Data>  extends BatchJob<Id, Data> {
 			int processingBatchSize, 
 			Fetcher<Id> fetcher,
 			Processor<Id, Data> processor,
-			FilePersistence.Configuration configuration,
+			Configuration configuration,
 			PersistenceAdapter<Id, Data> persistence,
 			List<ProcessingResultListener<Id, Data>> listeners
 			) {
 		super(processingBatchSize, fetcher, processor, 
-				
-				Persistences.compose(new ControlFilePersistence<A>(configuration), new FilePersistence<Id, Data>(configuration, persistence)), 
-				
+				Persistences.compose(
+					new ControlFilePersistence<Id>(configuration), 
+					new FilePersistence<Id, Data>(configuration, persistence)
+				), 
 				listeners);
 	}
 

@@ -26,9 +26,10 @@ public class MakeControlFileFunction implements Function<File, ControlFile> {
     public ControlFile apply( final File file ) {
         try {
             final FileReader in = new FileReader( file );
-            final BufferedReader br = new BufferedReader( in );
-            final String nameOfDownloadedMiscDocument = br.readLine();
-            return new ControlFile( nameOfDownloadedMiscDocument, file );
+            try (BufferedReader br = new BufferedReader( in )) {
+            	final String nameOfDownloadedMiscDocument = br.readLine();
+            	return new ControlFile( nameOfDownloadedMiscDocument, file );
+            }
         } catch ( final IOException e ) {
             throw new RuntimeException( e );
         }

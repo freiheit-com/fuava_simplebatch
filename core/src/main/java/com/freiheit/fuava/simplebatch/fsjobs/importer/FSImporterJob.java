@@ -1,6 +1,5 @@
 package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.List;
 
@@ -8,12 +7,9 @@ import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.persist.FilePersistence;
 import com.freiheit.fuava.simplebatch.persist.Persistence;
-import com.freiheit.fuava.simplebatch.process.PrepareControlledFileProcessor;
 import com.freiheit.fuava.simplebatch.process.Processor;
-import com.freiheit.fuava.simplebatch.process.Processors;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.google.common.base.Function;
-import com.google.common.base.Supplier;
 
 /**
  * An importer that imports files from the file system, adhering to the control file protocol.
@@ -104,13 +100,15 @@ public class FSImporterJob<Output>  extends BatchJob<ControlFile, Output> {
 
 
 		public Builder<Output> setFileInputStreamReader(Function<InputStream, Iterable<Output>> documentReader) {
-			builder.setReader(byIdsFetcher);
-			return this;
+			throw new UnsupportedOperationException();
+			//builder.setReader(byIdsFetcher);
+			//return this;
 		}
 
 		public <P> Builder<Output> setContentPersistence(Function<List<Output>, List<P>> documentReader) {
-			builder.setReader(byIdsFetcher);
-			return this;
+			throw new UnsupportedOperationException();
+			//builder.setReader(byIdsFetcher);
+			//return this;
 		}
 
 
@@ -130,12 +128,15 @@ public class FSImporterJob<Output>  extends BatchJob<ControlFile, Output> {
 
 
 		public FSImporterJob<Output> build() {
+			throw new UnsupportedOperationException();
+/*
             new PrepareControlledFileProcessor<>( procDir, downloadDir ),
 	        //always the same!
 	        final Supplier<Iterable<ControlFile>> controlFileFilePagingFetcher = new DirectoryFileFetcher<ControlFile>(
 	        		downloadDir, ".ctl", 
 	        		new MakeControlFileFunction()
 			);
+			/*
     		//new ControlledFilePersistence()
     		/*
     		new Persistence<ControlFile, Iterable<ArticleCacheMiscData>>() {
@@ -172,7 +173,7 @@ public class FSImporterJob<Output>  extends BatchJob<ControlFile, Output> {
             return null;
         }
         */
-
+/*
 			return new FSImporterJob<Output>(
 					builder.getProcessingBatchSize(), 
 					builder.getFetcher(), 
@@ -180,18 +181,19 @@ public class FSImporterJob<Output>  extends BatchJob<ControlFile, Output> {
 					builder.getPersistence(),
 					builder.getListeners()
 			);
+			*/
 		}		
 	}
 	
 	
 	protected FSImporterJob(
 			int processingBatchSize, 
-			Fetcher<File> fetcher,
-			Processor<File, Output> processor,
-			Persistence<File, Output, ?> persistence,
-			List<ProcessingResultListener<File, Output>> listeners
+			Fetcher<ControlFile> fetcher,
+			Processor<ControlFile, Output> processor,
+			Persistence<ControlFile, Output, ?> persistence,
+			List<ProcessingResultListener<ControlFile, Output>> listeners
 	) {
-		super(processingBatchSize, fetcher, Processors.compose(processor, new PrepareControlledFile()), persistence, listeners);
+		super(processingBatchSize, fetcher, processor/*Processors.compose(processor, new PrepareControlledFile())*/, persistence, listeners);
 	}
 
 	
