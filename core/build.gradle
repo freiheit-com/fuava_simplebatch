@@ -1,5 +1,10 @@
 apply plugin: 'application'
 
+jar {
+    baseName 'fuafa-simplebatch-core'
+    version version
+}
+
 dependencies {
     compile 'com.google.code.findbugs:jsr305:3.0.0'
     compile 'com.google.guava:guava:18.0'
