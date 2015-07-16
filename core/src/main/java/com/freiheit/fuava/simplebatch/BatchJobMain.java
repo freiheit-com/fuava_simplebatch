@@ -11,15 +11,6 @@ import com.freiheit.fuava.simplebatch.result.ResultStatistics.Counts;
  * @author klas
  */
 public class BatchJobMain {
-
-	
-	private static boolean allFailed(Counts counts) {
-		return counts.getError() != 0 && counts.getSuccess() == 0;
-	}
-	
-	private static boolean allSuccess(Counts counts) {
-		return counts.getError() == 0;
-	}
 	
 	private static void printCounts(PrintStream out, String type, Counts counts) {
 		out.append(type)

@@ -8,6 +8,8 @@ import java.util.List;
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.FailsafeFetcherImpl;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
+import com.freiheit.fuava.simplebatch.logging.ProcessingBatchListener;
+import com.freiheit.fuava.simplebatch.logging.ProcessingItemListener;
 import com.freiheit.fuava.simplebatch.persist.FilePersistence;
 import com.freiheit.fuava.simplebatch.persist.Persistence;
 import com.freiheit.fuava.simplebatch.persist.RetryingPersistence;
@@ -95,6 +97,8 @@ public class FSImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>> 
 
 
 	public static final class Builder<Data> {
+		private static final String LOG_NAME_FILE_PROCESSING = "FILE PROCESSING";
+		private static final String LOG_NAME_CONTENT_PROCESSING = "CONTENT PROCESSING";
 		private Configuration configuration;
 		private int processingBatchSize;
 		private Function<InputStream, Iterable<Data>> documentReader;
@@ -150,6 +154,11 @@ public class FSImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>> 
 		}
 
 		public FSImporterJob<Data> build() {
+			fileProcessingListeners.add( new ProcessingBatchListener<ControlFile, Iterable<Data>>(LOG_NAME_FILE_PROCESSING) );
+			fileProcessingListeners.add( new ProcessingItemListener<ControlFile, Iterable<Data>>(LOG_NAME_FILE_PROCESSING) );
+
+			contentProcessingListeners.add( new ProcessingBatchListener<Data, Data>(LOG_NAME_CONTENT_PROCESSING) );
+			contentProcessingListeners.add( new ProcessingItemListener<Data, Data>(LOG_NAME_CONTENT_PROCESSING) );
 
 			final Supplier<Iterable<ControlFile>> controlFileFetcher = new DirectoryFileFetcher<ControlFile>(
 					this.configuration.getDownloadDirPath(), this.configuration.getControlFileEnding(),
@@ -170,6 +179,7 @@ public class FSImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>> 
 					configuration.getArchivedDirPath(), 
 					configuration.getFailedDirPath()
 				);
+
 
 			return new FSImporterJob<Data>(
 					1 /*process one file at a time, no use for batching*/, 

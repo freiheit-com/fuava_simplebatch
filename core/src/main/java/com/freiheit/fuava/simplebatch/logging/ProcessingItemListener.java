@@ -24,26 +24,30 @@ import com.freiheit.fuava.simplebatch.result.Result;
  * @author tim.lessner@freiheit.com
  */
 public class ProcessingItemListener<Input, Output> implements ProcessingResultListener<Input, Output> {
-    private static final Logger LOG = LoggerFactory.getLogger( ProcessingBatchListener.class );
+    private final Logger log;
 
+    public ProcessingItemListener(String logName) {
+		log = LoggerFactory.getLogger( logName );
+	}
+    
     @Override
     public void onFetchResult( final Result<?, Input> result ) {
         if ( result.isFailed() ) {
-            LOG.info( ResultItemStat.of( Event.FETCH, result.getFailureMessages(), result.getInput().toString() ) );
+            log.info( ResultItemStat.of( Event.FETCH, result.getFailureMessages(), result.getInput().toString() ) );
         }
     }
 
     @Override
     public void onProcessingResult( final Result<Input, Output> result ) {
         if ( result.isFailed() ) {
-            LOG.info( ResultItemStat.of( Event.PROCESS, result.getFailureMessages(), result.getInput().toString() ) );
+            log.info( ResultItemStat.of( Event.PROCESS, result.getFailureMessages(), result.getInput().toString() ) );
         }
     }
 
     @Override
     public void onPersistResult( final Result<Input, ?> result ) {
         if ( result.isFailed() ) {
-            LOG.info( ResultItemStat.of( Event.PERSIST, result.getFailureMessages(), result.getInput().toString() ) );
+            log.info( ResultItemStat.of( Event.PERSIST, result.getFailureMessages(), result.getInput().toString() ) );
         }
     }
 

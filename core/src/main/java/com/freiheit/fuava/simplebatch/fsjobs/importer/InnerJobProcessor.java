@@ -28,7 +28,7 @@ final class InnerJobProcessor<Data> extends SingleItemProcessor<Iterable<Data>, 
 	@Override
 	public final Result<Iterable<Data>, Iterable<Data>> processItem(Iterable<Data> inputs) {
 
-		BatchJob.Builder<Data, Data> builder = BatchJob.<Data, Data>builder()
+		final BatchJob.Builder<Data, Data> builder = BatchJob.<Data, Data>builder()
 				.setProcessingBatchSize(processingBatchSize)
 				.setFetcher(inputs)
 				.setProcessor(new IdentityProcessor<Data>())
@@ -38,8 +38,8 @@ final class InnerJobProcessor<Data> extends SingleItemProcessor<Iterable<Data>, 
 			builder.addListener(l);
 		}
 
-		BatchJob<Data, Data> job = builder.build();
-		ResultStatistics<Data,Data> statistics = job.run();
+		final BatchJob<Data, Data> job = builder.build();
+		final ResultStatistics<Data,Data> statistics = job.run();
 
 		if (statistics.isAllFailed()) {
 			return Result.failed(inputs, "Processing of all Items failed. Please check the log files.");

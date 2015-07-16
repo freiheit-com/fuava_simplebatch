@@ -59,7 +59,8 @@ public class FSDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
     }
 
     public static final class Builder<Id, Data> {
-        private final BatchJob.Builder<Id, Data> builder = BatchJob.builder();
+        private static final String LOG_NAME = "Downloader";
+		private final BatchJob.Builder<Id, Data> builder = BatchJob.builder();
         private PersistenceAdapter<Id, Data> persistenceAdapter;
         private Configuration configuration;
 
@@ -150,8 +151,8 @@ public class FSDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         }
 
         public FSDownloaderJob<Id, Data> build() {
-            builder.addListener( new ProcessingBatchListener<Id, Data>() );
-            builder.addListener( new ProcessingItemListener<Id, Data>() );
+            builder.addListener( new ProcessingBatchListener<Id, Data>(LOG_NAME) );
+            builder.addListener( new ProcessingItemListener<Id, Data>(LOG_NAME) );
             return new FSDownloaderJob<Id, Data>(
                     builder.getProcessingBatchSize(),
                     builder.getFetcher(),
