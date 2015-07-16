@@ -45,8 +45,11 @@ public class FilePersistence<Input, Output> extends SingleItemPersistence<Input,
 		    try ( OutputStreamWriter fos = new FileWriter( f ) ) {
 		    	adapter.write(fos, r.getOutput());
 		    	fos.flush();
-		        return Result.success(input, new FilePersistenceOutputInfo(f));
 		    }
+			if (!f.exists()) {
+				return Result.failed(input, "Control file does not exist after write: " + f);
+			}
+			return Result.success(input, new FilePersistenceOutputInfo(f));
 
 		} catch ( final Throwable t ) {
 			return Result.failed(input, "Failed writing to file " + (f == null ? null : f.getAbsolutePath()), t);

@@ -51,6 +51,9 @@ public class ControlFilePersistence<Input> extends SingleItemPersistence<Input, 
 				fos2.flush();
 				fos2.close();
 			}
+			if (!ctl.exists()) {
+				return Result.failed(input, "Control file does not exist after write: " + ctl);
+			}
 			return Result.success(input, new ControlFilePersistenceOutputInfo(ctl));
 
 		} catch ( final Throwable t ) {
