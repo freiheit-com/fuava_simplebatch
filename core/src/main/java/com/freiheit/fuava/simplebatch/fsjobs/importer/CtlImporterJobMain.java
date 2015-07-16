@@ -1,4 +1,4 @@
-package com.freiheit.fuava.simplebatch.fsjobs.downloader;
+package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
 import com.freiheit.fuava.simplebatch.BatchJobMain;
 
@@ -10,9 +10,9 @@ import com.freiheit.fuava.simplebatch.BatchJobMain;
  * @author klas
  *
  */
-public class FSDownloaderJobMain {
+public class CtlImporterJobMain {
 
-	public static <Input, Output> void exec(FSDownloaderJob<Input, Output> batchJob) {
+	public static <Output> void exec(CtlImporterJob<Output> batchJob) {
 		BatchJobMain.exec(batchJob);
 	}
 

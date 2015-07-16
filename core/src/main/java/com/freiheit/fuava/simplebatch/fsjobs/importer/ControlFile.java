@@ -13,6 +13,8 @@ package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
 import java.io.File;
 
+import com.google.common.base.MoreObjects;
+
 /**
  * @author tim.lessner@freiheit.com
  */
@@ -32,5 +34,13 @@ public class ControlFile {
 
     public File getFile() {
         return file;
+    }
+    
+    @Override
+    public String toString() {
+    	return MoreObjects.toStringHelper(this)
+    			.add("file", pathToControlledFile)
+    			.add("ctl", file)
+    			.toString();
     }
 }

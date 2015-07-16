@@ -25,7 +25,7 @@ import com.google.common.base.Supplier;
  * @param <Data>
  *            the downloaded content, should be easily writeable.
  */
-public class FSDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
+public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
     public interface Configuration extends FilePersistence.Configuration, ControlFilePersistence.Configuration {
 
@@ -59,7 +59,8 @@ public class FSDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
     }
 
     public static final class Builder<Id, Data> {
-        private static final String LOG_NAME = "Downloader";
+        private static final String LOG_NAME_BATCH = "ITEMS DOWNLOADED";
+        private static final String LOG_NAME_ITEM = "ITEM";
 		private final BatchJob.Builder<Id, Data> builder = BatchJob.builder();
         private PersistenceAdapter<Id, Data> persistenceAdapter;
         private Configuration configuration;
@@ -150,10 +151,10 @@ public class FSDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             return this;
         }
 
-        public FSDownloaderJob<Id, Data> build() {
-            builder.addListener( new ProcessingBatchListener<Id, Data>(LOG_NAME) );
-            builder.addListener( new ProcessingItemListener<Id, Data>(LOG_NAME) );
-            return new FSDownloaderJob<Id, Data>(
+        public CtlDownloaderJob<Id, Data> build() {
+            builder.addListener( new ProcessingBatchListener<Id, Data>(LOG_NAME_BATCH) );
+            builder.addListener( new ProcessingItemListener<Id, Data>(LOG_NAME_ITEM) );
+            return new CtlDownloaderJob<Id, Data>(
                     builder.getProcessingBatchSize(),
                     builder.getFetcher(),
                     builder.getProcessor(),
@@ -169,7 +170,7 @@ public class FSDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
     }
 
-    protected FSDownloaderJob(
+    protected CtlDownloaderJob(
             int processingBatchSize,
             Fetcher<Id> fetcher,
             Processor<Id, Data> processor,

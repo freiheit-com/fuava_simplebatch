@@ -26,7 +26,7 @@ import com.google.common.base.Supplier;
  *
  * @param <ProcessedData>
  */
-public class FSImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>> {
+public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>> {
 
 
 	public interface Configuration extends FilePersistence.Configuration {
@@ -97,8 +97,10 @@ public class FSImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>> 
 
 
 	public static final class Builder<Data> {
-		private static final String LOG_NAME_FILE_PROCESSING = "FILE PROCESSING";
-		private static final String LOG_NAME_CONTENT_PROCESSING = "CONTENT PROCESSING";
+		private static final String LOG_NAME_FILE_PROCESSING_ITEM = "FILE";
+		private static final String LOG_NAME_FILE_PROCESSING_BATCH = "PROCESSED FILES";
+		private static final String LOG_NAME_CONTENT_PROCESSING_ITEM = "CONTENT";
+		private static final String LOG_NAME_CONTENT_PROCESSING_BATCH = "PROCESSED CONTENT";
 		private Configuration configuration;
 		private int processingBatchSize;
 		private Function<InputStream, Iterable<Data>> documentReader;
@@ -153,12 +155,12 @@ public class FSImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>> 
 			return this;
 		}
 
-		public FSImporterJob<Data> build() {
-			fileProcessingListeners.add( new ProcessingBatchListener<ControlFile, Iterable<Data>>(LOG_NAME_FILE_PROCESSING) );
-			fileProcessingListeners.add( new ProcessingItemListener<ControlFile, Iterable<Data>>(LOG_NAME_FILE_PROCESSING) );
+		public CtlImporterJob<Data> build() {
+			fileProcessingListeners.add( new ProcessingBatchListener<ControlFile, Iterable<Data>>(LOG_NAME_FILE_PROCESSING_BATCH) );
+			fileProcessingListeners.add( new ProcessingItemListener<ControlFile, Iterable<Data>>(LOG_NAME_FILE_PROCESSING_ITEM) );
 
-			contentProcessingListeners.add( new ProcessingBatchListener<Data, Data>(LOG_NAME_CONTENT_PROCESSING) );
-			contentProcessingListeners.add( new ProcessingItemListener<Data, Data>(LOG_NAME_CONTENT_PROCESSING) );
+			contentProcessingListeners.add( new ProcessingBatchListener<Data, Data>(LOG_NAME_CONTENT_PROCESSING_BATCH) );
+			contentProcessingListeners.add( new ProcessingItemListener<Data, Data>(LOG_NAME_CONTENT_PROCESSING_ITEM) );
 
 			final Supplier<Iterable<ControlFile>> controlFileFetcher = new DirectoryFileFetcher<ControlFile>(
 					this.configuration.getDownloadDirPath(), this.configuration.getControlFileEnding(),
@@ -181,7 +183,7 @@ public class FSImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>> 
 				);
 
 
-			return new FSImporterJob<Data>(
+			return new CtlImporterJob<Data>(
 					1 /*process one file at a time, no use for batching*/, 
 					new FailsafeFetcherImpl<ControlFile>(controlFileFetcher), 
 					processor, 
@@ -192,7 +194,7 @@ public class FSImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>> 
 
 
 
-	private FSImporterJob(
+	private CtlImporterJob(
 			int processingBatchSize,
 			Fetcher<ControlFile> fetcher,
 			Processor<ControlFile, Iterable<Data>> processor,
