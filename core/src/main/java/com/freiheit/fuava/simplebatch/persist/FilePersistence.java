@@ -39,7 +39,7 @@ public class FilePersistence<Input, Output> extends SingleItemPersistence<Input,
     	Input input = r.getInput();
 		File f = null;
 		try {
-			String itemDescription = adapter.getItemDescription(r);
+			String itemDescription = adapter.getFileName(r);
 			f = new File( basedir, itemDescription);
 			LOG.info("Writing data file " + f  + " (exists: " + f.exists()  + ") " + trimOut(r.getOutput()));
 		    try ( OutputStreamWriter fos = new FileWriter( f ) ) {

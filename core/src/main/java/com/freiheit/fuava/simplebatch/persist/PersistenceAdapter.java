@@ -6,6 +6,6 @@ import java.io.Writer;
 import com.freiheit.fuava.simplebatch.result.Result;
 
 public interface PersistenceAdapter<Input, Output> {
-	String getItemDescription(Result<Input, Output> result);
+	String getFileName(Result<Input, Output> result);
 	void write(Writer writer, Output data) throws IOException;
 }

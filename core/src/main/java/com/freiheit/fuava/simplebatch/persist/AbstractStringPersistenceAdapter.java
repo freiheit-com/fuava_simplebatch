@@ -8,7 +8,7 @@ import com.freiheit.fuava.simplebatch.result.Result;
 public class AbstractStringPersistenceAdapter<Input, Output> implements PersistenceAdapter<Input, Output>{
 
 	@Override
-	public String getItemDescription(Result<Input, Output> result) {
+	public String getFileName(Result<Input, Output> result) {
 		Input input = result.getInput();
 		return input == null ? "null" : input.toString();
 	}
