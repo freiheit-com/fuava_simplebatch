@@ -45,6 +45,7 @@ public class FilePersistence<Input, Output> extends SingleItemPersistence<Input,
 			LOG.info("Writing data file " + f);
 		    try ( OutputStreamWriter fos = new OutputStreamWriter( new FileOutputStream( f ), Charsets.UTF_8.name() ) ) {
 		    	adapter.write(fos, r.getOutput());
+		    	fos.flush();
 		        return Result.success(input, new FilePersistenceOutputInfo(f));
 		    }
 

@@ -45,8 +45,12 @@ public class ControlFilePersistence<Input> extends SingleItemPersistence<Input, 
 			
 			final File ctl = new File( basedir + "/" + String.valueOf( System.currentTimeMillis() ) + "_done" + config.getControlFileEnding() );
 			LOG.info("Writing control file " + ctl);
-			try ( OutputStreamWriter fos2 = new OutputStreamWriter( new FileOutputStream( ctl ), Charsets.UTF_8.name() ) ) {
+			OutputStreamWriter fos2 = new OutputStreamWriter( new FileOutputStream( ctl ), Charsets.UTF_8.name() );
+			try {
 				fos2.write( f.getName() );
+			} finally {
+				fos2.flush();
+				fos2.close();
 			}
 			return Result.success(input, new ControlFilePersistenceOutputInfo(ctl));
 
