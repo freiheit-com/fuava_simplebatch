@@ -36,7 +36,7 @@ public final class FailsafeIterator<T> implements Iterator<Result<?, T>> {
 			return r;
 		}
 		try {
-			return Result.success(null , iterator.next());
+			return Result.success(null, iterator.next());
 		} catch (Throwable t) {
 			return Result.failed(null, "Failed to call next for delegate iterator" , t);
 		}
