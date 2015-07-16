@@ -56,7 +56,7 @@ public class RetryingPersistence<Input, Output, PersistenceResult> implements Pe
 		} catch (Throwable t) {
 			if (inputList.size() == 1) {
 				Result<Input, Output> result = inputList.get(0);
-				return ImmutableList.of(Result.<Input, PersistenceResult>builder(result).withThrowable(t).failed());
+				return ImmutableList.of(Result.<Input, PersistenceResult>builder(result).failed(t));
 			}
 			ImmutableList.Builder<Result<Input, PersistenceResult>> retriedResults = ImmutableList.builder();
 			for (Result<Input, Output> input: inputList) {

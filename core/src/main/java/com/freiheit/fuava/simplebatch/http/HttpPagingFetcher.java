@@ -43,7 +43,7 @@ public class HttpPagingFetcher<T> implements Fetcher<T> {
 				return Iterators.singletonIterator(Result.failed(null,"Transform called with null Input", null));
 			}
 			if (input.isFailed()) {
-				return Iterators.singletonIterator(Result.failed(input.getInput(), input.getFailureMessages(), input.getThrowables()));
+				return Iterators.singletonIterator(Result.<PagingInput, T>builder(input).failed());
 			}
 			return Iterators.transform(input.getOutput().iterator(), (T t) -> Result.success(input.getInput(), t));
 		}

@@ -3,9 +3,14 @@ package com.freiheit.fuava.simplebatch.result;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 
 public class Result<Input, Output> {
+	private static final Logger LOG = LoggerFactory.getLogger( Result.class );
 	
 	public static final class Builder<Input, Output> {
 	    private Input input;
@@ -55,7 +60,7 @@ public class Result<Input, Output> {
 	    	return this;
 	    }
 
-	    public Builder<Input, Output> withThrowable(Throwable t) {
+	    private Builder<Input, Output> withThrowable(Throwable t) {
 	    	if (throwables == null) {
 	    		throwables = new ArrayList<Throwable>();
 	    	}
@@ -75,6 +80,15 @@ public class Result<Input, Output> {
 	    }
 
 	    public Result<Input, Output> failed() {
+	    	return build(true);
+	    }
+	    
+	    public Result<Input, Output> failed(Throwable t) {
+	    	if (t != null) {
+	    		String msg = input + " - " + (failureMessages == null ? "" : Joiner.on(" | ").join(failureMessages));
+	    		LOG.error(msg, t);
+	    	}
+	    	withThrowable(t);
 	    	return build(true);
 	    }
 
@@ -164,19 +178,19 @@ public class Result<Input, Output> {
     }
 
     public static <I, O> Result<I, O> failed( I id, String failureMessage) {
-        return failed( id , failureMessage == null ? ImmutableList.<String>of() : ImmutableList.of(failureMessage), ImmutableList.<Throwable>of());
+        return failed( id , failureMessage == null ? ImmutableList.<String>of() : ImmutableList.of(failureMessage), null);
     }
 
     public static <I, O> Result<I, O> failed( I id, Iterable<String> failureMessages, Throwable t ) {
-    	return failed(id, failureMessages, t == null ? ImmutableList.<Throwable>of(): ImmutableList.of(t));
-    }
-
-    public static <I, O> Result<I, O> failed( I id, Iterable<String> failureMessages, Iterable<Throwable> throwables ) {
-        return new Result<I, O>( id , null, true, ImmutableList.of(), failureMessages, throwables);
+    	if (t != null) {
+    		String msg = id + " - " + (failureMessages == null ? "" : Joiner.on(" | ").join(failureMessages));
+    		LOG.error(msg, t);
+    	}
+    	return new Result<I, O>( id , null, true, ImmutableList.of(), failureMessages, t == null ? ImmutableList.<Throwable>of(): ImmutableList.of(t));
     }
 
     public static <I, O> Result<I, O> failed( I id, Iterable<String> failureMessages ) {
-        return failed( id , failureMessages, ImmutableList.<Throwable>of());
+        return failed( id , failureMessages, null);
     }
     
     @Override

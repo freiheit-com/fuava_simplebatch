@@ -31,7 +31,7 @@ public class FileMovingPersistence<D> extends SingleItemPersistence<ControlFile,
 			}
 			return Result.success(input, null);
 		} catch ( Throwable e ) {
-			return Result.<ControlFile, Void>builder(r).withThrowable(e).failed();
+			return Result.<ControlFile, Void>builder(r).failed(e);
 		}
 
 	}
