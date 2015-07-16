@@ -39,6 +39,9 @@ public class ControlFilePersistence<Input> implements Persistence<Input, FilePer
     }
 
 	private Result<Input, ControlFilePersistenceOutputInfo> writeResult(final File basedir, Result<Input, FilePersistenceOutputInfo> r) {
+		if (r.isFailed()) {
+			return Result.<Input, ControlFilePersistenceOutputInfo>builder(r).failed();
+		}
 		Input input = r.getInput();
 		try {		
 			File f = r.getOutput().getDataFile();

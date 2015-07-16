@@ -21,7 +21,7 @@ import com.google.common.base.Function;
 /**
  * @author tim.lessner@freiheit.com
  */
-public class MakeControlFileFunction implements Function<File, ControlFile> {
+public class ReadControlFileFunction implements Function<File, ControlFile> {
     @Override
     public ControlFile apply( final File file ) {
         try {

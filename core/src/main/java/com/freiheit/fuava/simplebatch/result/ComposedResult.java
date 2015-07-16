@@ -12,11 +12,7 @@ public final class ComposedResult<A, B> {
 	private Object intermediateValue;
 	
 	private ComposedResult(Result<A, ?> orig) {
-		builder = Result.<A, B>builder()
-				.withInput(orig.getInput())
-				.withThrowables(orig.getThrowables())
-				.withWarningMessages(orig.getWarningMessages())
-				.withFailureMessages(orig.getFailureMessages());
+		builder = Result.<A, B>builder(orig);
 		intermediateValue = orig.getOutput();
 	}
 

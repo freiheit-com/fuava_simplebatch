@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.freiheit.fuava.simplebatch.fetch.FailsafeFetcherImpl;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.persist.Persistence;
+import com.freiheit.fuava.simplebatch.persist.RetryingPersistence;
 import com.freiheit.fuava.simplebatch.process.MapBuildingFunction;
 import com.freiheit.fuava.simplebatch.process.Processor;
 import com.freiheit.fuava.simplebatch.process.RetryingProcessor;
@@ -142,6 +143,12 @@ public class BatchJob<Input, Output> {
 			this.persistence = writer;
 			return this;
 		}
+		
+		public <PersistenceResult> Builder<Input, Output> setRetryablePersistence(Function<List<Output>, List<PersistenceResult>> persistence) {
+			this.persistence = new RetryingPersistence<Input, Output, PersistenceResult>(persistence);
+			return this;
+		}
+
 		public Persistence<Input, Output, ?> getPersistence() {
 			return persistence;
 		}
@@ -207,12 +214,12 @@ public class BatchJob<Input, Output> {
 
 			final List<Input> processingInputs =
 					FluentIterable.from( sourceResults ).filter( Result::isSuccess ).transform( Result::getOutput ).toList();
-			final Iterable<Result<Input, Output>> processingResults = processor.process( processingInputs );
+			final Iterable<Result<Input, Output>> processingResults = processor.process(processingInputs );
 
 			listeners.onProcessingResults(processingResults);
 
-			final List<Result<Input, Output>> persistInputs = FluentIterable.from(processingResults).filter(Result::isSuccess).toList();
-			Iterable<? extends Result<Input, ?>> persistResults = persistence.persist( persistInputs );
+
+			Iterable<? extends Result<Input, ?>> persistResults = persistence.persist( processingResults );
 
 			listeners.onPersistResults(persistResults);
 		}

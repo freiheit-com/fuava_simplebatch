@@ -42,6 +42,9 @@ public class FilePersistence<Input, Output> implements Persistence<Input, Output
     }
 
 	private Result<Input, FilePersistenceOutputInfo> writeResult(final File basedir, Result<Input, Output> r) {
+		if (r.isFailed()) {
+			return Result.<Input, FilePersistenceOutputInfo>builder(r).failed();
+		}
 		Input input = r.getInput();
 		String itemDescription = adapter.getItemDescription(r);
 		

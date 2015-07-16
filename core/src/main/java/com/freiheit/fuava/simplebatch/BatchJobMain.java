@@ -50,14 +50,9 @@ public class BatchJobMain {
 		Counts processingCounts = statistics.getProcessingCounts();
 		Counts persistCounts = statistics.getPersistCounts();
 		
-		boolean allSuccess = allSuccess(fetchCounts)
-				&& allSuccess(processingCounts)
-				&& allSuccess(persistCounts)
-				&& !statistics.hasListenerDelegationFailures();
+		boolean allSuccess = statistics.isAllSuccess();
 
-		boolean allFailed = allFailed(fetchCounts) 
-				||  allFailed(processingCounts) 
-				|| allFailed(persistCounts);
+		boolean allFailed = statistics.isAllFailed();
 
 		PrintStream out = System.out;
 		

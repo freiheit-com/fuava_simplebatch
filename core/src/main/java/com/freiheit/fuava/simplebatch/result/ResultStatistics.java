@@ -115,6 +115,29 @@ public class ResultStatistics<Input, Output> {
 		return persist;
 	}
 	
+	
+	private static boolean allFailed(Counts counts) {
+		return counts.getError() != 0 && counts.getSuccess() == 0;
+	}
+	
+	private static boolean allSuccess(Counts counts) {
+		return counts.getError() == 0;
+	}
+
+	public boolean isAllFailed() {
+		return allFailed(fetch) 
+				||  allFailed(process) 
+				|| allFailed(persist);
+
+	}
+	
+	public boolean isAllSuccess() {		
+		return allSuccess(fetch)
+				&& allSuccess(process)
+				&& allSuccess(persist)
+				&& !hasListenerDelegationFailures();
+	}
+	
 	public boolean hasListenerDelegationFailures() {
 		return hasListenerDelegationFailures;
 	}

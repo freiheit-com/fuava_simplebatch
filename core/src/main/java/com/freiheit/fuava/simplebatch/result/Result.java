@@ -111,6 +111,14 @@ public class Result<Input, Output> {
     	return new Builder<I, O>();
     }
     
+    public static final <I, O> Builder<I, O> builder(Result<I, ?> orig) {
+		return new Builder<I, O>()
+				.withInput(orig.getInput())
+				.withThrowables(orig.getThrowables())
+				.withWarningMessages(orig.getWarningMessages())
+				.withFailureMessages(orig.getFailureMessages());
+    }
+    
     public Input getInput() {
 		return input;
 	}
