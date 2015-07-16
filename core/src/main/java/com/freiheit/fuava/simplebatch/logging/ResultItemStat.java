@@ -20,27 +20,39 @@ package com.freiheit.fuava.simplebatch.logging;
 public class ResultItemStat {
 
     private final Event event;
-    private final String failureMessage;
+    private final Iterable<String> failureMessage;
+    private final Iterable<Throwable> throwables;
     private final String input;
 
-    public ResultItemStat( final Event event, String failureMessage, final String input ) {
+    private ResultItemStat( final Event event, Iterable<String> failureMessage, final Iterable<Throwable> throwables,
+            final String input ) {
         this.event = event;
         this.failureMessage = failureMessage;
+        this.throwables = throwables;
         this.input = input;
     }
 
-    public static String of( final Event event, final Iterable<String> failureMessage, final String input ) {
-        return new ResultItemStat( event, prettyFailures( failureMessage ), input ).toString();
+    public static String formatted( final Event event, Iterable<String> failureMessage, final Iterable<Throwable> throwables,
+            final String input ) {
+        return new ResultItemStat( event, failureMessage, throwables, input ).format();
     }
 
-    private static String prettyFailures( final Iterable<String> failureMessages ) {
-        int i = 1;
+    private String format() {
         final StringBuffer stringBuffer = new StringBuffer();
-        for ( final String s : failureMessages ) {
-            stringBuffer.append( String.format( "Error %s", 1 ) );
+        stringBuffer.append( event );
+        stringBuffer.append( " Input: " );
+        stringBuffer.append( input );
+
+        stringBuffer.append( " Failures: " );
+        for ( final String s : failureMessage ) {
             stringBuffer.append( s );
-            i++;
         }
+
+        stringBuffer.append( " Throwables: " );
+        for ( final Throwable t : throwables ) {
+            stringBuffer.append( t.getMessage() );
+        }
+
         return stringBuffer.toString();
     }
 

@@ -33,21 +33,21 @@ public class ProcessingItemListener<Input, Output> implements ProcessingResultLi
     @Override
     public void onFetchResult( final Result<?, Input> result ) {
         if ( result.isFailed() ) {
-            log.info( ResultItemStat.of( Event.FETCH, result.getFailureMessages(), result.getInput().toString() ) );
+            log.info( ResultItemStat.formatted(Event.FETCH, result.getFailureMessages(), result.getThrowables(),  result.getInput().toString() ) );
         }
     }
 
     @Override
     public void onProcessingResult( final Result<Input, Output> result ) {
         if ( result.isFailed() ) {
-            log.info( ResultItemStat.of( Event.PROCESS, result.getFailureMessages(), result.getInput().toString() ) );
+            log.info( ResultItemStat.formatted(Event.PROCESS, result.getFailureMessages(), result.getThrowables(), result.getInput().toString()) );
         }
     }
 
     @Override
     public void onPersistResult( final Result<Input, ?> result ) {
         if ( result.isFailed() ) {
-            log.info( ResultItemStat.of( Event.PERSIST, result.getFailureMessages(), result.getInput().toString() ) );
+            log.info( ResultItemStat.formatted( Event.PERSIST, result.getFailureMessages(), result.getThrowables(), result.getInput().toString() ) );
         }
     }
 
