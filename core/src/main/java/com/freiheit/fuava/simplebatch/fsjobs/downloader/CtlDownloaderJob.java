@@ -119,23 +119,30 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         /**
          * Uses the Ids to download the data. 
          * 
+         * <br>
+         * <p><b>Note</b> that the function needs to support retry: 
+         * If processing of a non-singleton list fails, it will be 
+         * retried with each item of the list as a singleton input list.</p>
+         * 
+         */
+        public Builder<Id, Data> setRetryableDownloaderToMap(
+                Function<List<Id>, Map<Id, Data>> retryableFunction ) {
+            builder.setRetryableProcessorToMap( retryableFunction );
+            return this;
+        }
+
+        /**
+         * Uses the Ids to download the data.
+         * 
+         * <br>
          * <p><b>Note</b> that the function needs to support retry: 
          * If processing of a non-singleton list fails, it will be 
          * retried with each item of the list as a singleton input list.</p>
          * 
          */
         public Builder<Id, Data> setRetryableDownloader(
-                Function<List<Id>, Map<Id, Data>> retryableFunction ) {
-            builder.setRetryableProcessor( retryableFunction );
-            return this;
-        }
-
-        /**
-         * Uses the Ids to download the data.
-         */
-        public Builder<Id, Data> setRetryableListDownloader(
                 Function<List<Id>, List<Data>> retryableFunction ) {
-            builder.setRetryableListProcessor( retryableFunction );
+            builder.setRetryableProcessor( retryableFunction );
             return this;
         }
 

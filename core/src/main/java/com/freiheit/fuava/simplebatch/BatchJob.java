@@ -119,7 +119,7 @@ public class BatchJob<Input, Output> {
 		 * to handle transactions and rollbacks.
 		 * 
 		 */
-		public Builder<Input, Output> setRetryableProcessor( Function<List<Input>, Map<Input, Output>> retryableFunction) {
+		public Builder<Input, Output> setRetryableProcessorToMap( Function<List<Input>, Map<Input, Output>> retryableFunction) {
 			this.processor = new RetryingProcessor<Input, Output>(retryableFunction);
 			return this;
 		}
@@ -134,7 +134,7 @@ public class BatchJob<Input, Output> {
 		 * no duplicates exist within one input.
 		 * 
 		 */
-		public Builder<Input, Output> setRetryableListProcessor( Function<List<Input>, List<Output>> retryableFunction) {
+		public Builder<Input, Output> setRetryableProcessor( Function<List<Input>, List<Output>> retryableFunction) {
 			this.processor = new RetryingProcessor<Input, Output>(new MapBuildingFunction<Input, Output>(retryableFunction));
 			return this;
 		}

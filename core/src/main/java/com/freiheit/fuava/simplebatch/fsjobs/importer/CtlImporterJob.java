@@ -132,8 +132,14 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
 			return this;
 		}
 
-
-		public <PersistenceResult> Builder<Data> setContentPersistence(Function<List<Data>, List<PersistenceResult>> persistence) {
+		/**
+         * <br>
+         * <p><b>Note</b> that the function needs to support retry: 
+         * If processing of a non-singleton list fails, it will be 
+         * retried with each item of the list as a singleton input list.</p>
+         * 
+		 */
+		public <PersistenceResult> Builder<Data> setRetryableContentPersistence(Function<List<Data>, List<PersistenceResult>> persistence) {
 			contentPersistence = new RetryingPersistence<Data, Data, PersistenceResult>(persistence);
 			return this;
 		}
@@ -201,7 +207,6 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
 			Persistence<ControlFile, Iterable<Data>, ?> persistence,
 			List<ProcessingResultListener<ControlFile, Iterable<Data>>> listeners) {
 		super(processingBatchSize, fetcher, processor, persistence, listeners);
-		// TODO Auto-generated constructor stub
 	}
 
 
