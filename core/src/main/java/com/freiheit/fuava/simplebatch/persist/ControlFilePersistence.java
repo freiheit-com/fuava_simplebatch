@@ -1,14 +1,13 @@
 package com.freiheit.fuava.simplebatch.persist;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.OutputStreamWriter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 
 
@@ -43,9 +42,9 @@ public class ControlFilePersistence<Input> extends SingleItemPersistence<Input, 
 		try {		
 			File f = r.getOutput().getDataFile();
 			
-			final File ctl = new File( basedir + "/" + String.valueOf( System.currentTimeMillis() ) + "_done" + config.getControlFileEnding() );
+			final File ctl = new File( basedir, String.valueOf( System.currentTimeMillis() ) + "_done" + config.getControlFileEnding() );
 			LOG.info("Writing control file " + ctl);
-			OutputStreamWriter fos2 = new OutputStreamWriter( new FileOutputStream( ctl ), Charsets.UTF_8.name() );
+			OutputStreamWriter fos2 = new FileWriter( ctl );
 			try {
 				fos2.write( f.getName() );
 			} finally {
