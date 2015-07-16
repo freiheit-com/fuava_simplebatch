@@ -43,7 +43,7 @@ public class ControlFilePersistence<Input> extends SingleItemPersistence<Input, 
 			File f = r.getOutput().getDataFile();
 			
 			final File ctl = new File( basedir, String.valueOf( System.currentTimeMillis() ) + "_done" + config.getControlFileEnding() );
-			LOG.info("Writing control file " + ctl);
+			LOG.info("Writing ctl file " + ctl  + " (exists: " + ctl.exists()  + ") " + trimOut(r.getOutput()));
 			OutputStreamWriter fos2 = new FileWriter( ctl );
 			try {
 				fos2.write( f.getName() );
@@ -54,10 +54,17 @@ public class ControlFilePersistence<Input> extends SingleItemPersistence<Input, 
 			if (!ctl.exists()) {
 				return Result.failed(input, "Control file does not exist after write: " + ctl);
 			}
+			LOG.info("Wroite ctl file ");
 			return Result.success(input, new ControlFilePersistenceOutputInfo(ctl));
 
 		} catch ( final Throwable t ) {
 			return Result.failed(input, t);
 		}
 	}
+    
+	private String trimOut(FilePersistenceOutputInfo output) {
+		String os = output == null ? "null" : output.toString();
+		return output == null? "null" : os.substring(0,  Math.min(20, os.length()));
+	}
+
 }

@@ -41,7 +41,7 @@ public class FilePersistence<Input, Output> extends SingleItemPersistence<Input,
 		try {
 			String itemDescription = adapter.getItemDescription(r);
 			f = new File( basedir, itemDescription);
-			LOG.info("Writing data file " + f);
+			LOG.info("Writing data file " + f  + " (exists: " + f.exists()  + ") " + trimOut(r.getOutput()));
 		    try ( OutputStreamWriter fos = new FileWriter( f ) ) {
 		    	adapter.write(fos, r.getOutput());
 		    	fos.flush();
@@ -49,10 +49,16 @@ public class FilePersistence<Input, Output> extends SingleItemPersistence<Input,
 			if (!f.exists()) {
 				return Result.failed(input, "Control file does not exist after write: " + f);
 			}
+			LOG.info("Wrote data file " + f);
 			return Result.success(input, new FilePersistenceOutputInfo(f));
 
 		} catch ( final Throwable t ) {
 			return Result.failed(input, "Failed writing to file " + (f == null ? null : f.getAbsolutePath()), t);
 		}
+	}
+
+	private String trimOut(Output output) {
+		String os = output == null ? "null" : output.toString();
+		return output == null? "null" : os.substring(0,  Math.min(20, os.length()));
 	}
 }
