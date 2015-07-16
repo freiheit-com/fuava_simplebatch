@@ -28,6 +28,13 @@ public class FilePersistence<Input, Output> extends SingleItemPersistence<Input,
     public FilePersistence(Configuration configuration, PersistenceAdapter<Input, Output> adapter) {
 		this.adapter = Preconditions.checkNotNull(adapter);
 		this.basedir = new File( Preconditions.checkNotNull(configuration.getDownloadDirPath()) );
+		if (!this.basedir.exists()) {
+			if (this.basedir.mkdirs()) {
+				LOG.info("Created base dir ", basedir);
+			} else {
+				LOG.error("Could not create base dir ", basedir);
+			}
+		}
 	}
     
     @Override
