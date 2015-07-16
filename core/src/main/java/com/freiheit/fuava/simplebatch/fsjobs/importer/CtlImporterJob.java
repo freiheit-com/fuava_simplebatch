@@ -133,7 +133,7 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
 		}
 
 
-		public <PersistenceResult> Builder<Data> setContentRetryableListPersistence(Function<List<Data>, List<PersistenceResult>> persistence) {
+		public <PersistenceResult> Builder<Data> setContentPersistence(Function<List<Data>, List<PersistenceResult>> persistence) {
 			contentPersistence = new RetryingPersistence<Data, Data, PersistenceResult>(persistence);
 			return this;
 		}

@@ -32,6 +32,10 @@ public class ControlFile {
         return pathToControlledFile;
     }
 
+    public String getFileName() {
+    	return file.getName();
+    }
+    
     public File getFile() {
         return file;
     }
