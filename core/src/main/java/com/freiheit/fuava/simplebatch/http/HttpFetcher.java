@@ -50,7 +50,7 @@ public class HttpFetcher {
 
             try ( InputStream stream = response.getEntity().getContent() ) {
                 T result = reader.apply( stream );
-                LOG.info( String.format( "transformed request result: %s", result ) );
+                LOG.debug( String.format( "transformed request result: %s", result ) );
                 return  result ;
             }
         } catch ( IOException e ) {
