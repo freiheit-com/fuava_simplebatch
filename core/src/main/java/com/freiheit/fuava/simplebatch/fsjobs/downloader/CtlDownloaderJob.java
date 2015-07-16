@@ -7,7 +7,13 @@ import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.logging.ProcessingBatchListener;
 import com.freiheit.fuava.simplebatch.logging.ProcessingItemListener;
-import com.freiheit.fuava.simplebatch.persist.*;
+import com.freiheit.fuava.simplebatch.persist.AbstractStringPersistenceAdapter;
+import com.freiheit.fuava.simplebatch.persist.ControlFilePersistence;
+import com.freiheit.fuava.simplebatch.persist.ControlFilePersistenceOutputInfo;
+import com.freiheit.fuava.simplebatch.persist.FilePersistence;
+import com.freiheit.fuava.simplebatch.persist.Persistence;
+import com.freiheit.fuava.simplebatch.persist.PersistenceAdapter;
+import com.freiheit.fuava.simplebatch.persist.Persistences;
 import com.freiheit.fuava.simplebatch.process.Processor;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.google.common.base.Function;
@@ -59,10 +65,11 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
     }
 
     public static final class Builder<Id, Data> {
-        private static final String LOG_NAME_BATCH = "ITEMS DOWNLOADED";
+		private static final String LOG_NAME_BATCH = "ITEMS DOWNLOADED";
         private static final String LOG_NAME_ITEM = "ITEM";
 		private final BatchJob.Builder<Id, Data> builder = BatchJob.builder();
-        private PersistenceAdapter<Id, Data> persistenceAdapter;
+        private Persistence<Id, Data, ?>  persistence;
+        
         private Configuration configuration;
 
         public Builder() {
@@ -159,42 +166,53 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         }
 
         public Builder<Id, Data> setFileWriterAdapter( PersistenceAdapter<Id, Data> persistenceAdapter ) {
-            this.persistenceAdapter = persistenceAdapter;
+            setPersistence(persistenceAdapter);
             return this;
         }
+        
+        public Builder<Id, Data> setBatchFileWriterAdapter( PersistenceAdapter<List<Id>, List<Data>> persistenceAdapter ) {
+            Persistence<List<Id>, List<Data>, ControlFilePersistenceOutputInfo> listPersistence = createControlledFilePersistence(persistenceAdapter);
+            this.persistence = new BatchPersistence<Id, Data, ControlFilePersistenceOutputInfo>(listPersistence);
+            return this;
+        }
+        
+        private void setPersistence(PersistenceAdapter<Id, Data> persistenceAdapter) {
+            persistence = createControlledFilePersistence(persistenceAdapter);
+        }
+
+		private <I, O> Persistence<I, O, ControlFilePersistenceOutputInfo> createControlledFilePersistence(
+				PersistenceAdapter<I, O> persistenceAdapter) {
+			return Persistences.compose(
+                    new ControlFilePersistence<I>( configuration ),
+                    new FilePersistence<I, O>( configuration, persistenceAdapter )
+                    );
+		}
 
         public CtlDownloaderJob<Id, Data> build() {
             builder.addListener( new ProcessingBatchListener<Id, Data>(LOG_NAME_BATCH) );
             builder.addListener( new ProcessingItemListener<Id, Data>(LOG_NAME_ITEM) );
+            if (persistence == null) {
+            	setPersistence(new AbstractStringPersistenceAdapter<Id, Data>() {});
+            }
             return new CtlDownloaderJob<Id, Data>(
                     builder.getProcessingBatchSize(),
                     builder.getFetcher(),
                     builder.getProcessor(),
-                    this.configuration == null
-                        ? new ConfigurationImpl()
-                        : this.configuration,
-                    this.persistenceAdapter == null
-                        ? new AbstractStringPersistenceAdapter<Id, Data>() {
-                        }
-                        : this.persistenceAdapter,
+                    this.configuration == null? new ConfigurationImpl(): this.configuration,
+                    persistence,
                     builder.getListeners() );
         }
 
     }
 
-    protected CtlDownloaderJob(
+    private CtlDownloaderJob(
             int processingBatchSize,
             Fetcher<Id> fetcher,
             Processor<Id, Data> processor,
             Configuration configuration,
-            PersistenceAdapter<Id, Data> persistence,
+            Persistence<Id, Data, ?> persistence,
             List<ProcessingResultListener<Id, Data>> listeners ) {
-        super( processingBatchSize, fetcher, processor,
-                Persistences.compose(
-                        new ControlFilePersistence<Id>( configuration ),
-                        new FilePersistence<Id, Data>( configuration, persistence )
-                        ),
-                listeners );
+        super( processingBatchSize, fetcher, processor, persistence, listeners );
     }
 
 }

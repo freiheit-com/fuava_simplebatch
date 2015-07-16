@@ -1,7 +1,7 @@
 apply plugin: 'application'
 
 jar {
-    baseName 'fuafa-simplebatch-core'
+    baseName 'fuava-simplebatch-core'
     version version
 }
 
