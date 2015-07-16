@@ -24,11 +24,9 @@ public class ControlFilePersistence<Input> extends SingleItemPersistence<Input, 
     }
 
     
-	private Configuration config;
 	private File basedir;
     
     public ControlFilePersistence(Configuration config) {
-		this.config = config;
 		basedir = new File( Preconditions.checkNotNull(config.getDownloadDirPath()) );
 	}
     
@@ -42,7 +40,7 @@ public class ControlFilePersistence<Input> extends SingleItemPersistence<Input, 
 		try {		
 			File f = r.getOutput().getDataFile();
 			
-			final File ctl = new File( basedir, String.valueOf( System.currentTimeMillis() ) + "_done" + config.getControlFileEnding() );
+			final File ctl = new File( basedir, f.getName() + ".ctl"/*nextControlFilename()*/ );
 			LOG.info("Writing ctl file " + ctl  + " (exists: " + ctl.exists()  + ") " + trimOut(r.getOutput()));
 			OutputStreamWriter fos2 = new FileWriter( ctl );
 			try {
@@ -61,6 +59,7 @@ public class ControlFilePersistence<Input> extends SingleItemPersistence<Input, 
 			return Result.failed(input, t);
 		}
 	}
+
     
 	private String trimOut(FilePersistenceOutputInfo output) {
 		String os = output == null ? "null" : output.toString();
