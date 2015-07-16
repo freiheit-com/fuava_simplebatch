@@ -5,6 +5,7 @@ import java.io.File;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.processor.AbstractSingleItemProcessor;
 import com.freiheit.fuava.simplebatch.result.Result;
+import com.google.common.base.Preconditions;
 
 public class FileMovingPersistence<D> extends AbstractSingleItemProcessor<FetchedItem<ControlFile>, D, D> {
 
