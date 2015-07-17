@@ -85,7 +85,7 @@ downloader.run();
 
 ## Importer (works with Control-File)
 
-Example for an importer (runs after the  downloader documented below).
+Example for an importer (runs after the  downloader documented above).
 It imports a list of Article instances from a json file.
 ```java
 final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
