@@ -38,21 +38,27 @@ downloader.run();
 Example for a downloader, that persists the fetched items in a batch file, meaning that multiple downloaded items are persisted together.
 
 ```java
-final CtlDownloaderJob<ClipboardArticleId, String> downloader = new CtlDownloaderJob.Builder<ClipboardArticleId, String>()
+final CtlDownloaderJob<ClipboardArticleId, String> downloader =
+     new CtlDownloaderJob.Builder<ClipboardArticleId, String>()
         .setConfiguration( config )
         .setDownloaderBatchSize( 100 )
-        // Fetch ids of the data to be downloaded, will be used by the downloader to fetch the data
+        // Fetch ids of the data to be downloaded, will be used by the 
+        // downloader to fetch the data
         .setIdsFetcher( Fetchers....)
         .setDownloader( Processors....)
 
-        .setBatchFileWriterAdapter( new PersistenceAdapter<List<ClipboardArticleId>, List<String>>() {
+        .setBatchFileWriterAdapter(
+          new PersistenceAdapter<List<ClipboardArticleId>, List<String>>() {
             private final String prefix = "" + System.currentTimeMillis() + "_";
             private final AtomicLong counter = new AtomicLong();
 
             @Override
-            public void write( final Writer writer, final List<String> data ) throws IOException {
+            public void write(
+                final Writer writer, final List<String> data 
+             ) throws IOException {
 
-                final ImmutableList.Builder<String> builder = ImmutableList.<String> builder();
+                final ImmutableList.Builder<String> builder = 
+                           ImmutableList.<String> builder();
                 builder.add( "<begin>" );
                 builder.addAll( data );
                 builder.add( "</begin>" );
@@ -61,7 +67,9 @@ final CtlDownloaderJob<ClipboardArticleId, String> downloader = new CtlDownloade
             }
 
             @Override
-            public String getFileName( final Result<List<ClipboardArticleId>, List<String>> result ) {
+            public String getFileName( 
+                     final Result<List<ClipboardArticleId>, List<String>> result 
+            ) {
                 return prefix + counter.incrementAndGet();
             }
         } )
