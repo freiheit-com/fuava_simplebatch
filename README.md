@@ -42,13 +42,16 @@ final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
     // Will be called repeatedly until the iterator has no more items.
     .setContentPersistence(
 
-        // the function will be called again with singleton lists of the given
-        //  items, if processing of the original list fails
+        // If apply of the given function fails, it will be called again 
+        // with singleton lists of the given items, isolating the failed
+        // items.
         Persistences.retryableBatchedFunction(
             new Function<List<Article>, List<Article>>() {
                 @Override
                 public List<Integer> apply(List<Article> data) {
-                    // store data in database
+                    // Store data in database
+                    // If you work with transactions, then you must open and
+                    // commit or rollback the transaction here.
                     db.storeAll(data);
                     return data;
                 }
