@@ -9,15 +9,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
-import com.freiheit.fuava.simplebatch.fetch.SuppliedIterableFetcher;
 import com.freiheit.fuava.simplebatch.persist.Persistence;
 import com.freiheit.fuava.simplebatch.process.Processor;
 import com.freiheit.fuava.simplebatch.result.DelegatingProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -76,29 +73,6 @@ public class BatchJob<Input, Output> {
 			return fetcher;
 		}
 		
-		/**
-		 * Overloaded version of {@link #setFetcher(Fetcher)}. If the Iterable throws exceptions, they will 
-		 * be caught and translated into result instances.
-		 * 
-		 * @param idsFetcher
-		 * @return
-		 */
-		public Builder<Input, Output> setFetcher( Iterable<Input> idsFetcher ) {
-			this.fetcher = new SuppliedIterableFetcher<Input>(Suppliers.ofInstance(idsFetcher));
-			return this;
-		}
-
-		/**
-		 * Overloaded version of {@link #setFetcher(Fetcher)}. If the Iterable returned by the supplier throws exceptions, they will 
-		 * be caught and translated into result instances.
-		 * 
-		 * @param idsFetcher
-		 * @return
-		 */
-		public Builder<Input, Output> setFetcher( Supplier<Iterable<Input>> idsFetcher ) {
-			this.fetcher = new SuppliedIterableFetcher<Input>(idsFetcher);
-			return this;
-		}
 
 		public Builder<Input, Output> setProcessor( Processor<Input, Output> byIdsFetcher ) {
 			this.processor = byIdsFetcher;
