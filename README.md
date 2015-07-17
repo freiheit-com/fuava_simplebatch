@@ -23,9 +23,9 @@ final BatchJob<Input, ProcessedData> job =
     new BatchJob.Builder<Input, ProcessedData>()
         // fetches the data from any source, the returned iterable may be lazy
         .setFetcher( Fetchers....)
-        .setProcessingBatchSize( 100 )
         // processes partitions of the iterable provided by the fetcher
         .setProcessor( Processors....)
+        .setProcessingBatchSize( 100 )
         // persists the result of the processing
         .setPersistence( Persistences... )
         .build();
