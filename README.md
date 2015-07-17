@@ -38,7 +38,7 @@ downloader.run();
 
 
 ## Downloader (works with Control-File)
-There is a ready-made Job Builder for a downloader which persists the fetched items in a batch file, meaning that multiple downloaded items are persisted together. 
+This is a ready-made Job Builder for a downloader which persists the fetched items in a batch file, meaning that multiple downloaded items are persisted together. 
 Those files will later be processed with an importer for which an implementation exists as well (see below).
 
 ```java
