@@ -19,7 +19,8 @@ The general pattern for implementing a batch job (no matter wether files are use
 
 
 ```java
-final BatchJob<Input, ProcessedData> job = new BatchJob.Builder<Input, ProcessedData>()
+final BatchJob<Input, ProcessedData> job = 
+    new BatchJob.Builder<Input, ProcessedData>()
         .setFetcher( Fetchers....)
         .setProcessingBatchSize( 100 )
         .setProcessor( Processors....)
