@@ -25,7 +25,7 @@ Example for an importer (works together with the above downloader) from a json f
 ```java
 final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
 
-    // provide settings: input directory, archive directory, processing directory etc.
+    // provide settings: input directory, archive directory, etc.
     .setConfiguration( config )
 
     // The function to read the input stream of the files
