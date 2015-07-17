@@ -79,7 +79,8 @@ downloader.run();
 Example for a 'normal' downloader:
 
 ```java
-final CtlDownloaderJob<Id, String> downloader = new CtlDownloaderJob.Builder<Id, String>()
+final CtlDownloaderJob<Id, String> downloader = 
+   new CtlDownloaderJob.Builder<Id, String>()
         .setConfiguration( config )
         .setDownloaderBatchSize( 100 )
         // Fetch ids of the data to be downloaded, will be used by the downloader to fetch the data
