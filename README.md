@@ -79,7 +79,7 @@ To collect the statistics for the processed content (i. e. for storing your arti
 you could register a `ProcessingResultListener`:
 
 ```java
-job.addContentProcessingListener(new ProcessingResultListener<Integer, Integer>() {
+job.addContentProcessingListener(new ProcessingResultListener<Article, Article>() {
     private Counts.Builder counter;
     private String filename;
     @Override
@@ -98,7 +98,8 @@ job.addContentProcessingListener(new ProcessingResultListener<Integer, Integer>(
     }
 
     @Override
-    public void onPersistResult(Result<Integer,?> result) {
+    public void onPersistResult(Result<Article,?> result) {
+        // Will be called for each item after it was stored in the database. 
         counter.count(result);
     }
 })
