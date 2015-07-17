@@ -25,30 +25,30 @@ Example for an importer (works together with the above downloader) from a json f
 ```java
 final CtlImporterJob<Article> fileProcessingJob = new CtlImporterJob.Builder<Article>()
 
-        // provide settings: input directory, archive directory, processing directory etc.
-	.setConfiguration( config )
+    // provide settings: input directory, archive directory, processing directory etc.
+    .setConfiguration( config )
 
-        // The function to read the input stream of the files
-	.setFileInputStreamReader((InputStream is) -> new Gson().fromJson(new InputStreamReader(is), Types.listOf(Integer.class)))
+    // The function to read the input stream of the files
+    .setFileInputStreamReader((InputStream is) -> new Gson().fromJson(new InputStreamReader(is), Types.listOf(Integer.class)))
 
-        // the number of Article items to persist together in one list
-	.setContentBatchSize( 100 )
+    // the number of Article items to persist together in one list
+    .setContentBatchSize( 100 )
 
-        // Persist the lists (max. size is set to 100 above) 
-	.setContentPersistence(
+    // Persist the lists (max. size is set to 100 above) 
+    .setContentPersistence(
 
-                // the function will be called again with singleton lists of the given items, if processing
-                // of the original list fails
-	        Persistences.retryableBatchedFunction(new Function<List<Article>, List<Article>>() {
-	        	@Override
-	        	public List<Integer> apply(List<Article> data) {
-	        		// store data in database
-	        		db.storeAll(data);
-	        		return data;
-	        	}
-	        })
-	)
-	.build();
+        // the function will be called again with singleton lists of the given items, if processing
+        // of the original list fails
+        Persistences.retryableBatchedFunction(new Function<List<Article>, List<Article>>() {
+            @Override
+            public List<Integer> apply(List<Article> data) {
+                // store data in database
+                db.storeAll(data);
+                return data;
+            }
+        })
+    )
+    .build();
 
 // Run the job. This reads the control files from download directory, 
 // moves the control  file (and its data file) to the processing dir.
