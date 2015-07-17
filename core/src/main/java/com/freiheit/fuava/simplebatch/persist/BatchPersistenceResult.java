@@ -1,4 +1,4 @@
-package com.freiheit.fuava.simplebatch.fsjobs.downloader;
+package com.freiheit.fuava.simplebatch.persist;
 
 public final class BatchPersistenceResult<T> {
 	private final int rowNum;

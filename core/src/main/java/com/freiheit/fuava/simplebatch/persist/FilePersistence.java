@@ -15,19 +15,16 @@ import com.google.common.base.Preconditions;
  * @param <Input>
  * @param <Output>
  */
-public class FilePersistence<Input, Output> extends SingleItemPersistence<Input, Output, FilePersistenceOutputInfo> {
+class FilePersistence<Input, Output> extends AbstractSingleItemPersistence<Input, Output, FilePersistenceOutputInfo> {
     private static final Logger LOG = LoggerFactory.getLogger( FilePersistence.class );
-    public interface Configuration {
-    	String getDownloadDirPath();
-    }
-
+   
 
     private PersistenceAdapter<Input, Output> adapter;
 	private File basedir;
     
-    public FilePersistence(Configuration configuration, PersistenceAdapter<Input, Output> adapter) {
+    public FilePersistence(String dir, PersistenceAdapter<Input, Output> adapter) {
 		this.adapter = Preconditions.checkNotNull(adapter);
-		this.basedir = new File( Preconditions.checkNotNull(configuration.getDownloadDirPath()) );
+		this.basedir = new File( Preconditions.checkNotNull(dir) );
 		if (!this.basedir.exists()) {
 			if (this.basedir.mkdirs()) {
 				LOG.info("Created base dir ", basedir);

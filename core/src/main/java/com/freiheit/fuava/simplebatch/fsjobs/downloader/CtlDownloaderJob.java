@@ -8,9 +8,7 @@ import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.logging.ProcessingBatchListener;
 import com.freiheit.fuava.simplebatch.logging.ProcessingItemListener;
 import com.freiheit.fuava.simplebatch.persist.AbstractStringPersistenceAdapter;
-import com.freiheit.fuava.simplebatch.persist.ControlFilePersistence;
 import com.freiheit.fuava.simplebatch.persist.ControlFilePersistenceOutputInfo;
-import com.freiheit.fuava.simplebatch.persist.FilePersistence;
 import com.freiheit.fuava.simplebatch.persist.Persistence;
 import com.freiheit.fuava.simplebatch.persist.PersistenceAdapter;
 import com.freiheit.fuava.simplebatch.persist.Persistences;
@@ -33,7 +31,11 @@ import com.google.common.base.Supplier;
  */
 public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
-    public interface Configuration extends FilePersistence.Configuration, ControlFilePersistence.Configuration {
+    public interface Configuration {
+
+		String getDownloadDirPath();
+
+		String getControlFileEnding();
 
     }
 
@@ -171,8 +173,11 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         }
         
         public Builder<Id, Data> setBatchFileWriterAdapter( PersistenceAdapter<List<Id>, List<Data>> persistenceAdapter ) {
-            Persistence<List<Id>, List<Data>, ControlFilePersistenceOutputInfo> listPersistence = createControlledFilePersistence(persistenceAdapter);
-            this.persistence = new BatchPersistence<Id, Data, ControlFilePersistenceOutputInfo>(listPersistence);
+            this.persistence = Persistences.controlledBatchFile(
+            		configuration.getDownloadDirPath(),
+            		configuration.getControlFileEnding(),
+            		persistenceAdapter
+        		);
             return this;
         }
         
@@ -182,12 +187,10 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
 		private <I, O> Persistence<I, O, ControlFilePersistenceOutputInfo> createControlledFilePersistence(
 				PersistenceAdapter<I, O> persistenceAdapter) {
-			return Persistences.compose(
-                    new ControlFilePersistence<I>( configuration ),
-                    new FilePersistence<I, O>( configuration, persistenceAdapter )
-                    );
+			return Persistences.controlledFile(configuration.getDownloadDirPath(), configuration.getControlFileEnding(), persistenceAdapter);
 		}
 
+		
         public CtlDownloaderJob<Id, Data> build() {
             builder.addListener( new ProcessingBatchListener<Id, Data>(LOG_NAME_BATCH) );
             builder.addListener( new ProcessingItemListener<Id, Data>(LOG_NAME_ITEM) );

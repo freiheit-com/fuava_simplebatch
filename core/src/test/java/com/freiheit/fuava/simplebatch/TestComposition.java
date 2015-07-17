@@ -24,7 +24,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.freiheit.fuava.simplebatch.process.FileProcessor;
 import com.freiheit.fuava.simplebatch.process.PrepareControlledFileProcessor;
 import com.freiheit.fuava.simplebatch.process.Processor;
 import com.freiheit.fuava.simplebatch.process.Processors;
@@ -108,7 +107,7 @@ public class TestComposition {
 
     private Processor<File, String> makeComposedProcessorFileStringProcessor() {
         final PrepareControlledFileProcessor prepareControlledFileProcessor = new PrepareControlledFileProcessor( "/tmp" );
-        final FileProcessor readFilesToStringTestProcessor = makeReadFilesToStringTestProcessor();
+        final Processor<File, String> readFilesToStringTestProcessor = makeReadFilesToStringTestProcessor();
 
         return Processors.compose(
                 readFilesToStringTestProcessor,
@@ -116,8 +115,8 @@ public class TestComposition {
                 );
     }
 
-    private FileProcessor makeReadFilesToStringTestProcessor() {
-        return new FileProcessor( new Function<File, String>() {
+    private Processor<File, String> makeReadFilesToStringTestProcessor() {
+        return Processors.single(new Function<File, String>() {
             @Nullable
             @Override
             public String apply( final File input ) {

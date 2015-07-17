@@ -2,10 +2,10 @@ package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
 import java.io.File;
 
-import com.freiheit.fuava.simplebatch.persist.SingleItemPersistence;
+import com.freiheit.fuava.simplebatch.persist.AbstractSingleItemPersistence;
 import com.freiheit.fuava.simplebatch.result.Result;
 
-public class FileMovingPersistence<D> extends SingleItemPersistence<ControlFile, D, Void> {
+public class FileMovingPersistence<D> extends AbstractSingleItemPersistence<ControlFile, D, Void> {
 
 	private final FileMover fileMover = new FileMover();
 	private final String processingDir;

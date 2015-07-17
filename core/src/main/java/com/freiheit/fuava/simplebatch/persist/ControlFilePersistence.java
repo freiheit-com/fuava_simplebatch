@@ -15,7 +15,7 @@ import com.google.common.base.Preconditions;
  * @param <Input>
  * @param <Output>
  */
-public class ControlFilePersistence<Input> extends SingleItemPersistence<Input, FilePersistenceOutputInfo, ControlFilePersistenceOutputInfo> {
+class ControlFilePersistence<Input> extends AbstractSingleItemPersistence<Input, FilePersistenceOutputInfo, ControlFilePersistenceOutputInfo> {
     private static final Logger LOG = LoggerFactory.getLogger( ControlFilePersistence.class );
     
     public interface Configuration {

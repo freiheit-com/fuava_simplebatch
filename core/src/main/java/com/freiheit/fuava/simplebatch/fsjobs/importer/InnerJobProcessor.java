@@ -4,13 +4,13 @@ import java.util.List;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.persist.Persistence;
-import com.freiheit.fuava.simplebatch.process.IdentityProcessor;
-import com.freiheit.fuava.simplebatch.process.SingleItemProcessor;
+import com.freiheit.fuava.simplebatch.process.AbstractSingleItemProcessor;
+import com.freiheit.fuava.simplebatch.process.Processors;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 
-final class InnerJobProcessor<Data> extends SingleItemProcessor<Iterable<Data>, Iterable<Data>> {
+final class InnerJobProcessor<Data> extends AbstractSingleItemProcessor<Iterable<Data>, Iterable<Data>> {
 	private final int processingBatchSize;
 	private final List<ProcessingResultListener<Data, Data>> contentProcessingListeners;
 	private final Persistence<Data, Data, ?> contentPersistence;
@@ -31,7 +31,7 @@ final class InnerJobProcessor<Data> extends SingleItemProcessor<Iterable<Data>, 
 		final BatchJob.Builder<Data, Data> builder = BatchJob.<Data, Data>builder()
 				.setProcessingBatchSize(processingBatchSize)
 				.setFetcher(inputs)
-				.setProcessor(new IdentityProcessor<Data>())
+				.setProcessor(Processors.identity())
 				.setPersistence(contentPersistence);
 
 		for (ProcessingResultListener<Data, Data> l: contentProcessingListeners) {

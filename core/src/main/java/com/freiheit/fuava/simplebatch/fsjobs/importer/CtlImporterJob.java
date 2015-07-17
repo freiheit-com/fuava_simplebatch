@@ -10,10 +10,9 @@ import com.freiheit.fuava.simplebatch.fetch.FailsafeFetcherImpl;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.logging.ProcessingBatchListener;
 import com.freiheit.fuava.simplebatch.logging.ProcessingItemListener;
-import com.freiheit.fuava.simplebatch.persist.FilePersistence;
 import com.freiheit.fuava.simplebatch.persist.Persistence;
-import com.freiheit.fuava.simplebatch.persist.RetryingPersistence;
-import com.freiheit.fuava.simplebatch.process.DelegatingSingleItemProcessor;
+import com.freiheit.fuava.simplebatch.persist.Persistences;
+import com.freiheit.fuava.simplebatch.process.SingleItemProcessor;
 import com.freiheit.fuava.simplebatch.process.Processor;
 import com.freiheit.fuava.simplebatch.process.Processors;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
@@ -29,8 +28,9 @@ import com.google.common.base.Supplier;
 public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>> {
 
 
-	public interface Configuration extends FilePersistence.Configuration {
+	public interface Configuration {
 		String getControlFileEnding();
+		String getDownloadDirPath();
 		String getArchivedDirPath();
 		String getProcessingDirPath();
 		String getFailedDirPath();
@@ -140,7 +140,7 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
          * 
 		 */
 		public <PersistenceResult> Builder<Data> setRetryableContentPersistence(Function<List<Data>, List<PersistenceResult>> persistence) {
-			contentPersistence = new RetryingPersistence<Data, Data, PersistenceResult>(persistence);
+			contentPersistence = Persistences.retryableBatch(persistence);
 			return this;
 		}
 
@@ -177,7 +177,7 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
 					processingBatchSize, contentProcessingListeners, contentPersistence
 					);
 			final Function<File, Iterable<Data>> fileProcessorFunction = new FileToInputStreamFunction<>(this.documentReader);
-			final Processor<File, Iterable<Data>> fileProcessor = new DelegatingSingleItemProcessor<File, Iterable<Data>>(fileProcessorFunction);
+			final Processor<File, Iterable<Data>> fileProcessor = new SingleItemProcessor<File, Iterable<Data>>(fileProcessorFunction);
 			final Processor<ControlFile, File> prepare = new PrepareControlledFile(configuration.getProcessingDirPath(), configuration.getDownloadDirPath());
 			final Processor<ControlFile, Iterable<Data>> controlFileProcessor = Processors.compose(fileProcessor, prepare);
 			final Processor<ControlFile, Iterable<Data>> processor = Processors.compose(innerJobProcessor, controlFileProcessor);

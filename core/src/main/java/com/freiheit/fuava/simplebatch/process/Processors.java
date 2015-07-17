@@ -1,58 +1,13 @@
 package com.freiheit.fuava.simplebatch.process;
 
-import com.freiheit.fuava.simplebatch.result.ComposedResult;
-import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.Multimaps;
+import java.util.List;
+import java.util.Map;
+
+import com.google.common.base.Function;
+
 
 public class Processors {
-	private static final class ComposedProcessor<A, B, C> implements Processor<A, C> {
-		private final Processor<B, C> g;
-		private final Processor<A, B> f;
-		
-		public ComposedProcessor(Processor<B, C> g, Processor<A, B> f) {
-			this.g = g;
-			this.f = f;
-		}
-
-		@Override
-		public Iterable<Result<A, C>> process(Iterable<A> inputs) {
-			//FIXME: try.. catch needed on a finer base - guard against exceptions triggered here.
-			
-			Iterable<Result<A, B>> fResults = this.f.process(inputs);
-			
-			Iterable<B> gInputs = FluentIterable.from(fResults).filter(Result::isSuccess).transform(Result::getOutput).toSet();
-					
-			Iterable<Result<B, C>> gResults = this.g.process(gInputs);
-			
-			ImmutableListMultimap<B, Result<B, C>> gResultsMap = Multimaps.index(gResults, Result::getInput);
-			
-			ImmutableList.Builder<Result<A, C>> b = ImmutableList.builder();
-			for (Result<A, B> r: fResults) {
-				b.add(composeResult(gResultsMap, r));
-			}
-			return b.build();
-		}
-		
-		private Result<A, C> composeResult(
-				ImmutableListMultimap<B, Result<B, C>> gResultsMap,
-				Result<A, B> inputResult
-		) {
-			if (inputResult.isFailed()) {
-				return ComposedResult.<A, C>of(inputResult).failed("Compose Step 1 aborted: " + f);
-			} else {
-				B intermediateInput = inputResult.getOutput();
-				ImmutableList<Result<B, C>> intermediateResults = gResultsMap.get(intermediateInput);
-				return ComposedResult.<A, C>of(inputResult).compose(intermediateResults);
-			}
-		}
-		
-		
-	}
-	
-   /**
+	/**
 	 * Compose two processors.
 	 * Note that the input of g will be a set of the successful output values from f.
 	 * Also note that f must not return null outputs for successfully processed items!
@@ -60,5 +15,49 @@ public class Processors {
 	public static <A, B, C> Processor<A, C> compose(Processor<B, C> g, Processor<A, B> f) {
 		return new ComposedProcessor<A, B, C>(g, f);
 	}
-	
+
+	/**
+	 * A Processor that does nothing.
+	 */
+	public static <A> Processor<A, A> identity() {
+		return new IdentityProcessor<A>();
+	}
+
+	/**
+	 * A Processor that processes a single item with the help of a function. 
+	 * If it would be faster to perform the processing in batches (i. e. if you use databases), 
+	 * use {@link #retryableBatch(Function)}.
+	 * 
+	 * @see #retryableBatch(Function)
+	 */
+	public static <Input, Output> Processor<Input, Output> single(Function<Input, Output> reader) {
+		return new SingleItemProcessor<Input, Output>(reader);
+	}
+
+	/**
+	 * A processor which delegates processing of batches to a function.
+	 * 
+	 * If processing of a batch failed, it will be divided into singleton batches and retried.
+	 * 
+	 * You have to ensure, that aborting and retying the function will not lead to illegal states.
+	 * 
+	 * If your function persists to databases for example, you may need to ensure that your function open
+	 * and closes the toplevel transaction and rolls back for <b>all</b> exceptions.
+	 * @param function
+	 * @return
+	 */
+	public static <Input, Output> Processor<Input, Output> retryableBatch( 
+			Function<List<Input>, List<Output>> function
+	) {
+		return new RetryingProcessor<Input, Output>(new MapBuildingFunction<Input, Output>(function));
+	}
+
+	/**
+	 * Like {@link #retryableBatch(Function)}, but takes a function which produces a map from input to output.
+	 */
+	public static <Input, Output> Processor<Input, Output> retryableToMapBatch( 
+			Function<List<Input>, Map<Input, Output>> function
+	) {
+		return new RetryingProcessor<Input, Output>(function);
+	}
 }

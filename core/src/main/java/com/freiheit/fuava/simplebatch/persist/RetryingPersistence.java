@@ -22,7 +22,7 @@ import com.google.common.collect.Iterables;
  * @param <Input>
  * @param <Output>
  */
-public class RetryingPersistence<Input, Output, PersistenceResult> implements Persistence<Input, Output, PersistenceResult> {
+class RetryingPersistence<Input, Output, PersistenceResult> implements Persistence<Input, Output, PersistenceResult> {
 	private final Function<List<Output>, List<PersistenceResult>> _func;
 	
 	

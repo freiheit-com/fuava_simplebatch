@@ -1,18 +1,22 @@
 package com.freiheit.fuava.simplebatch.persist;
 
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.collect.ImmutableList;
+import com.google.common.base.Function;
 
-public abstract class SingleItemPersistence<Input, Output, P> implements Persistence<Input, Output, P> {
+public class SingleItemPersistence<Input, Output, PersistenceResult> extends AbstractSingleItemPersistence<Input, Output, PersistenceResult> {
+	private final Function<Output, PersistenceResult> _func;
 	
-	@Override
-	public final Iterable<Result<Input, P>> persist(Iterable<Result<Input, Output>> iterable) {
-		ImmutableList.Builder<Result<Input, P>> b = ImmutableList.builder();
-		for (Result<Input, Output> input: iterable) {
-			b.add(persistItem(input));
-		}
-		return b.build();
+	public SingleItemPersistence(Function<Output, PersistenceResult> func) {
+	   _func = func;
 	}
-	
-	public abstract Result<Input, P> persistItem(Result<Input, Output> input);
+	@Override
+	public Result<Input, PersistenceResult> persistItem(Result<Input, Output> input) {
+		Input ipt = input.getInput();
+		try {
+			return Result.success(ipt, _func.apply(input.getOutput()));
+		} catch (Throwable t) {
+			return Result.failed(ipt, t);
+		}
+	}
+
 }

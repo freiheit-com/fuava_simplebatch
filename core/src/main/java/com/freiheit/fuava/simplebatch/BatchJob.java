@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import com.freiheit.fuava.simplebatch.fetch.FailsafeFetcherImpl;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.persist.Persistence;
-import com.freiheit.fuava.simplebatch.persist.RetryingPersistence;
 import com.freiheit.fuava.simplebatch.process.MapBuildingFunction;
 import com.freiheit.fuava.simplebatch.process.Processor;
 import com.freiheit.fuava.simplebatch.process.RetryingProcessor;
@@ -144,11 +143,6 @@ public class BatchJob<Input, Output> {
 			return this;
 		}
 		
-		public <PersistenceResult> Builder<Input, Output> setRetryablePersistence(Function<List<Output>, List<PersistenceResult>> persistence) {
-			this.persistence = new RetryingPersistence<Input, Output, PersistenceResult>(persistence);
-			return this;
-		}
-
 		public Persistence<Input, Output, ?> getPersistence() {
 			return persistence;
 		}

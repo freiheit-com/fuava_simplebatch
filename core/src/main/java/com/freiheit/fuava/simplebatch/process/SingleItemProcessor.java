@@ -1,19 +1,21 @@
 package com.freiheit.fuava.simplebatch.process;
 
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.collect.ImmutableList;
+import com.google.common.base.Function;
 
-public abstract class SingleItemProcessor<Input, Output> implements Processor<Input, Output> {
+public class SingleItemProcessor<Input, Output> extends AbstractSingleItemProcessor<Input, Output> {
+	private final Function<Input, Output> func;
 	
-	
-	@Override
-	public final Iterable<Result<Input, Output>> process(Iterable<Input> inputs) {
-		ImmutableList.Builder<Result<Input, Output>> b = ImmutableList.builder();
-		for (Input input: inputs) {
-			b.add(processItem(input));
-		}
-		return b.build();
+	public SingleItemProcessor(Function<Input, Output> func) {
+		this.func = func;
 	}
 	
-	public abstract Result<Input, Output> processItem(Input input);
+	public Result<Input, Output> processItem(Input input) {
+		try {
+			Output output = func.apply(input);
+			return Result.success(input, output);
+		} catch (Throwable t) {
+			return Result.failed(input, t);
+		}
+	}
 }

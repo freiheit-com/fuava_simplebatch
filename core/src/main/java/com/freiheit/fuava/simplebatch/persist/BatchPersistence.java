@@ -1,13 +1,12 @@
-package com.freiheit.fuava.simplebatch.fsjobs.downloader;
+package com.freiheit.fuava.simplebatch.persist;
 
 import java.util.List;
 
-import com.freiheit.fuava.simplebatch.persist.Persistence;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 
-public final class BatchPersistence<Input, Output, P> implements Persistence<Input, Output, BatchPersistenceResult<P>> {
+final class BatchPersistence<Input, Output, P> implements Persistence<Input, Output, BatchPersistenceResult<P>> {
 	private final Persistence<List<Input>, List<Output>, P> delegee;
 	
 	public BatchPersistence(Persistence<List<Input>, List<Output>, P> delegee) {
