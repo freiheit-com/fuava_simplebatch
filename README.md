@@ -23,13 +23,15 @@ We provide classes to streamline the following tasks
 
 Example for an importer (works together with the above downloader) from a json file with lists of Article.
 ```java
-final CtlImporterJob<Article> fileProcessingJob = new CtlImporterJob.Builder<Article>()
+final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
 
     // provide settings: input directory, archive directory, processing directory etc.
     .setConfiguration( config )
 
     // The function to read the input stream of the files
-    .setFileInputStreamReader((InputStream is) -> new Gson().fromJson(new InputStreamReader(is), Types.listOf(Integer.class)))
+    .setFileInputStreamReader((InputStream is) -> 
+        new Gson().fromJson(new InputStreamReader(is), Types.listOf(Integer.class))
+    )
 
     // the number of Article items to persist together in one list
     .setContentBatchSize( 100 )
@@ -55,7 +57,7 @@ final CtlImporterJob<Article> fileProcessingJob = new CtlImporterJob.Builder<Art
 // Then it reads the data files, persists the content with the given function and
 // finally moves the file (together with its control file) to the archive 
 // directory, or the failed directory if all items in the file failed
-fileProcessingJob.run();
+job.run();
 
 ```
 
