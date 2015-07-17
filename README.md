@@ -41,14 +41,16 @@ final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
 
         // the function will be called again with singleton lists of the given items, if processing
         // of the original list fails
-        Persistences.retryableBatchedFunction(new Function<List<Article>, List<Article>>() {
-            @Override
-            public List<Integer> apply(List<Article> data) {
-                // store data in database
-                db.storeAll(data);
-                return data;
+        Persistences.retryableBatchedFunction(
+            new Function<List<Article>, List<Article>>() {
+                @Override
+                public List<Integer> apply(List<Article> data) {
+                    // store data in database
+                    db.storeAll(data);
+                    return data;
+                }
             }
-        })
+        )
     )
     .build();
 
