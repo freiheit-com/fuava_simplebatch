@@ -1,29 +1,30 @@
 package com.freiheit.fuava.simplebatch.process;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
+import com.freiheit.fuava.simplebatch.fetch.Fetchers;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 
 final class InnerJobProcessor<Data> extends AbstractSingleItemProcessor<Iterable<Data>, Iterable<Data>> {
-	private final BatchJob.Builder<Data, Data> builder;
- 
-	public InnerJobProcessor(
-			 BatchJob.Builder<Data, Data> builder
-		) {
-		this.builder = builder;
-	}
+    private final BatchJob.Builder<Data, Data> builder;
 
-	@Override
-	public final Result<Iterable<Data>, Iterable<Data>> processItem(Iterable<Data> inputs) {
+    public InnerJobProcessor(
+            BatchJob.Builder<Data, Data> builder
+            ) {
+        this.builder = builder;
+    }
 
-		final BatchJob<Data, Data> job = builder.setFetcher(inputs).build();
-		final ResultStatistics statistics = job.run();
+    @Override
+    public final Result<Iterable<Data>, Iterable<Data>> processItem(Iterable<Data> inputs) {
 
-		if (statistics.isAllFailed()) {
-			return Result.failed(inputs, "Processing of all Items failed. Please check the log files.");
-		}
+        final BatchJob<Data, Data> job = builder.setFetcher(Fetchers.iterable(inputs)).build();
+        final ResultStatistics statistics = job.run();
 
-		return Result.success(inputs, inputs);
-	}
+        if (statistics.isAllFailed()) {
+            return Result.failed(inputs, "Processing of all Items failed. Please check the log files.");
+        }
+
+        return Result.success(inputs, inputs);
+    }
 
 }
