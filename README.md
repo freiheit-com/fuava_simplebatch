@@ -65,7 +65,9 @@ final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
 // Then it reads the data files, persists the content with the given function and
 // finally moves the file (together with its control file) to the archive 
 // directory, or the failed directory if all items in the file failed
-job.run();
+ResultStatistics result = job.run();
+int numFailedFiles = result.getPersistCounts().getError();
+int numProcessedFiles = result.getPersistCounts().getSuccess();
 
 ```
 
