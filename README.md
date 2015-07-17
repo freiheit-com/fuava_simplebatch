@@ -34,7 +34,7 @@ final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
         new Gson().fromJson(new InputStreamReader(is), Types.listOf(Integer.class))
     )
 
-    // the number of Article items to persist together in one list
+    // the number of Article items to persist together 
     .setContentBatchSize( 100 )
 
     // Persist a partition of the iterator (max size is ContentBatchSize) 
