@@ -1,5 +1,5 @@
 # Fuava SimpleBatch
-A Java library that makes implementation of simple, fast and failsafe batch processing jobs nearly trivial.
+A Java library that aims to make implementation of simple, fast and failsafe batch processing jobs nearly trivial.
 
 It provides many helpers and default implementations for everyday batch processing tasks.
 
@@ -29,8 +29,7 @@ final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
     // provide settings: input directory, archive directory, etc.
     .setConfiguration( config )
 
-    // The function to read the input stream. 
-    // This function will be called for each file.
+    // Read the content of a file and return it as an iterable.
     .setFileInputStreamReader((InputStream is) -> 
         new Gson().fromJson(new InputStreamReader(is), Types.listOf(Integer.class))
     )
