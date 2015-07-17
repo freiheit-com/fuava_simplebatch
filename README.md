@@ -39,11 +39,13 @@ downloader.run();
 
 ## Downloader (works with Control-File)
 This is a ready-made Job Builder for a downloader which persists the fetched items in a batch file, meaning that multiple downloaded items are persisted together. 
+This implementation will create control files as well.
 Those files will later be processed with an importer for which an implementation exists as well (see below).
 
 ```java
 final CtlDownloaderJob<ClipboardArticleId, String> downloader =
      new CtlDownloaderJob.Builder<ClipboardArticleId, String>()
+        // download dir, control file ending
         .setConfiguration( config )
         .setDownloaderBatchSize( 100 )
         // Fetch ids of the data to be downloaded, will be used by the 
