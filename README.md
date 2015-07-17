@@ -29,7 +29,8 @@ final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
     // provide settings: input directory, archive directory, etc.
     .setConfiguration( config )
 
-    // The function to read the input stream of the files
+    // The function to read the input stream. 
+    // This function will be called for each file.
     .setFileInputStreamReader((InputStream is) -> 
         new Gson().fromJson(new InputStreamReader(is), Types.listOf(Integer.class))
     )
