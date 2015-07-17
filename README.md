@@ -37,8 +37,8 @@ final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
     // the number of Article items to persist together 
     .setContentBatchSize( 100 )
 
-    // Persist a partition of the iterator (max size is ContentBatchSize) 
-    // returned by the FileInputStreamReader. 
+    // Persist a partition of the iterator returned by the FileInputStreamReader. 
+    // The maximum size of the partition is set to ContentBatchSize above.
     // Will be called repeatedly until the iterator has no more items.
     .setContentPersistence(
 
