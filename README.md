@@ -86,7 +86,8 @@ downloader.run();
 If you want to persist each downloaded item seperately, use instead:
 
 ```java
-       downloader .setFileWriterAdapter( ... )
+       // downloader.setBatchFileWriterAdapter( ... )
+       downloader.setFileWriterAdapter( ... )
 ```
 
 
