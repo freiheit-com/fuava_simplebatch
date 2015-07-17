@@ -45,14 +45,22 @@ Those files will later be processed with an importer for which an implementation
 ```java
 final CtlDownloaderJob<ClipboardArticleId, String> downloader =
      new CtlDownloaderJob.Builder<ClipboardArticleId, String>()
+
         // download dir, control file ending
         .setConfiguration( config )
-        .setDownloaderBatchSize( 100 )
+
         // Fetch ids of the data to be downloaded, will be used by the 
         // downloader to fetch the data
         .setIdsFetcher( Fetchers....)
         .setDownloader( Processors....)
 
+        // 100 items of the input fetcher will be downloaded in a batch, 
+        // and also persisted in a batch. If you use the BatchFileWriterAdapter,
+        // this means that those 100 items will be stored together in one file
+        .setDownloaderBatchSize( 100 )
+        
+        // If you want to persist each downloaded item seperately, use instead:
+        // downloader.setFileWriterAdapter( ... )
         .setBatchFileWriterAdapter(
           new PersistenceAdapter<List<ClipboardArticleId>, List<String>>() {
             private final String prefix = "" + System.currentTimeMillis() + "_";
@@ -82,14 +90,6 @@ final CtlDownloaderJob<ClipboardArticleId, String> downloader =
         .build();
 downloader.run();
 ```
-
-If you want to persist each downloaded item seperately, use instead:
-
-```java
-       // downloader.setBatchFileWriterAdapter( ... )
-       downloader.setFileWriterAdapter( ... )
-```
-
 
 ## Importer (works with Control-File)
 
