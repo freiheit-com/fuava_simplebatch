@@ -17,7 +17,7 @@ final class InnerJobProcessor<Data> extends AbstractSingleItemProcessor<Iterable
 	public final Result<Iterable<Data>, Iterable<Data>> processItem(Iterable<Data> inputs) {
 
 		final BatchJob<Data, Data> job = builder.setFetcher(inputs).build();
-		final ResultStatistics<Data,Data> statistics = job.run();
+		final ResultStatistics statistics = job.run();
 
 		if (statistics.isAllFailed()) {
 			return Result.failed(inputs, "Processing of all Items failed. Please check the log files.");

@@ -24,6 +24,29 @@ public class DelegatingProcessingResultListener<Input, Output> implements Proces
 	}
 	
 	@Override
+	public void onBeforeRun() {
+		for (ProcessingResultListener<Input, Output> l :listeners) {
+			try {
+				l.onBeforeRun();
+			} catch (Throwable t) {
+				onListenerFailure(l, "onBeforeRun", t);
+			}
+		}
+	}
+
+
+	@Override
+	public void onAfterRun() {
+		for (ProcessingResultListener<Input, Output> l :listeners) {
+			try {
+				l.onAfterRun();
+			} catch (Throwable t) {
+				onListenerFailure(l, "onAfterRun", t);
+			}
+		}
+	}
+
+	@Override
 	public void onFetchResult(Result<?, Input> result) {
 		for (ProcessingResultListener<Input, Output> l :listeners) {
 			try {

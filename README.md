@@ -74,5 +74,34 @@ int numProcessedFiles = result.getPersistCounts().getSuccess();
 If you implement a command line tool, you should call `CtlImporterJobMain.exec( fileProcessingJob )` 
 instead of `fileProcessingJob.run()`. This will lead to statistics on the command line, and `System.exit(-1)` for completely failing jobs.
 
+
+To collect the statistics for the processed content (i. e. for storing your articles to the database), 
+you could register a `ProcessingResultListener`:
+
+```java
+job.addContentProcessingListener(new ProcessingResultListener<Integer, Integer>() {
+    private final Counts.Builder counter = Counts.builder();
+    @Override
+    public void onBeforeRun() {
+                        
+    }
+
+    @Override
+    public void onAfterRun() {
+         Counts counts = counter.build();
+         System.out.println("Errors: " + counts.getError());
+         System.out.println("Successes: " + counts.getError());
+    }
+
+    @Override
+    public void onPersistResult(Result<Integer,?> result) {
+        counter.count(result);
+    }
+})
+
+```
+
+Note that there are convenience Implementations for those loggers available, for example `ItemProgressLoggingListener` and `BatchStatisticsLoggingListener`.
+
 [BatchJob.java](https://github.com/freiheit-com/fuava_simplebatch/blob/master/core/src/main/java/com/freiheit/fuava/simplebatch/BatchJob.java)
 

@@ -1,51 +1,8 @@
 package com.freiheit.fuava.simplebatch.result;
 
+
 public class ResultStatistics {
 
-	public static final class Counts {
-		public static final class Builder {
-			private int success;
-			private int error;
-			
-			public Builder success() {
-				success++;
-				return this;
-			}
-			
-			public Builder failed() {
-				error++;
-				return this;
-			}
-			
-			public Counts build() {
-				return new Counts(success, error);
-			}
-		}
-		
-		private final int success;
-		private final int error;
-		
-		public Counts(int success, int error) {
-			this.success = success;
-			this.error = error;
-		}
-		
-		
-		public int getSuccess() {
-			return success;
-		}
-		
-		public int getError() {
-			return error;
-		}
-		
-		public static final Builder builder() {
-			return new Builder();
-		}
-		
-		
-	}
-	
 	public static final class Builder<Input, Output> implements ProcessingResultListener<Input, Output> {
 
 		private final Counts.Builder fetch = Counts.builder();
@@ -61,14 +18,6 @@ public class ResultStatistics {
 					hasListenerDelegationFailures
 				);
 		}
-
-		private void increment(Counts.Builder b, Result<?, ?> result) {
-			if (result.isFailed()) {
-				b.failed();
-			} else {
-				b.success();
-			}
-		}
 		
 		public void setListenerDelegationFailures(boolean b) {
 			hasListenerDelegationFailures = b;
@@ -76,17 +25,17 @@ public class ResultStatistics {
 		
 		@Override
 		public void onFetchResult(Result<?, Input> result) {
-			increment(fetch, result);
+			fetch.count(result);
 		}
 
 		@Override
 		public void onProcessingResult(Result<Input, Output> result) {
-			increment(process, result);		
+			process.count(result);		
 		}
 
 		@Override
 		public void onPersistResult(Result<Input, ?> result) {
-			increment(persist, result);		
+			persist.count(result);		
 		}
 
 	}

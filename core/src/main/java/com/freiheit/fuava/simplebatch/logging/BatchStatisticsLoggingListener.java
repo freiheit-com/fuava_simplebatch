@@ -23,10 +23,10 @@ import com.google.common.collect.FluentIterable;
  *
  * @author tim.lessner@freiheit.com
  */
-public class ProcessingBatchListener<Input, Output> implements ProcessingResultListener<Input, Output> {
+public class BatchStatisticsLoggingListener<Input, Output> implements ProcessingResultListener<Input, Output> {
     private final Logger log;
 
-    public ProcessingBatchListener(String logFileName) {
+    public BatchStatisticsLoggingListener(String logFileName) {
     	log = LoggerFactory.getLogger(logFileName);
 	}
     

@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
-import com.freiheit.fuava.simplebatch.logging.ProcessingBatchListener;
-import com.freiheit.fuava.simplebatch.logging.ProcessingItemListener;
+import com.freiheit.fuava.simplebatch.logging.BatchStatisticsLoggingListener;
+import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
 import com.freiheit.fuava.simplebatch.persist.AbstractStringPersistenceAdapter;
 import com.freiheit.fuava.simplebatch.persist.ControlFilePersistenceOutputInfo;
 import com.freiheit.fuava.simplebatch.persist.Persistence;
@@ -146,8 +146,8 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
 		
         public CtlDownloaderJob<Id, Data> build() {
-            builder.addListener( new ProcessingBatchListener<Id, Data>(LOG_NAME_BATCH) );
-            builder.addListener( new ProcessingItemListener<Id, Data>(LOG_NAME_ITEM) );
+            builder.addListener( new BatchStatisticsLoggingListener<Id, Data>(LOG_NAME_BATCH) );
+            builder.addListener( new ItemProgressLoggingListener<Id, Data>(LOG_NAME_ITEM) );
             if (persistence == null) {
             	setPersistence(new AbstractStringPersistenceAdapter<Id, Data>() {});
             }

@@ -1,8 +1,16 @@
 package com.freiheit.fuava.simplebatch.result;
 
 public interface ProcessingResultListener<Input, Output> {
+	
+	default void onBeforeRun(){
+	}
+	
+	default void onAfterRun(){
+	}
+	
 	default void onFetchResult(Result<?, Input> result){
 	}
+	
 	
 	default void onFetchResults(Iterable<Result<?, Input>> result) {
 		for (Result<?, Input> r: result) {

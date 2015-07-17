@@ -8,8 +8,8 @@ import java.util.List;
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.fetch.Fetchers;
-import com.freiheit.fuava.simplebatch.logging.ProcessingBatchListener;
-import com.freiheit.fuava.simplebatch.logging.ProcessingItemListener;
+import com.freiheit.fuava.simplebatch.logging.BatchStatisticsLoggingListener;
+import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
 import com.freiheit.fuava.simplebatch.persist.Persistence;
 import com.freiheit.fuava.simplebatch.process.Processor;
 import com.freiheit.fuava.simplebatch.process.Processors;
@@ -167,11 +167,11 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
 		}
 
 		public CtlImporterJob<Data> build() {
-			fileProcessingListeners.add( new ProcessingBatchListener<ControlFile, Iterable<Data>>(LOG_NAME_FILE_PROCESSING_BATCH) );
-			fileProcessingListeners.add( new ProcessingItemListener<ControlFile, Iterable<Data>>(LOG_NAME_FILE_PROCESSING_ITEM) );
+			fileProcessingListeners.add( new BatchStatisticsLoggingListener<ControlFile, Iterable<Data>>(LOG_NAME_FILE_PROCESSING_BATCH) );
+			fileProcessingListeners.add( new ItemProgressLoggingListener<ControlFile, Iterable<Data>>(LOG_NAME_FILE_PROCESSING_ITEM) );
 
-			contentProcessingListeners.add( new ProcessingBatchListener<Data, Data>(LOG_NAME_CONTENT_PROCESSING_BATCH) );
-			contentProcessingListeners.add( new ProcessingItemListener<Data, Data>(LOG_NAME_CONTENT_PROCESSING_ITEM) );
+			contentProcessingListeners.add( new BatchStatisticsLoggingListener<Data, Data>(LOG_NAME_CONTENT_PROCESSING_BATCH) );
+			contentProcessingListeners.add( new ItemProgressLoggingListener<Data, Data>(LOG_NAME_CONTENT_PROCESSING_ITEM) );
 
 			final BatchJob.Builder<Data, Data> builder = BatchJob.<Data, Data>builder()
 					.setProcessingBatchSize(processingBatchSize)

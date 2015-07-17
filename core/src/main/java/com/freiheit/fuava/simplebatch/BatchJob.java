@@ -163,14 +163,15 @@ public class BatchJob<Input, Output> {
 	}
 	
 	@CheckReturnValue
-	public final ResultStatistics<Input, Output> run() {
-
+	public final ResultStatistics run() {
 		ResultStatistics.Builder<Input, Output> resultBuilder = ResultStatistics.builder();
 
 		DelegatingProcessingResultListener<Input, Output> listeners = new DelegatingProcessingResultListener<Input, Output>(
 				ImmutableList.<ProcessingResultListener<Input, Output>>builder().add(resultBuilder).addAll(this.listeners).build()
 				);
-
+		
+		listeners.onBeforeRun();
+		
 		final Iterable<Result<?, Input>> sourceIterable = fetcher.fetchAll();
 
 		for ( List<Result<?, Input>> sourceResults : Iterables.partition( sourceIterable, processingBatchSize ) ) {
@@ -189,8 +190,10 @@ public class BatchJob<Input, Output> {
 			listeners.onPersistResults(persistResults);
 		}
 
+		listeners.onAfterRun();
 		resultBuilder.setListenerDelegationFailures(listeners.hasDelegationFailures());
 
+		
 		// TODO: persist the state of the downloader (offset or downloader), so it can be
 		//       provided the next time
 		//idsDownloader.getWriteableState();

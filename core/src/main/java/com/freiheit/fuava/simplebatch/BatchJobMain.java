@@ -2,8 +2,8 @@ package com.freiheit.fuava.simplebatch;
 
 import java.io.PrintStream;
 
+import com.freiheit.fuava.simplebatch.result.Counts;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
-import com.freiheit.fuava.simplebatch.result.ResultStatistics.Counts;
 
 /**
  * Executes a {@link BatchJob} as suitable for a command line tool, using System.exit and System.out.println as applicable.

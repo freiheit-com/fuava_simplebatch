@@ -23,10 +23,10 @@ import com.freiheit.fuava.simplebatch.result.Result;
  * 
  * @author tim.lessner@freiheit.com
  */
-public class ProcessingItemListener<Input, Output> implements ProcessingResultListener<Input, Output> {
+public class ItemProgressLoggingListener<Input, Output> implements ProcessingResultListener<Input, Output> {
     private final Logger log;
 
-    public ProcessingItemListener(String logName) {
+    public ItemProgressLoggingListener(String logName) {
 		log = LoggerFactory.getLogger( logName );
 	}
     
