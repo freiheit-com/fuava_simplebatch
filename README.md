@@ -39,8 +39,8 @@ final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
     // Persist the lists (max. size is set to 100 above) 
     .setContentPersistence(
 
-        // the function will be called again with singleton lists of the given items, 
-        // if processing of the original list fails
+        // the function will be called again with singleton lists of the given
+        //  items, if processing of the original list fails
         Persistences.retryableBatchedFunction(
             new Function<List<Article>, List<Article>>() {
                 @Override
