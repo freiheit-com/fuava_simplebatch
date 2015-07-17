@@ -22,13 +22,20 @@ import com.google.common.base.Function;
  * @author tim.lessner@freiheit.com
  */
 public class ReadControlFileFunction implements Function<File, ControlFile> {
+	
+	private final String baseDir;
+	
+	public ReadControlFileFunction(String baseDir) {
+		this.baseDir = baseDir;
+	}
+	
     @Override
     public ControlFile apply( final File file ) {
         try {
             final FileReader in = new FileReader( file );
             try (BufferedReader br = new BufferedReader( in )) {
             	final String nameOfDownloadedMiscDocument = br.readLine();
-            	return new ControlFile( nameOfDownloadedMiscDocument, file );
+            	return new ControlFile( this.baseDir, nameOfDownloadedMiscDocument, file );
             }
         } catch ( final IOException e ) {
             throw new RuntimeException( e );

@@ -28,7 +28,7 @@ public class Persistences {
      * if - and only if - an exception is thrown.
      * 
      */
-    public static <JobInput, PersistenceInput, PersistenceOutput> Persistence<JobInput, PersistenceInput, PersistenceOutput> retryableBatch( 
+    public static <JobInput, PersistenceInput, PersistenceOutput> Persistence<JobInput, PersistenceInput, PersistenceOutput> retryableBatchedFunction( 
     		Function<List<PersistenceInput>, List<PersistenceOutput>> function
 	) {
         return new RetryingPersistence<JobInput, PersistenceInput, PersistenceOutput>(function);
@@ -41,11 +41,11 @@ public class Persistences {
      * Depending on your setup, you must ensure that your implementation opens a transaction and performs a rollback 
      * if - and only if - an exception is thrown.
      * 
-     * Please note that in most cases you should use {@link #retryableBatch(Function)} and implement that one as performant as possible.
+     * Please note that in most cases you should use {@link #retryableBatchedFunction(Function)} and implement that one as performant as possible.
      * 
      * Persisting of each item independently usually is a lot slower, so use this functionality only if it would not be faster to process the data in a batch.
      * 
-     * @see #retryableBatch(Function)
+     * @see #retryableBatchedFunction(Function)
      */
     public static <JobInput, PersistenceInput, PersistenceOutput> Persistence<JobInput, PersistenceInput, PersistenceOutput> single( 
     		Function<PersistenceInput, PersistenceOutput> function

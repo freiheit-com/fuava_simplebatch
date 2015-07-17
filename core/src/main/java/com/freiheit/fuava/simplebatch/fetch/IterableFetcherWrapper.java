@@ -5,10 +5,10 @@ import java.util.Iterator;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.collect.Iterators;
 
-public final class FailsafeIterable<T> implements Iterable<Result<?, T>> {
+public final class IterableFetcherWrapper<T> implements Iterable<Result<?, T>> {
 	private final Iterable<T> iterable;
 	
-	public FailsafeIterable(Iterable<T> iterable) {
+	public IterableFetcherWrapper(Iterable<T> iterable) {
 		this.iterable = iterable;
 	}
 	

@@ -1,7 +1,6 @@
 package com.freiheit.fuava.simplebatch.fsjobs.downloader;
 
 import java.util.List;
-import java.util.Map;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
@@ -14,8 +13,6 @@ import com.freiheit.fuava.simplebatch.persist.PersistenceAdapter;
 import com.freiheit.fuava.simplebatch.persist.Persistences;
 import com.freiheit.fuava.simplebatch.process.Processor;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
 
 /**
  * An importer that imports files from the file system, adhering to the control
@@ -83,6 +80,10 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             return this;
         }
 
+        /**
+         * The amount of items from the fetch stage that are put together in a list and passed on to the "Downloader" stage.
+         * If your downloader supports batch fetching, you can use this setting to control the amount of items in one batch.
+         */
         public Builder<Id, Data> setDownloaderBatchSize(
                 int processingBatchSize ) {
             builder.setProcessingBatchSize( processingBatchSize );
@@ -98,23 +99,6 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             return this;
         }
 
-        /**
-         * Fetches the Ids of the documents to download.
-         */
-        public Builder<Id, Data> setIdsFetcher(
-                Iterable<Id> idsFetcher ) {
-            builder.setFetcher( idsFetcher );
-            return this;
-        }
-
-        /**
-         * Fetches the Ids of the documents to download.
-         */
-        public Builder<Id, Data> setIdsFetcher(
-                Supplier<Iterable<Id>> idsFetcher ) {
-            builder.setFetcher( idsFetcher );
-            return this;
-        }
 
         /**
          * Uses the Ids to download the data.
@@ -122,36 +106,6 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         public Builder<Id, Data> setDownloader(
                 Processor<Id, Data> byIdsFetcher ) {
             builder.setProcessor( byIdsFetcher );
-            return this;
-        }
-
-        /**
-         * Uses the Ids to download the data. 
-         * 
-         * <br>
-         * <p><b>Note</b> that the function needs to support retry: 
-         * If processing of a non-singleton list fails, it will be 
-         * retried with each item of the list as a singleton input list.</p>
-         * 
-         */
-        public Builder<Id, Data> setRetryableDownloaderToMap(
-                Function<List<Id>, Map<Id, Data>> retryableFunction ) {
-            builder.setRetryableProcessorToMap( retryableFunction );
-            return this;
-        }
-
-        /**
-         * Uses the Ids to download the data.
-         * 
-         * <br>
-         * <p><b>Note</b> that the function needs to support retry: 
-         * If processing of a non-singleton list fails, it will be 
-         * retried with each item of the list as a singleton input list.</p>
-         * 
-         */
-        public Builder<Id, Data> setRetryableDownloader(
-                Function<List<Id>, List<Data>> retryableFunction ) {
-            builder.setRetryableProcessor( retryableFunction );
             return this;
         }
 

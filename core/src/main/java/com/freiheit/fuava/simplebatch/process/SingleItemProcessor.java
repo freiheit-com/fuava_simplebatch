@@ -3,7 +3,7 @@ package com.freiheit.fuava.simplebatch.process;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Function;
 
-public class SingleItemProcessor<Input, Output> extends AbstractSingleItemProcessor<Input, Output> {
+class SingleItemProcessor<Input, Output> extends AbstractSingleItemProcessor<Input, Output> {
 	private final Function<Input, Output> func;
 	
 	public SingleItemProcessor(Function<Input, Output> func) {

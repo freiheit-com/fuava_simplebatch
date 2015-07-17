@@ -9,45 +9,35 @@
  * freiheit.com technologies GmbH.
  */
 
-package com.freiheit.fuava.simplebatch.fsjobs.importer;
+package com.freiheit.fuava.simplebatch.process;
 
 import java.io.File;
 
-import com.freiheit.fuava.simplebatch.process.Processor;
+import com.freiheit.fuava.simplebatch.fsjobs.importer.ControlFile;
+import com.freiheit.fuava.simplebatch.fsjobs.importer.FileMover;
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.collect.ImmutableList;
 
 /**
  * @author tim.lessner@freiheit.com
  * @author klas.kalass@freiheit.com
  */
-public class PrepareControlledFile implements Processor<ControlFile, File> {
+class ControlledFileMovingProcessor extends AbstractSingleItemProcessor<ControlFile, File> {
     private final FileMover fileMover = new FileMover();
     private final String processingDir;
-    private final String downloadDir;
-
-    public PrepareControlledFile( final String processingDir, final String downloadDir) {
+    
+    public ControlledFileMovingProcessor( final String processingDir) {
         this.processingDir = processingDir;
-        this.downloadDir = downloadDir;
     }
 
     @Override
-    public Iterable<Result<ControlFile, File>> process( final Iterable<ControlFile> inputs ) {
-        final ImmutableList.Builder<Result<ControlFile, File>> builder = ImmutableList.<Result<ControlFile, File>>builder();
-        for ( final ControlFile ctl : inputs ) {
-            builder.add(process(ctl));
-        }
-        return builder.build();
-    }
-
-	private Result<ControlFile, File> process(final ControlFile ctl) {
+    public Result<ControlFile, File> processItem(ControlFile ctl) {
 		try {
 
 		    //Move ctl file before processing. Do never work in the directory where all the data is written to!
 			fileMover.moveFile( ctl.getFile(), processingDir );
 
 		    //move file that is controlled by the control file
-		    final File controlledFile = new File( downloadDir + "/" + ctl.getPathToControlledFile() );
+		    final File controlledFile = ctl.getControlledFile();
 		    final File processingFile = fileMover.moveFile( controlledFile, processingDir );
 
 		    return Result.success( ctl, processingFile ) ;

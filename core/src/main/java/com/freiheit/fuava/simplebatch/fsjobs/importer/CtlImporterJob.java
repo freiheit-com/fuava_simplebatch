@@ -6,18 +6,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
-import com.freiheit.fuava.simplebatch.fetch.FailsafeFetcherImpl;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
+import com.freiheit.fuava.simplebatch.fetch.Fetchers;
 import com.freiheit.fuava.simplebatch.logging.ProcessingBatchListener;
 import com.freiheit.fuava.simplebatch.logging.ProcessingItemListener;
 import com.freiheit.fuava.simplebatch.persist.Persistence;
-import com.freiheit.fuava.simplebatch.persist.Persistences;
-import com.freiheit.fuava.simplebatch.process.SingleItemProcessor;
 import com.freiheit.fuava.simplebatch.process.Processor;
 import com.freiheit.fuava.simplebatch.process.Processors;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.google.common.base.Function;
-import com.google.common.base.Supplier;
 
 /**
  * An importer that imports files from the file system, adhering to the control file protocol.
@@ -112,6 +109,9 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
 		public Builder() {
 		}
 
+		/**
+		 * Controls settings like download directory, processing directory etc.
+		 */
 		public Builder<Data> setConfiguration(Configuration configuration) {
 			this.configuration = configuration;
 			return this;
@@ -119,7 +119,11 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
 
 
 		/**
-		 * The number of files to read (and subsequently persist) together  in one batch.
+		 * Controls the number of Data items which will be passed  
+		 * to the content persistence stage in one list.
+		 * 
+		 * Note that your file may contain more items. The partitioning into lists is lazy.
+		 * 
 		 */
 		public Builder<Data> setContentBatchSize(int processingBatchSize) {
 			this.processingBatchSize = processingBatchSize;
@@ -127,23 +131,24 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
 		}
 
 
+		/**
+		 * The given function is used for each file to convert the contents of that file (accessed by an {@link InputStream}) 
+		 * into an iterable. 
+		 * 
+		 * Note that your Iterable will be processed lazily by creating partitions of size {@link #setContentBatchSize(int)}.
+		 * After that, it will be passed to the persistence configured in {@link #setContentPersistence(Persistence)}. 
+		 * 
+		 */
 		public Builder<Data> setFileInputStreamReader(Function<InputStream, Iterable<Data>> documentReader) {
 			this.documentReader = documentReader;
 			return this;
 		}
 
 		/**
-         * <br>
-         * <p><b>Note</b> that the function needs to support retry: 
-         * If processing of a non-singleton list fails, it will be 
-         * retried with each item of the list as a singleton input list.</p>
-         * 
+		 * Controls where to store a batch of the data read from your file. 
+		 * 
+		 * The size of the list which is passed to this persistence is controlled by {@link #setContentBatchSize(int)}
 		 */
-		public <PersistenceResult> Builder<Data> setRetryableContentPersistence(Function<List<Data>, List<PersistenceResult>> persistence) {
-			contentPersistence = Persistences.retryableBatch(persistence);
-			return this;
-		}
-
 		public <PersistenceResult> Builder<Data> setContentPersistence(Persistence<Data, Data, PersistenceResult> persistence) {
 			contentPersistence = persistence;
 			return this;
@@ -168,19 +173,22 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
 			contentProcessingListeners.add( new ProcessingBatchListener<Data, Data>(LOG_NAME_CONTENT_PROCESSING_BATCH) );
 			contentProcessingListeners.add( new ProcessingItemListener<Data, Data>(LOG_NAME_CONTENT_PROCESSING_ITEM) );
 
-			final Supplier<Iterable<ControlFile>> controlFileFetcher = new DirectoryFileFetcher<ControlFile>(
-					this.configuration.getDownloadDirPath(), this.configuration.getControlFileEnding(),
-					new ReadControlFileFunction()
-					);
+			final BatchJob.Builder<Data, Data> builder = BatchJob.<Data, Data>builder()
+					.setProcessingBatchSize(processingBatchSize)
+					.setProcessor(Processors.identity())
+					.setPersistence(contentPersistence);
 
-			final Processor<Iterable<Data>, Iterable<Data>> innerJobProcessor = new InnerJobProcessor<Data>(
-					processingBatchSize, contentProcessingListeners, contentPersistence
-					);
+			for (ProcessingResultListener<Data, Data> l: contentProcessingListeners) {
+				builder.addListener(l);
+			}
+
+
+			final Processor<Iterable<Data>, Iterable<Data>> innerJobProcessor = Processors.runSingleItemBatchJobProcessor(builder);
 			final Function<File, Iterable<Data>> fileProcessorFunction = new FileToInputStreamFunction<>(this.documentReader);
-			final Processor<File, Iterable<Data>> fileProcessor = new SingleItemProcessor<File, Iterable<Data>>(fileProcessorFunction);
-			final Processor<ControlFile, File> prepare = new PrepareControlledFile(configuration.getProcessingDirPath(), configuration.getDownloadDirPath());
-			final Processor<ControlFile, Iterable<Data>> controlFileProcessor = Processors.compose(fileProcessor, prepare);
-			final Processor<ControlFile, Iterable<Data>> processor = Processors.compose(innerJobProcessor, controlFileProcessor);
+			final Processor<File, Iterable<Data>> fileProcessor = Processors.single(fileProcessorFunction);
+			final Processor<ControlFile, File> controlledFileMover = Processors.controlledFileMover(configuration.getProcessingDirPath());
+			final Processor<ControlFile, Iterable<Data>> controlledFileProcessor = Processors.compose(fileProcessor, controlledFileMover);
+			final Processor<ControlFile, Iterable<Data>> processor = Processors.compose(innerJobProcessor, controlledFileProcessor);
 			
 			final FileMovingPersistence<Iterable<Data>> persistence = new FileMovingPersistence<Iterable<Data>>(
 					configuration.getProcessingDirPath(), 
@@ -191,7 +199,7 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
 
 			return new CtlImporterJob<Data>(
 					1 /*process one file at a time, no use for batching*/, 
-					new FailsafeFetcherImpl<ControlFile>(controlFileFetcher), 
+					Fetchers.folderFetcher(this.configuration.getDownloadDirPath(), this.configuration.getControlFileEnding(), new ReadControlFileFunction(this.configuration.getDownloadDirPath())), 
 					processor, 
 					persistence, 
 					fileProcessingListeners);

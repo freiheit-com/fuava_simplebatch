@@ -20,16 +20,20 @@ import com.google.common.base.MoreObjects;
  */
 public class ControlFile {
 
-    private final String pathToControlledFile;
+    private final File controlledFile;
     private final File file;
 
-    public ControlFile(final String pathToControlledFile, final File file) {
-        this.pathToControlledFile = pathToControlledFile;
+    public ControlFile(String sourceDir, final String pathToControlledFile, final File file) {
+        this.controlledFile = new File(sourceDir, pathToControlledFile);
         this.file = file;
     }
 
-    public String getPathToControlledFile() {
-        return pathToControlledFile;
+    public File getControlledFile() {
+    	return controlledFile;
+    }
+
+    public String getControlledFileName() {
+    	return controlledFile.getName();
     }
 
     public String getFileName() {
@@ -43,7 +47,7 @@ public class ControlFile {
     @Override
     public String toString() {
     	return MoreObjects.toStringHelper(this)
-    			.add("file", pathToControlledFile)
+    			.add("file", controlledFile)
     			.add("ctl", file)
     			.toString();
     }

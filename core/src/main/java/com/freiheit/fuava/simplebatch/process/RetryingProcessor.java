@@ -25,7 +25,7 @@ import com.google.common.collect.Sets;
  * @param <Input>
  * @param <Output>
  */
-public class RetryingProcessor<Input, Output> implements Processor<Input, Output> {
+class RetryingProcessor<Input, Output> implements Processor<Input, Output> {
 	private final Function<List<Input>, Map<Input, Output>> _fkt;
 	
 	

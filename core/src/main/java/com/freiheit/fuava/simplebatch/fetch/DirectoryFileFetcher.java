@@ -9,7 +9,7 @@
  * freiheit.com technologies GmbH.
  */
 
-package com.freiheit.fuava.simplebatch.fsjobs.importer;
+package com.freiheit.fuava.simplebatch.fetch;
 
 import java.io.File;
 import java.util.Arrays;
@@ -21,7 +21,7 @@ import com.google.common.collect.FluentIterable;
 /**
  * @author tim.lessner@freiheit.com
  */
-public class DirectoryFileFetcher<T> implements Supplier<Iterable<T>>{
+class DirectoryFileFetcher<T> implements Supplier<Iterable<T>>{
 
     private final String filter;
 	private final String uri;

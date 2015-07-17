@@ -14,8 +14,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.freiheit.fuava.simplebatch.fetch.Fetchers;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob.ConfigurationImpl;
 import com.freiheit.fuava.simplebatch.persist.PersistenceAdapter;
+import com.freiheit.fuava.simplebatch.process.Processors;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.google.common.base.Function;
@@ -67,8 +69,8 @@ public class CtlDownloaderTest {
 		final CtlDownloaderJob<Integer, String> downloader = builder
 				.setDownloaderBatchSize(100)
                 // Fetch ids of the data to be downloaded, will be used by the downloader to fetch the data
-                .setIdsFetcher(data.keySet())
-                .setRetryableDownloader(new MapBasedBatchDownloader<Integer, String>(data))
+                .setIdsFetcher(Fetchers.iterable(data.keySet()))
+                .setDownloader(Processors.retryableBatch(new MapBasedBatchDownloader<Integer, String>(data)))
                 .setBatchFileWriterAdapter(new PersistenceAdapter<List<Integer>, List<String>>() {
 					private final String prefix = targetFileName + "_";
 					private final AtomicLong counter = new AtomicLong();

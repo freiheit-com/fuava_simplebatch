@@ -39,7 +39,7 @@ public class FileMovingPersistence<D> extends AbstractSingleItemPersistence<Cont
 	private void moveBoth(final ControlFile input, String targetDir)  throws FailedToMoveFileException {
 		final File dir = new File(processingDir);
 		fileMover.moveFile( new File( dir, input.getFileName()), targetDir );
-		fileMover.moveFile( new File( dir, input.getPathToControlledFile() ), targetDir );
+		fileMover.moveFile( new File( dir, input.getControlledFileName() ), targetDir );
 	}
 
 }
