@@ -52,13 +52,13 @@ final CtlDownloaderJob<ClipboardArticleId, String> downloader =
         // Fetch ids of the data to be downloaded, will be used by the 
         // downloader to fetch the data
         .setIdsFetcher( Fetchers....)
-        .setDownloader( Processors....)
-
+        
         // 100 items of the input fetcher will be downloaded in a batch, 
         // and also persisted in a batch. If you use the BatchFileWriterAdapter,
         // this means that those 100 items will be stored together in one file
         .setDownloaderBatchSize( 100 )
-        
+        .setDownloader( Processors....)
+
         // If you want to persist each downloaded item seperately, use instead:
         // downloader.setFileWriterAdapter( ... )
         .setBatchFileWriterAdapter(
