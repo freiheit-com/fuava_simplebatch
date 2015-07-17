@@ -80,15 +80,18 @@ you could register a `ProcessingResultListener`:
 
 ```java
 job.addContentProcessingListener(new ProcessingResultListener<Integer, Integer>() {
-    private final Counts.Builder counter = Counts.builder();
+    private Counts.Builder counter;
+    private String filename;
     @Override
-    public void onBeforeRun() {
-                        
+    public void onBeforeRun(String filename) {
+         this.filename = filename;
+         counter = Counts.builder();
     }
 
     @Override
     public void onAfterRun() {
          Counts counts = counter.build();
+         System.out.println("Results for file: " + filename);
          System.out.println("Errors: " + counts.getError());
          System.out.println("Successes: " + counts.getError());
     }
