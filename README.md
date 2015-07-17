@@ -14,14 +14,28 @@ We provide classes to streamline the following tasks
   - **Downloader / Importer pair** of Command Line Tools (or jobs, if you prefer) that communicate via the filesystem. The Downloader will create control files which will then be used by the importer to read the downloaded file, move it to a processing folder, process it and in the end move it to an archive folder, or failed folder if it failed completely.
   - **Simple Command line tool** that perform some batch job, print statistics and fail if and only if all items failed
 
+## General BatchJob
+The general pattern for implementing a batch job (no matter wether files are used or not) is:
 
-## Downloader (works with Control-File)
+
+```java
+final BatchJob<Input, ProcessedData> job = new BatchJob.Builder<Input, ProcessedData>()
+        .setFetcher( Fetchers....)
+        .setProcessingBatchSize( 100 )
+        .setProcessor( Processors....)
+        .setPersistence( Persistences... )
+        .build();
+downloader.run();
+```
+
+
+[BatchJob.java](https://github.com/freiheit-com/fuava_simplebatch/blob/master/core/src/main/java/com/freiheit/fuava/simplebatch/BatchJob.java)
 
 
 
-## Importer (also works with Control-File)
+## Importer (works with Control-File)
 
-Example for an importer (works together with the above downloader).
+Example for an importer (runs after the  downloader documented below).
 It imports a list of Article instances from a json file.
 ```java
 final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
@@ -108,5 +122,100 @@ job.addContentProcessingListener(new ProcessingResultListener<Article, Article>(
 
 Note that there are convenience Implementations for those loggers available, for example `ItemProgressLoggingListener` and `BatchStatisticsLoggingListener`.
 
-[BatchJob.java](https://github.com/freiheit-com/fuava_simplebatch/blob/master/core/src/main/java/com/freiheit/fuava/simplebatch/BatchJob.java)
+
+## Downloader (works with Control-File)
+Example for a downloader, that persists the fetched items in a batch file, meaning that multiple downloaded items are persisted together.
+
+```java
+final CtlDownloaderJob<ClipboardArticleId, String> downloader = new CtlDownloaderJob.Builder<ClipboardArticleId, String>()
+        .setConfiguration( config )
+        .setDownloaderBatchSize( 100 )
+        // Fetch ids of the data to be downloaded, will be used by the downloader to fetch the data
+        .setIdsFetcher( Fetchers....)
+        .setDownloader( Processors....)
+
+        .setBatchFileWriterAdapter( new PersistenceAdapter<List<ClipboardArticleId>, List<String>>() {
+            private final String prefix = "" + System.currentTimeMillis() + "_";
+            private final AtomicLong counter = new AtomicLong();
+
+            @Override
+            public void write( final Writer writer, final List<String> data ) throws IOException {
+
+                final ImmutableList.Builder<String> builder = ImmutableList.<String> builder();
+                builder.add( "<begin>" );
+                builder.addAll( data );
+                builder.add( "</begin>" );
+                final String string = Joiner.on( '\n' ).join( builder.build() );
+                writer.write( string );
+            }
+
+            @Override
+            public String getFileName( final Result<List<ClipboardArticleId>, List<String>> result ) {
+                return prefix + counter.incrementAndGet();
+            }
+        } )
+        .build();
+downloader.run();
+```
+Example for a 'normal' downloader:
+
+```java
+final CtlDownloaderJob<ClipboardArticleId, String> downloader = new CtlDownloaderJob.Builder<ClipboardArticleId, String>()
+        .setConfiguration( config )
+        .setDownloaderBatchSize( 100 )
+        // Fetch ids of the data to be downloaded, will be used by the downloader to fetch the data
+        .setIdsFetcher( Fetchers....)
+        .setDownloader( Processors....)
+        .setFileWriterAdapter( ... )
+        .build();
+downloader.run();
+```
+
+## Downloader (works with Control-File)
+Example for a downloader, that persists the fetched items in a batch file, meaning that multiple downloaded items are persisted together.
+
+```java
+final CtlDownloaderJob<ClipboardArticleId, String> downloader = new CtlDownloaderJob.Builder<ClipboardArticleId, String>()
+        .setConfiguration( config )
+        .setDownloaderBatchSize( 100 )
+        // Fetch ids of the data to be downloaded, will be used by the downloader to fetch the data
+        .setIdsFetcher( Fetchers....)
+        .setDownloader( Processors....)
+
+        .setBatchFileWriterAdapter( new PersistenceAdapter<List<ClipboardArticleId>, List<String>>() {
+            private final String prefix = "" + System.currentTimeMillis() + "_";
+            private final AtomicLong counter = new AtomicLong();
+
+            @Override
+            public void write( final Writer writer, final List<String> data ) throws IOException {
+
+                final ImmutableList.Builder<String> builder = ImmutableList.<String> builder();
+                builder.add( "<begin>" );
+                builder.addAll( data );
+                builder.add( "</begin>" );
+                final String string = Joiner.on( '\n' ).join( builder.build() );
+                writer.write( string );
+            }
+
+            @Override
+            public String getFileName( final Result<List<ClipboardArticleId>, List<String>> result ) {
+                return prefix + counter.incrementAndGet();
+            }
+        } )
+        .build();
+downloader.run();
+```
+Example for a 'normal' downloader:
+
+```java
+final CtlDownloaderJob<Id, String> downloader = new CtlDownloaderJob.Builder<Id, String>()
+        .setConfiguration( config )
+        .setDownloaderBatchSize( 100 )
+        // Fetch ids of the data to be downloaded, will be used by the downloader to fetch the data
+        .setIdsFetcher( Fetchers....)
+        .setDownloader( Processors....)
+        .setFileWriterAdapter( ... )
+        .build();
+downloader.run();
+```
 
