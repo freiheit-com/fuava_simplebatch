@@ -21,7 +21,8 @@ We provide classes to streamline the following tasks
 
 ## Importer (also works with Control-File)
 
-Example for an importer (works together with the above downloader) from a json file with lists of Article.
+Example for an importer (works together with the above downloader).
+It imports a list of Article instances from a json file.
 ```java
 final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
 
