@@ -1,6 +1,6 @@
 package com.freiheit.fuava.simplebatch.result;
 
-public class ResultStatistics<Input, Output> {
+public class ResultStatistics {
 
 	public static final class Counts {
 		public static final class Builder {
@@ -53,8 +53,8 @@ public class ResultStatistics<Input, Output> {
 		private final Counts.Builder persist = Counts.builder();
 		private boolean hasListenerDelegationFailures = false;
 		
-		public ResultStatistics<Input, Output> build() {
-			return new ResultStatistics<Input, Output>(
+		public ResultStatistics build() {
+			return new ResultStatistics(
 					fetch.build(), 
 					process.build(), 
 					persist.build(),
