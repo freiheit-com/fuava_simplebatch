@@ -53,6 +53,7 @@ public class BatchJob<Input, Output> {
 		private Persistence<Input, Output, ?> persistence;
 
 		private ArrayList<ProcessingResultListener<Input, Output>> listeners = new ArrayList<ProcessingResultListener<Input, Output>>();
+		private String description;
 
 		public Builder() {
 		}
@@ -131,10 +132,21 @@ public class BatchJob<Input, Output> {
 		public ArrayList<ProcessingResultListener<Input, Output>> getListeners() {
 			return listeners;
 		}
-		
-		public BatchJob<Input, Output> build() {
-			return new BatchJob<Input, Output>(processingBatchSize, fetcher, processor, persistence, listeners);
+
+		public Builder<Input, Output> setDescription(String desc) {
+			this.description = desc;
+			return this;
 		}
+
+		public BatchJob<Input, Output> build() {
+			return new BatchJob<Input, Output>(description, processingBatchSize, fetcher, processor, persistence, listeners);
+		}
+
+		
+		public String getDescription() {
+			return description;
+		}
+
 	}
 
 	private final int processingBatchSize;
@@ -143,14 +155,17 @@ public class BatchJob<Input, Output> {
 	private final Persistence<Input, Output, ?> persistence;
 
 	private final List<ProcessingResultListener<Input, Output>> listeners;
+	private final String description;
 
 	protected BatchJob(
+			String description,
 			int processingBatchSize, 
 			Fetcher<Input> fetcher, 
 			Processor<Input, Output> processor, 
 			Persistence<Input, Output, ?> persistence,
 			List<ProcessingResultListener<Input, Output>> listeners
 			) {
+		this.description = description;
 		this.processingBatchSize = processingBatchSize;
 		this.fetcher = fetcher;
 		this.processor = processor;
@@ -170,7 +185,7 @@ public class BatchJob<Input, Output> {
 				ImmutableList.<ProcessingResultListener<Input, Output>>builder().add(resultBuilder).addAll(this.listeners).build()
 				);
 		
-		listeners.onBeforeRun();
+		listeners.onBeforeRun(this.description);
 		
 		final Iterable<Result<?, Input>> sourceIterable = fetcher.fetchAll();
 

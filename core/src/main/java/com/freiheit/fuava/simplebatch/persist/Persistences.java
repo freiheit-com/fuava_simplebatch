@@ -3,6 +3,7 @@ package com.freiheit.fuava.simplebatch.persist;
 import java.io.Writer;
 import java.util.List;
 
+import com.freiheit.fuava.simplebatch.BatchJob;
 import com.google.common.base.Function;
 
 public class Persistences {
@@ -118,5 +119,20 @@ public class Persistences {
     	return new BatchPersistence<Input, Output, ControlFilePersistenceOutputInfo>(controlledFile(dirName, controlFileEnding, adapter));
     }
     
+	/**
+	 * A persistence that takes the Iterable which is passed as a data item and 
+	 * uses it as input to the job builder, which it uses to create a job that will subsequently be executed as an inner job.
+	 * 
+	 * Note that this Persistence always works on a single item of the input data, which must be an iterable.
+	 * 
+	 * Note that this means, that the instances provided to the builder will be used for multiple instances of the (inner) BatchJob.
+	 */
+	public static <Input, Data> Persistence<Input, Iterable<Data>, Iterable<Data>> runSingleItemBatchJobProcessor(
+			Function<Input, String> jobDescriptionFunc,
+			BatchJob.Builder<Data, Data> builder
+		) {
+		return new InnerJobPersistence<Input, Data>(jobDescriptionFunc, builder);
+	}
+
 
 }

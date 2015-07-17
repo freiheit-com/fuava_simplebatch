@@ -2,7 +2,7 @@ package com.freiheit.fuava.simplebatch.result;
 
 public interface ProcessingResultListener<Input, Output> {
 	
-	default void onBeforeRun(){
+	default void onBeforeRun(String description){
 	}
 	
 	default void onAfterRun(){

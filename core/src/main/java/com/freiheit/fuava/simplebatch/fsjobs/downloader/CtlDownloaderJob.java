@@ -80,6 +80,12 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             return this;
         }
 
+        public Builder<Id, Data>  setDescription(String description) {
+			builder.setDescription(description);
+			return this;
+		}
+
+
         /**
          * The amount of items from the fetch stage that are put together in a list and passed on to the "Downloader" stage.
          * If your downloader supports batch fetching, you can use this setting to control the amount of items in one batch.
@@ -152,6 +158,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             	setPersistence(new AbstractStringPersistenceAdapter<Id, Data>() {});
             }
             return new CtlDownloaderJob<Id, Data>(
+            		builder.getDescription(),
                     builder.getProcessingBatchSize(),
                     builder.getFetcher(),
                     builder.getProcessor(),
@@ -163,13 +170,14 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
     }
 
     private CtlDownloaderJob(
+    		String description,
             int processingBatchSize,
             Fetcher<Id> fetcher,
             Processor<Id, Data> processor,
             Configuration configuration,
             Persistence<Id, Data, ?> persistence,
             List<ProcessingResultListener<Id, Data>> listeners ) {
-        super( processingBatchSize, fetcher, processor, persistence, listeners );
+        super( description, processingBatchSize, fetcher, processor, persistence, listeners );
     }
 
 }

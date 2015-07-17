@@ -87,7 +87,7 @@ public class CtlDownloaderTest {
 				})
                 .build();
 		
-		ResultStatistics<Integer, String> results = downloader.run();
+		ResultStatistics results = downloader.run();
 		Assert.assertTrue(results.isAllSuccess());
 		Assert.assertFalse(results.isAllFailed());
 		

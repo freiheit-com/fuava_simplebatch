@@ -11,6 +11,7 @@ import com.freiheit.fuava.simplebatch.fetch.Fetchers;
 import com.freiheit.fuava.simplebatch.logging.BatchStatisticsLoggingListener;
 import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
 import com.freiheit.fuava.simplebatch.persist.Persistence;
+import com.freiheit.fuava.simplebatch.persist.Persistences;
 import com.freiheit.fuava.simplebatch.process.Processor;
 import com.freiheit.fuava.simplebatch.process.Processors;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
@@ -105,6 +106,7 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
 
 		private List<ProcessingResultListener<Data, Data>> contentProcessingListeners = new ArrayList<>();
 		private Persistence<Data, Data, ?> contentPersistence;
+		private String description;
 
 		public Builder() {
 		}
@@ -114,6 +116,11 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
 		 */
 		public Builder<Data> setConfiguration(Configuration configuration) {
 			this.configuration = configuration;
+			return this;
+		}
+
+		public Builder<Data> setDescription(String description) {
+			this.description= description;
 			return this;
 		}
 
@@ -183,21 +190,31 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
 			}
 
 
-			final Processor<Iterable<Data>, Iterable<Data>> innerJobProcessor = Processors.runSingleItemBatchJobProcessor(builder);
+			
 			final Function<File, Iterable<Data>> fileProcessorFunction = new FileToInputStreamFunction<>(this.documentReader);
 			final Processor<File, Iterable<Data>> fileProcessor = Processors.single(fileProcessorFunction);
 			final Processor<ControlFile, File> controlledFileMover = Processors.controlledFileMover(configuration.getProcessingDirPath());
-			final Processor<ControlFile, Iterable<Data>> controlledFileProcessor = Processors.compose(fileProcessor, controlledFileMover);
-			final Processor<ControlFile, Iterable<Data>> processor = Processors.compose(innerJobProcessor, controlledFileProcessor);
+			final Processor<ControlFile, Iterable<Data>> processor = Processors.compose(fileProcessor, controlledFileMover);
 			
-			final FileMovingPersistence<Iterable<Data>> persistence = new FileMovingPersistence<Iterable<Data>>(
+			final Persistence<ControlFile, Iterable<Data>, Iterable<Data>> innerJobProcessor = Persistences.runSingleItemBatchJobProcessor(
+					new Function<ControlFile, String>() {
+
+						@Override
+						public String apply( ControlFile ctl) {
+							return ctl.getControlledFileName();
+						}
+					}, builder
+				);
+			
+			final FileMovingPersistence<Iterable<Data>> fileMovingPersistence = new FileMovingPersistence<Iterable<Data>>(
 					configuration.getProcessingDirPath(), 
 					configuration.getArchivedDirPath(), 
 					configuration.getFailedDirPath()
 				);
-
+			Persistence<ControlFile, Iterable<Data> , Void> persistence = Persistences.compose(fileMovingPersistence, innerJobProcessor);
 
 			return new CtlImporterJob<Data>(
+					description,
 					1 /*process one file at a time, no use for batching*/, 
 					Fetchers.folderFetcher(this.configuration.getDownloadDirPath(), this.configuration.getControlFileEnding(), new ReadControlFileFunction(this.configuration.getDownloadDirPath())), 
 					processor, 
@@ -209,12 +226,13 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, Iterable<Data>>
 
 
 	private CtlImporterJob(
+			String description,
 			int processingBatchSize,
 			Fetcher<ControlFile> fetcher,
 			Processor<ControlFile, Iterable<Data>> processor,
 			Persistence<ControlFile, Iterable<Data>, ?> persistence,
 			List<ProcessingResultListener<ControlFile, Iterable<Data>>> listeners) {
-		super(processingBatchSize, fetcher, processor, persistence, listeners);
+		super(description, processingBatchSize, fetcher, processor, persistence, listeners);
 	}
 
 

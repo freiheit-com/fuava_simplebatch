@@ -24,10 +24,10 @@ public class DelegatingProcessingResultListener<Input, Output> implements Proces
 	}
 	
 	@Override
-	public void onBeforeRun() {
+	public void onBeforeRun(String description) {
 		for (ProcessingResultListener<Input, Output> l :listeners) {
 			try {
-				l.onBeforeRun();
+				l.onBeforeRun(description);
 			} catch (Throwable t) {
 				onListenerFailure(l, "onBeforeRun", t);
 			}
