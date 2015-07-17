@@ -84,6 +84,7 @@ job.addContentProcessingListener(new ProcessingResultListener<Integer, Integer>(
     private String filename;
     @Override
     public void onBeforeRun(String filename) {
+         // the name of the proccessed file will be provided here
          this.filename = filename;
          counter = Counts.builder();
     }
