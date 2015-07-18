@@ -72,7 +72,7 @@ final BatchJob<Input, ProcessedData> job =
         .setProcessor( Processors....)
         .setProcessingBatchSize( 100 )
         .build();
-downloader.run();
+job.run();
 ```
 
 
