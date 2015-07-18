@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -44,6 +45,7 @@ public class CtlImporterTest {
                 4, "vier"
                 );
 
+        final AtomicLong counter = new AtomicLong();
         ResultStatistics downloadResults = new CtlDownloaderJob.Builder<Integer, String>()
                 .setConfiguration(new ConfigurationImpl().setDownloadDirPath(testDirDownloads))
                 .setDownloaderBatchSize(100)
@@ -52,7 +54,7 @@ public class CtlImporterTest {
                 .setFileWriterAdapter(new StringFileWriterAdapter<Integer>() {
                     @Override
                     public String getFileName(Result<Integer, String> result) {
-                        return System.currentTimeMillis() + ".tmp";
+                        return counter.incrementAndGet() + ".tmp";
                     }
                 })
                 .build()
