@@ -20,34 +20,34 @@ import com.freiheit.fuava.simplebatch.result.Result;
 /**
  * Logs the {@link ResultItemStat} for each downloaded, processed, or persisted
  * element if it has failed.
- * 
+ *
  * @author tim.lessner@freiheit.com
  */
 public class ItemProgressLoggingListener<Input, Output> implements ProcessingResultListener<Input, Output> {
     private final Logger log;
+    private String prefix;
 
     public ItemProgressLoggingListener(String logName) {
-		log = LoggerFactory.getLogger( logName );
-	}
-    
-    @Override
-    public void onFetchResult( final Result<?, Input> result ) {
-        if ( result.isFailed() ) {
-            log.info( ResultItemStat.formatted(Event.FETCH, result.getFailureMessages(), result.getThrowables(),  result.getInput().toString() ) );
-        }
+        log = LoggerFactory.getLogger( logName );
     }
 
     @Override
-    public void onProcessingResult( final Result<Input, Output> result ) {
-        if ( result.isFailed() ) {
-            log.info( ResultItemStat.formatted(Event.PROCESS, result.getFailureMessages(), result.getThrowables(), result.getInput().toString()) );
-        }
+    public void onBeforeRun(String description) {
+        prefix = description;
     }
 
     @Override
-    public void onPersistResult( final Result<Input, ?> result ) {
+    public void onFetchResult( final Result<Input, Input> result ) {
         if ( result.isFailed() ) {
-            log.info( ResultItemStat.formatted( Event.PERSIST, result.getFailureMessages(), result.getThrowables(), result.getInput().toString() ) );
+            log.info( ResultItemStat.formatted(Event.FETCH, result.getFailureMessages(), result.getThrowables(),  result.getInput() ) );
+        }
+    }
+
+
+    @Override
+    public void onProcessingResult( final Result<Input, ?> result ) {
+        if ( result.isFailed() ) {
+            log.info( ResultItemStat.formatted( Event.PERSIST, result.getFailureMessages(), result.getThrowables(), result.getInput() ) );
         }
     }
 

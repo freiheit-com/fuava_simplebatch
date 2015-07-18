@@ -6,18 +6,17 @@ import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.logging.BatchStatisticsLoggingListener;
 import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
-import com.freiheit.fuava.simplebatch.persist.AbstractStringPersistenceAdapter;
-import com.freiheit.fuava.simplebatch.persist.ControlFilePersistenceOutputInfo;
-import com.freiheit.fuava.simplebatch.persist.Persistence;
-import com.freiheit.fuava.simplebatch.persist.PersistenceAdapter;
-import com.freiheit.fuava.simplebatch.persist.Persistences;
-import com.freiheit.fuava.simplebatch.process.Processor;
+import com.freiheit.fuava.simplebatch.processor.AbstractStringFileWriterAdapter;
+import com.freiheit.fuava.simplebatch.processor.FileWriterAdapter;
+import com.freiheit.fuava.simplebatch.processor.Processor;
+import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
+import com.google.common.base.Preconditions;
 
 /**
  * An importer that imports files from the file system, adhering to the control
  * file protocol.
- * 
+ *
  * @author klas
  *
  * @param <Id>
@@ -30,16 +29,18 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
     public interface Configuration {
 
-		String getDownloadDirPath();
+        String getDownloadDirPath();
 
-		String getControlFileEnding();
+        String getControlFileEnding();
 
     }
 
+    public static final String DEFAULT_CONFIG_DOWNLOAD_DIR_PATH = "/tmp/downloading";
+    public static final String DEFAULT_CONFIG_CONTROL_FILE_ENDING = ".ctl";
     public static final class ConfigurationImpl implements Configuration {
 
-        private String downloadDirPath = "/tmp/downloading";
-        private String controlFileEnding = ".ctl";
+        private String downloadDirPath = DEFAULT_CONFIG_DOWNLOAD_DIR_PATH;
+        private String controlFileEnding = DEFAULT_CONFIG_CONTROL_FILE_ENDING;
 
         @Override
         public String getDownloadDirPath() {
@@ -64,11 +65,11 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
     }
 
     public static final class Builder<Id, Data> {
-		private static final String LOG_NAME_BATCH = "ITEMS DOWNLOADED";
+        private static final String LOG_NAME_BATCH = "ITEMS DOWNLOADED";
         private static final String LOG_NAME_ITEM = "ITEM";
-		private final BatchJob.Builder<Id, Data> builder = BatchJob.builder();
-        private Persistence<Id, Data, ?>  persistence;
-        
+        private final BatchJob.Builder<Id, Data> builder = BatchJob.builder();
+        private Processor<Id, Data, ?>  fileWriter;
+
         private Configuration configuration;
 
         public Builder() {
@@ -81,9 +82,9 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         }
 
         public Builder<Id, Data>  setDescription(String description) {
-			builder.setDescription(description);
-			return this;
-		}
+            builder.setDescription(description);
+            return this;
+        }
 
 
         /**
@@ -110,8 +111,8 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
          * Uses the Ids to download the data.
          */
         public Builder<Id, Data> setDownloader(
-                Processor<Id, Data> byIdsFetcher ) {
-            builder.setProcessor( byIdsFetcher );
+                Processor<Id, Id, Data> byIdsFetcher ) {
+            builder.setPersistence( byIdsFetcher );
             return this;
         }
 
@@ -127,57 +128,47 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             return this;
         }
 
-        public Builder<Id, Data> setFileWriterAdapter( PersistenceAdapter<Id, Data> persistenceAdapter ) {
-            setPersistence(persistenceAdapter);
+        public Builder<Id, Data> setFileWriterAdapter( FileWriterAdapter<Id, Data> persistenceAdapter ) {
+            this.fileWriter = Processors.controlledFileWriter(configuration.getDownloadDirPath(), configuration.getControlFileEnding(), persistenceAdapter);
             return this;
         }
-        
-        public Builder<Id, Data> setBatchFileWriterAdapter( PersistenceAdapter<List<Id>, List<Data>> persistenceAdapter ) {
-            this.persistence = Persistences.controlledBatchFile(
-            		configuration.getDownloadDirPath(),
-            		configuration.getControlFileEnding(),
-            		persistenceAdapter
-        		);
+
+        public Builder<Id, Data> setBatchFileWriterAdapter( FileWriterAdapter<List<Id>, List<Data>> persistenceAdapter ) {
+            this.fileWriter = Processors.controlledBatchFileWriter(
+                    configuration.getDownloadDirPath(),
+                    configuration.getControlFileEnding(),
+                    persistenceAdapter
+                    );
             return this;
         }
-        
-        private void setPersistence(PersistenceAdapter<Id, Data> persistenceAdapter) {
-            persistence = createControlledFilePersistence(persistenceAdapter);
-        }
 
-		private <I, O> Persistence<I, O, ControlFilePersistenceOutputInfo> createControlledFilePersistence(
-				PersistenceAdapter<I, O> persistenceAdapter) {
-			return Persistences.controlledFile(configuration.getDownloadDirPath(), configuration.getControlFileEnding(), persistenceAdapter);
-		}
-
-		
         public CtlDownloaderJob<Id, Data> build() {
             builder.addListener( new BatchStatisticsLoggingListener<Id, Data>(LOG_NAME_BATCH) );
             builder.addListener( new ItemProgressLoggingListener<Id, Data>(LOG_NAME_ITEM) );
-            if (persistence == null) {
-            	setPersistence(new AbstractStringPersistenceAdapter<Id, Data>() {});
+            if (fileWriter == null) {
+                setFileWriterAdapter(new AbstractStringFileWriterAdapter<Id, Data>() {});
+                Preconditions.checkNotNull(fileWriter);
             }
+            Processor<Id, Id, ?> p = Processors.compose(fileWriter, builder.getPersistence());
             return new CtlDownloaderJob<Id, Data>(
-            		builder.getDescription(),
+                    builder.getDescription(),
                     builder.getProcessingBatchSize(),
                     builder.getFetcher(),
-                    builder.getProcessor(),
                     this.configuration == null? new ConfigurationImpl(): this.configuration,
-                    persistence,
-                    builder.getListeners() );
+                            p,
+                            builder.getListeners() );
         }
 
     }
 
     private CtlDownloaderJob(
-    		String description,
+            String description,
             int processingBatchSize,
             Fetcher<Id> fetcher,
-            Processor<Id, Data> processor,
             Configuration configuration,
-            Persistence<Id, Data, ?> persistence,
+            Processor<Id, Id, ?> persistence,
             List<ProcessingResultListener<Id, Data>> listeners ) {
-        super( description, processingBatchSize, fetcher, processor, persistence, listeners );
+        super( description, processingBatchSize, fetcher, persistence, listeners );
     }
 
 }

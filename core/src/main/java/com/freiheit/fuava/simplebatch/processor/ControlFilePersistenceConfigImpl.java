@@ -1,4 +1,4 @@
-package com.freiheit.fuava.simplebatch.persist;
+package com.freiheit.fuava.simplebatch.processor;
 
 final class ControlFilePersistenceConfigImpl implements
 		ControlFilePersistence.Configuration {

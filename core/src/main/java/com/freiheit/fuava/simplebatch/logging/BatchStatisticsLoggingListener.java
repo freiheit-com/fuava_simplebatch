@@ -27,26 +27,18 @@ public class BatchStatisticsLoggingListener<Input, Output> implements Processing
     private final Logger log;
 
     public BatchStatisticsLoggingListener(String logFileName) {
-    	log = LoggerFactory.getLogger(logFileName);
-	}
-    
+        log = LoggerFactory.getLogger(logFileName);
+    }
+
     @Override
-    public void onFetchResults(final Iterable<Result<?, Input>> result) {
+    public void onFetchResults(final Iterable<Result<Input, Input>> result) {
         final int failed = FluentIterable.from(result).filter(Result::isFailed).size();
         final int success = FluentIterable.from(result).filter(Result::isSuccess).size();
         log.info(ResultBatchStat.of(Event.FETCH, failed, success));
     }
 
     @Override
-    public void onProcessingResults(final Iterable<Result<Input, Output>> iterable) {
-        final int failed = FluentIterable.from(iterable).filter(Result::isFailed).size();
-        final int success = FluentIterable.from(iterable).filter(Result::isSuccess).size();
-        log.info(ResultBatchStat.of(Event.PROCESS, failed, success));
-
-    }
-
-    @Override
-    public void onPersistResults(final Iterable<? extends Result<Input, ?>> iterable) {
+    public void onProcessingResults(final Iterable<? extends Result<Input, ?>> iterable) {
         final int failed = FluentIterable.from(iterable).filter(Result::isFailed).size();
         final int success = FluentIterable.from(iterable).filter(Result::isSuccess).size();
         log.info(ResultBatchStat.of(Event.PERSIST, failed, success));

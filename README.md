@@ -10,7 +10,7 @@ With SimpleBatch, you can write your Jobs such that they comply to the following
   - **Communicate processing status**. You will recieve processing statistics at the end of your job and you can register listeners to keep you informed.
 
 We provide classes to streamline the following tasks
-  - Any type of plain old BatchJob that has a **data fetching, a data processing and a persistence stage**.
+  - Any type of plain old BatchJob that has a **data fetching and a processing or persistence stage**.
   - **Downloader / Importer pair** of Command Line Tools (or jobs, if you prefer) that communicate via the filesystem. The Downloader will create control files which will then be used by the importer to read the downloaded file, move it to a processing folder, process it and in the end move it to an archive folder, or failed folder if it failed completely.
   - **Simple Command line tool** that perform some batch job, print statistics and fail if and only if all items failed
 
@@ -23,11 +23,9 @@ final BatchJob<Input, ProcessedData> job =
     new BatchJob.Builder<Input, ProcessedData>()
         // fetches the data from any source, the returned iterable may be lazy
         .setFetcher( Fetchers....)
-        // processes partitions of the iterable provided by the fetcher
+        // processes (often persists) partitions of the iterable provided by the fetcher
         .setProcessor( Processors....)
         .setProcessingBatchSize( 100 )
-        // persists the result of the processing
-        .setPersistence( Persistences... )
         .build();
 downloader.run();
 ```
@@ -62,7 +60,7 @@ final CtlDownloaderJob<ClipboardArticleId, String> downloader =
         // If you want to persist each downloaded item seperately, use instead:
         // downloader.setFileWriterAdapter( ... )
         .setBatchFileWriterAdapter(
-          new PersistenceAdapter<List<ClipboardArticleId>, List<String>>() {
+          new FileWriterAdapter<List<ClipboardArticleId>, List<String>>() {
             private final String prefix = "" + System.currentTimeMillis() + "_";
             private final AtomicLong counter = new AtomicLong();
 
@@ -112,12 +110,12 @@ final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
     // Persist a partition of the iterator returned by the FileInputStreamReader. 
     // The maximum size of the partition is set to ContentBatchSize above.
     // Will be called repeatedly until the iterator has no more items.
-    .setContentPersistence(
+    .setContentProcessor(
 
         // If apply of the given function fails, it will be called again 
         // with singleton lists of the given items, isolating the failed
         // items.
-        Persistences.retryableBatchedFunction(
+        Processors.retryableBatchedFunction(
             new Function<List<Article>, List<Article>>() {
                 @Override
                 public List<Integer> apply(List<Article> data) {
@@ -138,8 +136,8 @@ final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
 // finally moves the file (together with its control file) to the archive 
 // directory, or the failed directory if all items in the file failed
 ResultStatistics result = job.run();
-int numFailedFiles = result.getPersistCounts().getError();
-int numProcessedFiles = result.getPersistCounts().getSuccess();
+int numFailedFiles = result.getProcessingCounts().getError();
+int numProcessedFiles = result.getProcessingCounts().getSuccess();
 
 ```
 
@@ -170,7 +168,7 @@ job.addContentProcessingListener(new ProcessingResultListener<Article, Article>(
     }
 
     @Override
-    public void onPersistResult(Result<Article,?> result) {
+    public void onProcessingResult(Result<Article,?> result) {
         // Will be called for each item after it was stored in the database. 
         counter.count(result);
     }

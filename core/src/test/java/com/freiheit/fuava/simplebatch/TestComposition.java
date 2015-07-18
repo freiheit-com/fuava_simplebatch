@@ -24,8 +24,8 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.freiheit.fuava.simplebatch.process.Processor;
-import com.freiheit.fuava.simplebatch.process.Processors;
+import com.freiheit.fuava.simplebatch.processor.Processor;
+import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -61,8 +61,8 @@ public class TestComposition {
             f3String, new FileContentPair( exF3, f3String )
             );
 
-    final ImmutableList<File> nonExistingFiles = ImmutableList.of(
-            new File( "/tmp/a/a" )
+    final ImmutableList<Result<File, File>> nonExistingFiles = ImmutableList.of(
+            asResult(new File( "/tmp/a/a" ))
             );
 
     @BeforeClass
@@ -74,13 +74,18 @@ public class TestComposition {
         }
     }
 
+    private <T> Result<T, T> asResult(T data) {
+        return Result.success(data, data);
+    }
+
     @Test
     public void testComposition() {
-        final Processor<File, String> compose = makeComposedProcessorFileStringProcessor();
-        final List<File> testFiles = testFileContentPairs
+        final Processor<File, File, String> compose = makeComposedProcessorFileStringProcessor();
+        final List<Result<File, File>> testFiles = testFileContentPairs
                 .values()
                 .stream()
                 .map( fileContentPair -> fileContentPair.file )
+                .map( file -> Result.success(file, file) )
                 .collect( Collectors.toList() );
         final Iterable<Result<File, String>> processed = compose.process( testFiles );
 
@@ -94,7 +99,7 @@ public class TestComposition {
 
     @Test
     public void testForFailures() {
-        final Processor<File, String> compose = makeComposedProcessorFileStringProcessor();
+        final Processor<File, File, String> compose = makeComposedProcessorFileStringProcessor();
 
         final Iterable<Result<File, String>> processed = compose.process( nonExistingFiles );
         Assert.assertEquals( Arrays.asList( processed ).size(), 1 );
@@ -104,9 +109,9 @@ public class TestComposition {
         }
     }
 
-    private Processor<File, String> makeComposedProcessorFileStringProcessor() {
-        final Processor<File, File> prepareControlledFileProcessor = Processors.fileMover("/tmp" );
-        final Processor<File, String> readFilesToStringTestProcessor = makeReadFilesToStringTestProcessor();
+    private Processor<File, File, String> makeComposedProcessorFileStringProcessor() {
+        final Processor<File ,File, File> prepareControlledFileProcessor = Processors.fileMover("/tmp" );
+        final Processor<File ,File, String> readFilesToStringTestProcessor = makeReadFilesToStringTestProcessor();
 
         return Processors.compose(
                 readFilesToStringTestProcessor,
@@ -114,8 +119,8 @@ public class TestComposition {
                 );
     }
 
-    private Processor<File, String> makeReadFilesToStringTestProcessor() {
-        return Processors.single(new Function<File, String>() {
+    private Processor<File, File, String> makeReadFilesToStringTestProcessor() {
+        return Processors.singleItemFunction(new Function<File, String>() {
             @Nullable
             @Override
             public String apply( final File input ) {

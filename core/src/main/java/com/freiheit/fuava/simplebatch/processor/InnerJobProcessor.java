@@ -1,4 +1,4 @@
-package com.freiheit.fuava.simplebatch.persist;
+package com.freiheit.fuava.simplebatch.processor;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.Fetchers;
@@ -6,11 +6,11 @@ import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.google.common.base.Function;
 
-final class InnerJobPersistence<Input, Data> extends AbstractSingleItemPersistence<Input, Iterable<Data>, Iterable<Data>> {
+final class InnerJobProcessor<Input, Data> extends AbstractSingleItemProcessor<Input, Iterable<Data>, Iterable<Data>> {
     private final Function<Input, String> jobDescriptionFunc;
     private final BatchJob.Builder<Data, Data> builder;
 
-    public InnerJobPersistence(
+    public InnerJobProcessor(
             Function<Input, String> jobDescriptionFunc,
             BatchJob.Builder<Data, Data> builder
             ) {
@@ -19,7 +19,11 @@ final class InnerJobPersistence<Input, Data> extends AbstractSingleItemPersisten
     }
 
     @Override
-    public Result<Input, Iterable<Data>> persistItem(Result<Input, Iterable<Data>> previous) {
+    public Result<Input, Iterable<Data>> processItem(Result<Input, Iterable<Data>> previous) {
+        if (previous.isFailed()) {
+            // nothing we can do for failed processing items
+            return Result.<Input, Iterable<Data>>builder(previous).failed();
+        }
         Input i = previous.getInput();
         Iterable<Data> output = previous.getOutput();
         String desc = jobDescriptionFunc.apply(i);

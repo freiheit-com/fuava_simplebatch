@@ -14,7 +14,7 @@ package com.freiheit.fuava.simplebatch.logging;
 /**
  * Short statistics of processing one item. Contains the event, the messages (if
  * provided) and the input, e.g., an id of a document.
- * 
+ *
  * @author tim.lessner@freiheit.com
  */
 public class ResultItemStat {
@@ -33,8 +33,8 @@ public class ResultItemStat {
     }
 
     public static String formatted( final Event event, Iterable<String> failureMessage, final Iterable<Throwable> throwables,
-            final String input ) {
-        return new ResultItemStat( event, failureMessage, throwables, input ).format();
+            final Object input ) {
+        return new ResultItemStat( event, failureMessage, throwables, input == null ? null : input.toString() ).format();
     }
 
     private String format() {

@@ -16,8 +16,8 @@ import java.io.File;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.freiheit.fuava.simplebatch.persist.Persistence;
-import com.freiheit.fuava.simplebatch.persist.Persistences;
+import com.freiheit.fuava.simplebatch.processor.Processor;
+import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
@@ -32,9 +32,9 @@ public class TestPersistenceComposition {
         final ImmutableList.Builder<Result<Integer, File>> builder = ImmutableList.<Result<Integer, File>> builder();
         builder.add( Result.success( 1, new File( "foo" ) ) );
         builder.add( Result.success( 2, new File( "foo" ) ) );
-        final Persistence<Integer, File, String> persistence1 = new Persistence<Integer, File, String>() {
+        final Processor<Integer, File, String> persistence1 = new Processor<Integer, File, String>() {
             @Override
-            public Iterable<Result<Integer, String>> persist( final Iterable<Result<Integer, File>> iterable ) {
+            public Iterable<Result<Integer, String>> process( final Iterable<Result<Integer, File>> iterable ) {
                 final ImmutableList.Builder<Result<Integer, String>> builder = ImmutableList.<Result<Integer, String>> builder();
 
                 for ( final Result<Integer, File> toTransform : iterable ) {
@@ -50,9 +50,9 @@ public class TestPersistenceComposition {
             }
         };
 
-        final Persistence<Integer, String, Object> persistence2 = new Persistence<Integer, String, Object>() {
+        final Processor<Integer, String, Object> persistence2 = new Processor<Integer, String, Object>() {
             @Override
-            public Iterable<Result<Integer, Object>> persist( final Iterable<Result<Integer, String>> iterable ) {
+            public Iterable<Result<Integer, Object>> process( final Iterable<Result<Integer, String>> iterable ) {
                 final ImmutableList.Builder<Result<Integer, Object>> builder = ImmutableList.<Result<Integer, Object>> builder();
                 for ( final Result<Integer, String> toTransform : iterable ) {
                     if ( toTransform.isFailed() ) {
@@ -66,8 +66,8 @@ public class TestPersistenceComposition {
             }
         };
 
-        final Persistence<Integer, File, Object> compose = Persistences.compose( persistence2, persistence1 );
-        final Iterable<Result<Integer, Object>> persist = compose.persist( builder.build() );
+        final Processor<Integer, File, Object> compose = Processors.compose( persistence2, persistence1 );
+        final Iterable<Result<Integer, Object>> persist = compose.process( builder.build() );
 
         final int sizeFailed = FluentIterable.from( persist ).filter( Result::isFailed ).toSet().size();
         final int sizeSuccess = FluentIterable.from( persist ).filter( Result::isSuccess ).toSet().size();

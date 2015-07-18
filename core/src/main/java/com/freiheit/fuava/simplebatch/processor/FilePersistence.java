@@ -1,4 +1,4 @@
-package com.freiheit.fuava.simplebatch.persist;
+package com.freiheit.fuava.simplebatch.processor;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -15,14 +15,14 @@ import com.google.common.base.Preconditions;
  * @param <Input>
  * @param <Output>
  */
-class FilePersistence<Input, Output> extends AbstractSingleItemPersistence<Input, Output, FilePersistenceOutputInfo> {
+class FilePersistence<Input, Output> extends AbstractSingleItemProcessor<Input, Output, FilePersistenceOutputInfo> {
     private static final Logger LOG = LoggerFactory.getLogger( FilePersistence.class );
    
 
-    private PersistenceAdapter<Input, Output> adapter;
+    private FileWriterAdapter<Input, Output> adapter;
 	private File basedir;
     
-    public FilePersistence(String dir, PersistenceAdapter<Input, Output> adapter) {
+    public FilePersistence(String dir, FileWriterAdapter<Input, Output> adapter) {
 		this.adapter = Preconditions.checkNotNull(adapter);
 		this.basedir = new File( Preconditions.checkNotNull(dir) );
 		if (!this.basedir.exists()) {
@@ -35,7 +35,7 @@ class FilePersistence<Input, Output> extends AbstractSingleItemPersistence<Input
 	}
     
     @Override
-    public Result<Input, FilePersistenceOutputInfo> persistItem(Result<Input, Output> r) {
+    public Result<Input, FilePersistenceOutputInfo> processItem(Result<Input, Output> r) {
     	if (r.isFailed()) {
 			return Result.<Input, FilePersistenceOutputInfo>builder(r).failed();
 		}

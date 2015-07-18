@@ -1,11 +1,11 @@
-package com.freiheit.fuava.simplebatch.persist;
+package com.freiheit.fuava.simplebatch.processor;
 
 import java.io.IOException;
 import java.io.Writer;
 
 import com.freiheit.fuava.simplebatch.result.Result;
 
-public class AbstractStringPersistenceAdapter<Input, Output> implements PersistenceAdapter<Input, Output>{
+public class AbstractStringFileWriterAdapter<Input, Output> implements FileWriterAdapter<Input, Output>{
 
 	@Override
 	public String getFileName(Result<Input, Output> result) {

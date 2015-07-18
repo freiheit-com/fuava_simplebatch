@@ -1,4 +1,4 @@
-package com.freiheit.fuava.simplebatch.persist;
+package com.freiheit.fuava.simplebatch.processor;
 
 import java.io.File;
 
