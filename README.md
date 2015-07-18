@@ -7,14 +7,59 @@ With SimpleBatch, you can write your Jobs such that they comply to the following
   - **Isolate Failures**. If Processing or Persisting of one Item fails, everything else continues.
   - **Process Batches**. A lot of tasks (for example Database queries) are a lot faster if performed for multiple items at once.
   - **Iterate over large Datasets**. If your Input Iterable is lazy, you can process huge datasets where only the currently processed batches are kept in memory at any one time.
-  - **Communicate processing status**. You will recieve processing statistics at the end of your job and you can register listeners to keep you informed.
+  - **Communicate processing status**. You will receive processing statistics at the end of your job and you can register listeners to keep you informed.
+
+## Basic Usage
+```java
+// Will be used to collect the number of successfully processed (or failed)  items 
+final Counts.Builder statistics = Counts.builder();
+
+// A fetcher will retrieve data from somewhere - here it simply works on a list
+final Fetcher<Integer> fetcher = Fetchers.iterable(ImmutableList.<Integer>of(1, 2, 3, 4));
+
+// A processor takes a list of inputs and does interesting things to them, 
+// for example downloading data or persisting data.
+final Processor<Integer, Integer, Article> processor = 
+    // Retryable means, that the function will be called again if a list with more
+    // than one item fails during processing. It will be called for each of those items 
+    // seperately, wrapped in a singleton list
+	Processors.retryableBatchedFunction(new Function<List<Integer>, List<Article>>() {
+
+		@Override
+		public List<Article> apply(List<Integer> ids) {
+			// Do interesting stuff, maybe using the ids to fetch the Article
+			// and then to store it
+			return ids.stream().map(id -> new Article(id)).collect(Collectors.toList());
+		}
+	});
+
+// Build partitions to iterate over. This means, that your processor will
+// always work on maximum 100 items
+Iterable<List<Result<Integer, Integer>>> partitions = Iterables.partition( 
+	fetcher.fetchAll(), 100 
+);
+
+// Do the real work: iterate over the input data and pass it to the processing stage
+for ( List<Result<Integer, Integer>> sourceResults : partitions) {
+	statistics.addAll(processor.process( sourceResults ));
+}
+
+// Do something useful with the information collected. If you only got errors
+// you might want to throw an exception 
+Counts counts = statistics.build();
+System.out.println("Num Errors: " + counts.getError());
+System.out.println("Num Success: " + counts.getSuccess());
+
+```
+
+## Job-Builders available:
 
 We provide classes to streamline the following tasks
   - Any type of plain old BatchJob that has a **data fetching and a processing or persistence stage**.
   - **Downloader / Importer pair** of Command Line Tools (or jobs, if you prefer) that communicate via the filesystem. The Downloader will create control files which will then be used by the importer to read the downloaded file, move it to a processing folder, process it and in the end move it to an archive folder, or failed folder if it failed completely.
   - **Simple Command line tool** that perform some batch job, print statistics and fail if and only if all items failed
 
-## General BatchJob
+### General BatchJob
 The general pattern for implementing a batch job (no matter wether files are used or not) is:
 
 
@@ -35,7 +80,7 @@ downloader.run();
 
 
 
-## Downloader (works with Control-File)
+### Downloader (works with Control-File)
 This is a ready-made Job Builder for a downloader which persists the fetched items in a batch file, meaning that multiple downloaded items are persisted together. 
 This implementation will create control files as well.
 Those files will later be processed with an importer for which an implementation exists as well (see below).
@@ -89,7 +134,7 @@ final CtlDownloaderJob<ClipboardArticleId, String> downloader =
 downloader.run();
 ```
 
-## Importer (works with Control-File)
+### Importer (works with Control-File)
 
 Example for an importer (runs after the  downloader documented above).
 It imports a list of Article instances from a json file.

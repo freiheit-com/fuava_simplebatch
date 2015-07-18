@@ -23,13 +23,13 @@ public class ResultStatistics {
 
         @Override
         public void onFetchResult(Result<Input, Input> result) {
-            fetch.count(result);
+            fetch.add(result);
         }
 
 
         @Override
         public void onProcessingResult(Result<Input, ?> result) {
-            processing.count(result);
+            processing.add(result);
         }
 
     }
