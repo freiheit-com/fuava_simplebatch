@@ -1,5 +1,7 @@
 package com.freiheit.fuava.simplebatch.fetch;
 
+import com.freiheit.fuava.simplebatch.util.Utils;
+
 public class FetchedItem<T> {
     private final int num;
     private final T value;
@@ -24,8 +26,10 @@ public class FetchedItem<T> {
         return value;
     }
 
+
+
     @Override
     public String toString() {
-        return "[" + this.num + "] " + value;
+        return "[" + this.num + "] " + Utils.toMaxLengthString(value, 40);
     }
 }

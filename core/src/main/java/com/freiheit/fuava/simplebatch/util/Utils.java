@@ -16,6 +16,16 @@ public final class Utils {
         // static util class constructor
     }
 
+    public static String toMaxLengthString(Object value, int maxLength) {
+        if (value == null) {
+            return "null";
+        }
+        String str = value.toString();
+
+        int length = str.length();
+
+        return str.substring(0,  Math.min(40, length)) + (length > maxLength ? "..." : "");
+    }
     public static String consumeAsString( HttpResponse response ) throws IOException, FetchFailedException {
         return consumeAsString( response.getEntity().getContent() );
     }
