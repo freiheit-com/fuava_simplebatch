@@ -10,6 +10,8 @@ With SimpleBatch, you can write your Jobs such that they comply to the following
   - **Communicate processing status**. You will receive processing statistics at the end of your job and you can register listeners to keep you informed.
 
 ## Basic Usage
+
+[Working Example in Tests](https://github.com/freiheit-com/fuava_simplebatch/blob/master/core/src/test/java/com/freiheit/fuava/simplebatch/example/SimpleLoopTest.java)
 ```java
 // Will be used to collect the number of successfully processed (or failed)  items 
 final Counts.Builder statistics = Counts.builder();
@@ -19,7 +21,7 @@ final Fetcher<Integer> fetcher = Fetchers.iterable(ImmutableList.<Integer>of(1, 
 
 // A processor takes a list of inputs and does interesting things to them, 
 // for example downloading data or persisting data.
-final Processor<Integer, Integer, Article> processor = 
+final Processor<FetchedItem<Integer>, Integer, Article> processor = 
     // Retryable means, that the function will be called again if a list with more
     // than one item fails during processing. It will be called for each of those items 
     // seperately, wrapped in a singleton list
@@ -35,12 +37,12 @@ final Processor<Integer, Integer, Article> processor =
 
 // Build partitions to iterate over. This means, that your processor will
 // always work on maximum 100 items
-Iterable<List<Result<Integer, Integer>>> partitions = Iterables.partition( 
+Iterable<List<Result<FetchedItem<Integer>, Integer>>> partitions = Iterables.partition( 
 	fetcher.fetchAll(), 100 
 );
 
 // Do the real work: iterate over the input data and pass it to the processing stage
-for ( List<Result<Integer, Integer>> sourceResults : partitions) {
+for ( List<Result<FetchedItem<Integer>, Integer>> sourceResults : partitions) {
 	statistics.addAll(processor.process( sourceResults ));
 }
 
@@ -81,13 +83,16 @@ job.run();
 
 
 ### Downloader (works with Control-File)
+
+[Working Example from Tests](https://github.com/freiheit-com/fuava_simplebatch/blob/master/core/src/test/java/com/freiheit/fuava/simplebatch/fsjobs/downloader/CtlDownloaderTest.java)
+
 This is a ready-made Job Builder for a downloader which persists the fetched items in a batch file, meaning that multiple downloaded items are persisted together. 
 This implementation will create control files as well.
 Those files will later be processed with an importer for which an implementation exists as well (see below).
 
 ```java
-final CtlDownloaderJob<ClipboardArticleId, String> downloader =
-     new CtlDownloaderJob.Builder<ClipboardArticleId, String>()
+final CtlDownloaderJob<Id, ?> downloader =
+     new CtlDownloaderJob.BatchFileWritingBuilder<Id, String>()
 
         // download dir, control file ending
         .setConfiguration( config )
@@ -105,7 +110,7 @@ final CtlDownloaderJob<ClipboardArticleId, String> downloader =
         // If you want to persist each downloaded item seperately, use instead:
         // downloader.setFileWriterAdapter( ... )
         .setBatchFileWriterAdapter(
-          new FileWriterAdapter<List<ClipboardArticleId>, List<String>>() {
+          new FileWriterAdapter<List<FetchedItem<Id>>, List<String>>() {
             private final String prefix = "" + System.currentTimeMillis() + "_";
             private final AtomicLong counter = new AtomicLong();
 
@@ -114,18 +119,16 @@ final CtlDownloaderJob<ClipboardArticleId, String> downloader =
                 final Writer writer, final List<String> data 
              ) throws IOException {
 
-                final ImmutableList.Builder<String> builder = 
-                           ImmutableList.<String> builder();
-                builder.add( "<begin>" );
-                builder.addAll( data );
-                builder.add( "</begin>" );
-                final String string = Joiner.on( '\n' ).join( builder.build() );
-                writer.write( string );
+                final List<String> parts = ImmutableList.<String> builder()
+                    .add( "<begin>" ).addAll( data ).add( "</begin>" ).build();
+                    
+                writer.write( Joiner.on( '\n' ).join( parts ) );
             }
 
             @Override
             public String getFileName( 
-                     final Result<List<ClipboardArticleId>, List<String>> result 
+                     final Result<List<FetchedItem<Id>>,
+                    List<String>> result 
             ) {
                 return prefix + counter.incrementAndGet();
             }
@@ -138,6 +141,8 @@ downloader.run();
 
 Example for an importer (runs after the  downloader documented above).
 It imports a list of Article instances from a json file.
+
+[Working Example from Tests](https://github.com/freiheit-com/fuava_simplebatch/blob/master/core/src/test/java/com/freiheit/fuava/simplebatch/fsjobs/importer/CtlImporterTest.java)
 ```java
 final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
 
@@ -213,7 +218,7 @@ job.addContentProcessingListener(new ProcessingResultListener<Article, Article>(
     }
 
     @Override
-    public void onProcessingResult(Result<Article,?> result) {
+    public void onProcessingResult(Result<FetchedItem<Article>,?> result) {
         // Will be called for each item after it was stored in the database. 
         counter.count(result);
     }
