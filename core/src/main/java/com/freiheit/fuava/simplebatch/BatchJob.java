@@ -45,7 +45,7 @@ public class BatchJob<Input, Output> {
     public static class Builder<Input, Output> {
         private int processingBatchSize = 1000;
         private Fetcher<Input> fetcher;
-        private Processor<FetchedItem<Input>, Input, Output> persistence;
+        private Processor<FetchedItem<Input>, Input, Output> processor;
 
         private final ArrayList<ProcessingResultListener<Input, Output>> listeners = new ArrayList<ProcessingResultListener<Input, Output>>();
         private String description;
@@ -73,12 +73,12 @@ public class BatchJob<Input, Output> {
 
 
         public Builder<Input, Output> setProcessor( Processor<FetchedItem<Input>, Input, Output> writer ) {
-            this.persistence = writer;
+            this.processor = writer;
             return this;
         }
 
-        public Processor<FetchedItem<Input>, Input, Output> getPersistence() {
-            return persistence;
+        public Processor<FetchedItem<Input>, Input, Output> getProcessor() {
+            return processor;
         }
 
         public Builder<Input, Output> addListener(ProcessingResultListener<Input, Output> listener) {
@@ -101,7 +101,7 @@ public class BatchJob<Input, Output> {
         }
 
         public BatchJob<Input, Output> build() {
-            return new BatchJob<Input, Output>(description, processingBatchSize, fetcher, persistence, listeners);
+            return new BatchJob<Input, Output>(description, processingBatchSize, fetcher, processor, listeners);
         }
 
 
@@ -152,9 +152,9 @@ public class BatchJob<Input, Output> {
 
             listeners.onFetchResults(sourceResults);
 
-            Iterable<? extends Result<FetchedItem<Input>, Output>> persistResults = persistence.process( sourceResults );
+            Iterable<? extends Result<FetchedItem<Input>, Output>> processingResults = persistence.process( sourceResults );
 
-            listeners.onProcessingResults(persistResults);
+            listeners.onProcessingResults(processingResults);
         }
 
         listeners.onAfterRun();
