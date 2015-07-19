@@ -1,5 +1,7 @@
 package com.freiheit.fuava.simplebatch.result;
 
+import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
+
 
 public class ResultStatistics {
 
@@ -22,13 +24,13 @@ public class ResultStatistics {
         }
 
         @Override
-        public void onFetchResult(Result<Input, Input> result) {
+        public void onFetchResult(Result<FetchedItem<Input>, Input> result) {
             fetch.add(result);
         }
 
 
         @Override
-        public void onProcessingResult(Result<Input, ?> result) {
+        public void onProcessingResult(Result<FetchedItem<Input>, Output> result) {
             processing.add(result);
         }
 

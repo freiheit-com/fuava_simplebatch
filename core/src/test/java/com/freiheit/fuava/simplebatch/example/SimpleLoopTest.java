@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.testng.annotations.Test;
 
+import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.fetch.Fetchers;
 import com.freiheit.fuava.simplebatch.processor.Processor;
@@ -23,7 +24,7 @@ public class SimpleLoopTest {
         final Counts.Builder statistics = Counts.builder();
 
         final Fetcher<Integer> fetcher = Fetchers.iterable(ImmutableList.<Integer>of(1, 2, 3, 4));
-        final Processor<Integer, Integer, Long> processor =
+        final Processor<FetchedItem<Integer>, Integer, Long> processor =
                 Processors.retryableBatchedFunction(new Function<List<Integer>, List<Long>>() {
 
                     @Override
@@ -33,8 +34,8 @@ public class SimpleLoopTest {
                         return ids.stream().map(id -> id.longValue()).collect(Collectors.toList());
                     }
                 });
-        Iterable<List<Result<Integer, Integer>>> partitions = Iterables.partition( fetcher.fetchAll(), 100 ) ;
-        for ( List<Result<Integer, Integer>> sourceResults : partitions) {
+        Iterable<List<Result<FetchedItem<Integer>, Integer>>> partitions = Iterables.partition( fetcher.fetchAll(), 100 ) ;
+        for ( List<Result<FetchedItem<Integer>, Integer>> sourceResults : partitions) {
             statistics.addAll(processor.process( sourceResults ));
         }
 

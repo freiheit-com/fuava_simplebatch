@@ -6,7 +6,7 @@ import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.google.common.base.Function;
 
-final class InnerJobProcessor<Input, Data> extends AbstractSingleItemProcessor<Input, Iterable<Data>, Iterable<Data>> {
+final class InnerJobProcessor<Input, Data> extends AbstractSingleItemProcessor<Input, Iterable<Data>, ResultStatistics> {
     private final Function<Input, String> jobDescriptionFunc;
     private final BatchJob.Builder<Data, Data> builder;
 
@@ -19,10 +19,10 @@ final class InnerJobProcessor<Input, Data> extends AbstractSingleItemProcessor<I
     }
 
     @Override
-    public Result<Input, Iterable<Data>> processItem(Result<Input, Iterable<Data>> previous) {
+    public Result<Input, ResultStatistics> processItem(Result<Input, Iterable<Data>> previous) {
         if (previous.isFailed()) {
             // nothing we can do for failed processing items
-            return Result.<Input, Iterable<Data>>builder(previous).failed();
+            return Result.<Input, ResultStatistics>builder(previous).failed();
         }
         Input i = previous.getInput();
         Iterable<Data> output = previous.getOutput();
@@ -34,7 +34,7 @@ final class InnerJobProcessor<Input, Data> extends AbstractSingleItemProcessor<I
             return Result.failed(i, "Processing of all Items failed. Please check the log files.");
         }
 
-        return Result.success(i, output);
+        return Result.success(i, statistics);
     }
 
 }

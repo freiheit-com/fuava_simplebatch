@@ -15,8 +15,11 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.freiheit.fuava.simplebatch.MapBasedBatchDownloader;
+import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetchers;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob.ConfigurationImpl;
+import com.freiheit.fuava.simplebatch.processor.BatchProcessorResult;
+import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo;
 import com.freiheit.fuava.simplebatch.processor.FileWriterAdapter;
 import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.result.Result;
@@ -30,8 +33,8 @@ public class CtlDownloaderTest {
     public static final String TEST_DIR_BASE = "/tmp/fuava-simplebatch-test/";
     public static final String TEST_DIR_DOWNLOADS = TEST_DIR_BASE + "/downloads/";
 
-    public static <Input, Output> CtlDownloaderJob.Builder<Input, Output> newTestDownloaderBuilder() {
-        return new CtlDownloaderJob.Builder<Input, Output>()
+    public static <Input, Output> CtlDownloaderJob.BatchFileWritingBuilder<Input, Output> newTestDownloaderBuilder() {
+        return new CtlDownloaderJob.BatchFileWritingBuilder<Input, Output>()
                 .setConfiguration(new ConfigurationImpl().setDownloadDirPath(TEST_DIR_DOWNLOADS));
     }
 
@@ -52,13 +55,13 @@ public class CtlDownloaderTest {
         data.put(4, "vier");
         data.put(5, "fünf");
         data.put(6, "sechs");
-        final CtlDownloaderJob.Builder<Integer, String> builder = newTestDownloaderBuilder();
-        final CtlDownloaderJob<Integer, String> downloader = builder
+        final CtlDownloaderJob.BatchFileWritingBuilder<Integer, String> builder = newTestDownloaderBuilder();
+        final CtlDownloaderJob<Integer, BatchProcessorResult<ControlFilePersistenceOutputInfo>> downloader = builder
                 .setDownloaderBatchSize(100)
                 // Fetch ids of the data to be downloaded, will be used by the downloader to fetch the data
                 .setIdsFetcher(Fetchers.iterable(data.keySet()))
                 .setDownloader(Processors.retryableBatchedFunction(new MapBasedBatchDownloader<Integer, String>(data)))
-                .setBatchFileWriterAdapter(new FileWriterAdapter<List<Integer>, List<String>>() {
+                .setBatchFileWriterAdapter(new FileWriterAdapter<List<FetchedItem<Integer>>, List<String>>() {
                     private final String prefix = targetFileName + "_";
                     private final AtomicLong counter = new AtomicLong();
                     @Override
@@ -68,7 +71,7 @@ public class CtlDownloaderTest {
                     }
 
                     @Override
-                    public String getFileName(Result<List<Integer>, List<String>> result) {
+                    public String getFileName(Result<List<FetchedItem<Integer>>, List<String>> result) {
                         return prefix + counter.incrementAndGet();
                     }
                 })

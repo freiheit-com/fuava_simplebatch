@@ -3,6 +3,8 @@ package com.freiheit.fuava.simplebatch.result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
+
 public class DelegatingProcessingResultListener<Input, Output> implements ProcessingResultListener<Input, Output> {
     static final Logger LOG = LoggerFactory.getLogger( DelegatingProcessingResultListener.class );
 
@@ -47,7 +49,7 @@ public class DelegatingProcessingResultListener<Input, Output> implements Proces
     }
 
     @Override
-    public void onFetchResult(Result<Input, Input> result) {
+    public void onFetchResult(Result<FetchedItem<Input>, Input> result) {
         for (ProcessingResultListener<Input, Output> l :listeners) {
             try {
                 l.onFetchResult(result);
@@ -58,7 +60,7 @@ public class DelegatingProcessingResultListener<Input, Output> implements Proces
     }
 
     @Override
-    public void onFetchResults(Iterable<Result<Input, Input>> results) {
+    public void onFetchResults(Iterable<Result<FetchedItem<Input>, Input>> results) {
         for (ProcessingResultListener<Input, Output> l :listeners) {
             try {
                 l.onFetchResults(results);
@@ -70,7 +72,7 @@ public class DelegatingProcessingResultListener<Input, Output> implements Proces
 
 
     @Override
-    public void onProcessingResult(Result<Input, ?> result) {
+    public void onProcessingResult(Result<FetchedItem<Input>, Output> result) {
         for (ProcessingResultListener<Input, Output> l :listeners) {
             try {
                 l.onProcessingResult(result);
@@ -81,7 +83,7 @@ public class DelegatingProcessingResultListener<Input, Output> implements Proces
     }
 
     @Override
-    public void onProcessingResults(Iterable<? extends Result<Input, ?>> results) {
+    public void onProcessingResults(Iterable<? extends Result<FetchedItem<Input>, Output>> results) {
         for (ProcessingResultListener<Input, Output> l :listeners) {
             try {
                 l.onProcessingResults(results);

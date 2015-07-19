@@ -14,6 +14,7 @@ package com.freiheit.fuava.simplebatch.logging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.Result;
 
@@ -37,7 +38,7 @@ public class ItemProgressLoggingListener<Input, Output> implements ProcessingRes
     }
 
     @Override
-    public void onFetchResult( final Result<Input, Input> result ) {
+    public void onFetchResult( final Result<FetchedItem<Input>, Input> result ) {
         if ( result.isFailed() ) {
             log.info( ResultItemStat.formatted(Event.FETCH, result.getFailureMessages(), result.getThrowables(),  result.getInput() ) );
         }
@@ -45,7 +46,7 @@ public class ItemProgressLoggingListener<Input, Output> implements ProcessingRes
 
 
     @Override
-    public void onProcessingResult( final Result<Input, ?> result ) {
+    public void onProcessingResult( final Result<FetchedItem<Input>, Output> result ) {
         if ( result.isFailed() ) {
             log.info( ResultItemStat.formatted( Event.PERSIST, result.getFailureMessages(), result.getThrowables(), result.getInput() ) );
         }

@@ -8,6 +8,7 @@ import javax.annotation.CheckReturnValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.result.DelegatingProcessingResultListener;
@@ -44,7 +45,7 @@ public class BatchJob<Input, Output> {
     public static class Builder<Input, Output> {
         private int processingBatchSize = 1000;
         private Fetcher<Input> fetcher;
-        private Processor<Input, Input, Output> persistence;
+        private Processor<FetchedItem<Input>, Input, Output> persistence;
 
         private final ArrayList<ProcessingResultListener<Input, Output>> listeners = new ArrayList<ProcessingResultListener<Input, Output>>();
         private String description;
@@ -71,12 +72,12 @@ public class BatchJob<Input, Output> {
         }
 
 
-        public Builder<Input, Output> setPersistence( Processor<Input, Input, Output> writer ) {
+        public Builder<Input, Output> setPersistence( Processor<FetchedItem<Input>, Input, Output> writer ) {
             this.persistence = writer;
             return this;
         }
 
-        public Processor<Input, Input, Output> getPersistence() {
+        public Processor<FetchedItem<Input>, Input, Output> getPersistence() {
             return persistence;
         }
 
@@ -112,7 +113,7 @@ public class BatchJob<Input, Output> {
 
     private final int processingBatchSize;
     private final Fetcher<Input> fetcher;
-    private final Processor<Input, Input, ?> persistence;
+    private final Processor<FetchedItem<Input>, Input, Output> persistence;
 
     private final List<ProcessingResultListener<Input, Output>> listeners;
     private final String description;
@@ -121,7 +122,7 @@ public class BatchJob<Input, Output> {
             String description,
             int processingBatchSize,
             Fetcher<Input> fetcher,
-            Processor<Input, Input, ?> persistence,
+            Processor<FetchedItem<Input>, Input, Output> persistence,
             List<ProcessingResultListener<Input, Output>> listeners
             ) {
         this.description = description;
@@ -145,13 +146,13 @@ public class BatchJob<Input, Output> {
 
         listeners.onBeforeRun(this.description);
 
-        final Iterable<Result<Input, Input>> sourceIterable = fetcher.fetchAll();
+        final Iterable<Result<FetchedItem<Input>, Input>> sourceIterable = fetcher.fetchAll();
 
-        for ( List<Result<Input, Input>> sourceResults : Iterables.partition( sourceIterable, processingBatchSize ) ) {
+        for ( List<Result<FetchedItem<Input>, Input>> sourceResults : Iterables.partition( sourceIterable, processingBatchSize ) ) {
 
             listeners.onFetchResults(sourceResults);
 
-            Iterable<? extends Result<Input, ?>> persistResults = persistence.process( sourceResults );
+            Iterable<? extends Result<FetchedItem<Input>, Output>> persistResults = persistence.process( sourceResults );
 
             listeners.onProcessingResults(persistResults);
         }

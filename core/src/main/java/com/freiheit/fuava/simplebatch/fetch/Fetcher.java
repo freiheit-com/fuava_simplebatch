@@ -13,5 +13,5 @@ public interface Fetcher<T> {
      *
      * @return an Iterable over the input, possibliy containing failed input results.
      */
-    public Iterable<Result<T, T>> fetchAll();
+    public Iterable<Result<FetchedItem<T>, T>> fetchAll();
 }

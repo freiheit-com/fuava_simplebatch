@@ -10,6 +10,7 @@ import org.apache.http.client.HttpClient;
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fsjobs.importer.ControlFile;
 import com.freiheit.fuava.simplebatch.http.HttpDownloaderSettings;
+import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.google.common.base.Function;
 
 public class Processors {
@@ -133,7 +134,7 @@ public class Processors {
      *
      * Note that this means, that the instances provided to the builder will be used for multiple instances of the (inner) BatchJob.
      */
-    public static <Input, Data> Processor<Input, Iterable<Data>, Iterable<Data>> runBatchJobProcessor(
+    public static <Input, Data> Processor<Input, Iterable<Data>, ResultStatistics> runBatchJobProcessor(
             Function<Input, String> jobDescriptionFunc,
             BatchJob.Builder<Data, Data> builder
             ) {

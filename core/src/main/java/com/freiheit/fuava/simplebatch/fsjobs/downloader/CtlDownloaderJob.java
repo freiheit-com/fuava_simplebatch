@@ -3,10 +3,12 @@ package com.freiheit.fuava.simplebatch.fsjobs.downloader;
 import java.util.List;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
+import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.logging.BatchStatisticsLoggingListener;
 import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
-import com.freiheit.fuava.simplebatch.processor.AbstractStringFileWriterAdapter;
+import com.freiheit.fuava.simplebatch.processor.BatchProcessorResult;
+import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo;
 import com.freiheit.fuava.simplebatch.processor.FileWriterAdapter;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.Processors;
@@ -64,24 +66,193 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
     }
 
-    public static final class Builder<Id, Data> {
+    /**
+     * Builder for jobs which create one file per downloaded item
+     * @author klas
+     *
+     * @param <Id>
+     * @param <Data>
+     */
+    public static final class Builder<Id, Data> extends AbstractBuilder<Id, Data, ControlFilePersistenceOutputInfo> {
+
+
+        public Builder<Id, Data> setFileWriterAdapter(
+                FileWriterAdapter<FetchedItem<Id>, Data> persistenceAdapter
+                ) {
+            setFileWriter(Processors.controlledFileWriter(
+                    getConfiguration().getDownloadDirPath(),
+                    getConfiguration().getControlFileEnding(),
+                    persistenceAdapter
+                    ));
+            return this;
+        }
+
+        @Override
+        public Builder<Id, Data> setConfiguration( Configuration configuration ) {
+            super.setConfiguration(configuration);
+            return this;
+        }
+
+        @Override
+        public Builder<Id, Data>  setDescription(String description) {
+            super.setDescription(description);
+            return this;
+        }
+
+
+        /**
+         * The amount of items from the fetch stage that are put together in a list and passed on to the "Downloader" stage.
+         * If your downloader supports batch fetching, you can use this setting to control the amount of items in one batch.
+         */
+        @Override
+        public Builder<Id, Data> setDownloaderBatchSize(
+                int processingBatchSize ) {
+            super.setDownloaderBatchSize( processingBatchSize );
+            return this;
+        }
+
+        /**
+         * Fetches the Ids of the documents to download.
+         */
+        @Override
+        public Builder<Id, Data> setIdsFetcher(
+                Fetcher<Id> idsFetcher ) {
+            super.setIdsFetcher( idsFetcher );
+            return this;
+        }
+
+
+        /**
+         * Uses the Ids to download the data.
+         */
+        @Override
+        public Builder<Id, Data> setDownloader(
+                Processor<FetchedItem<Id>, Id, Data> byIdsFetcher ) {
+            super.setDownloader(byIdsFetcher);
+            return this;
+        }
+
+        @Override
+        public Builder<Id, Data> addListener(
+                ProcessingResultListener<Id, ControlFilePersistenceOutputInfo> listener ) {
+            super.addListener( listener );
+            return this;
+        }
+
+        @Override
+        public  Builder<Id, Data> removeListener(
+                ProcessingResultListener<Id, ControlFilePersistenceOutputInfo> listener ) {
+            super.removeListener( listener );
+            return this;
+        }
+
+    }
+
+    /**
+     * Builder for jobs that put multiple downloaded items together in one file, called "batch file".
+     * @author klas
+     *
+     * @param <Id>
+     * @param <Data>
+     */
+    public static final class BatchFileWritingBuilder<Id, Data> extends AbstractBuilder<Id, Data, BatchProcessorResult<ControlFilePersistenceOutputInfo>> {
+
+
+        public BatchFileWritingBuilder<Id, Data> setBatchFileWriterAdapter(
+                FileWriterAdapter<List<FetchedItem<Id>>, List<Data>> persistenceAdapter
+                ) {
+            setFileWriter(Processors.controlledBatchFileWriter(
+                    getConfiguration().getDownloadDirPath(),
+                    getConfiguration().getControlFileEnding(),
+                    persistenceAdapter
+                    ));
+            return this;
+        }
+
+        @Override
+        public BatchFileWritingBuilder<Id, Data> setConfiguration( Configuration configuration ) {
+            super.setConfiguration(configuration);
+            return this;
+        }
+
+        @Override
+        public BatchFileWritingBuilder<Id, Data>  setDescription(String description) {
+            super.setDescription(description);
+            return this;
+        }
+
+
+        /**
+         * The amount of items from the fetch stage that are put together in a list and passed on to the "Downloader" stage.
+         * If your downloader supports batch fetching, you can use this setting to control the amount of items in one batch.
+         */
+        @Override
+        public BatchFileWritingBuilder<Id, Data> setDownloaderBatchSize(
+                int processingBatchSize ) {
+            super.setDownloaderBatchSize( processingBatchSize );
+            return this;
+        }
+
+        /**
+         * Fetches the Ids of the documents to download.
+         */
+        @Override
+        public BatchFileWritingBuilder<Id, Data> setIdsFetcher(
+                Fetcher<Id> idsFetcher ) {
+            super.setIdsFetcher( idsFetcher );
+            return this;
+        }
+
+
+        /**
+         * Uses the Ids to download the data.
+         */
+        @Override
+        public BatchFileWritingBuilder<Id, Data> setDownloader(
+                Processor<FetchedItem<Id>, Id, Data> byIdsFetcher ) {
+            super.setDownloader(byIdsFetcher);
+            return this;
+        }
+
+        @Override
+        public BatchFileWritingBuilder<Id, Data> addListener(
+                ProcessingResultListener<Id, BatchProcessorResult<ControlFilePersistenceOutputInfo>> listener ) {
+            super.addListener( listener );
+            return this;
+        }
+
+        @Override
+        public BatchFileWritingBuilder<Id, Data> removeListener(
+                ProcessingResultListener<Id, BatchProcessorResult<ControlFilePersistenceOutputInfo>> listener ) {
+            super.removeListener( listener );
+            return this;
+        }
+
+    }
+
+    public static abstract class AbstractBuilder<Id, Data, ProcessingResult> {
         private static final String LOG_NAME_BATCH = "ITEMS DOWNLOADED";
         private static final String LOG_NAME_ITEM = "ITEM";
-        private final BatchJob.Builder<Id, Data> builder = BatchJob.builder();
-        private Processor<Id, Data, ?>  fileWriter;
+        private final BatchJob.Builder<Id, ProcessingResult> builder = BatchJob.builder();
+        private Processor<FetchedItem<Id>, Data, ProcessingResult>  fileWriter;
+        private Processor<FetchedItem<Id>, Id, Data> downloader;
 
         private Configuration configuration;
 
-        public Builder() {
+        public AbstractBuilder() {
 
         }
 
-        public Builder<Id, Data> setConfiguration( Configuration configuration ) {
+        public AbstractBuilder<Id, Data, ProcessingResult> setConfiguration( Configuration configuration ) {
             this.configuration = configuration;
             return this;
         }
 
-        public Builder<Id, Data>  setDescription(String description) {
+        public Configuration getConfiguration() {
+            return configuration;
+        }
+
+        public AbstractBuilder<Id, Data, ProcessingResult>  setDescription(String description) {
             builder.setDescription(description);
             return this;
         }
@@ -91,7 +262,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
          * The amount of items from the fetch stage that are put together in a list and passed on to the "Downloader" stage.
          * If your downloader supports batch fetching, you can use this setting to control the amount of items in one batch.
          */
-        public Builder<Id, Data> setDownloaderBatchSize(
+        public AbstractBuilder<Id, Data, ProcessingResult> setDownloaderBatchSize(
                 int processingBatchSize ) {
             builder.setProcessingBatchSize( processingBatchSize );
             return this;
@@ -100,7 +271,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         /**
          * Fetches the Ids of the documents to download.
          */
-        public Builder<Id, Data> setIdsFetcher(
+        public AbstractBuilder<Id, Data, ProcessingResult> setIdsFetcher(
                 Fetcher<Id> idsFetcher ) {
             builder.setFetcher( idsFetcher );
             return this;
@@ -110,47 +281,36 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         /**
          * Uses the Ids to download the data.
          */
-        public Builder<Id, Data> setDownloader(
-                Processor<Id, Id, Data> byIdsFetcher ) {
-            builder.setPersistence( byIdsFetcher );
+        public AbstractBuilder<Id, Data, ProcessingResult> setDownloader(
+                Processor<FetchedItem<Id>, Id, Data> byIdsFetcher ) {
+            downloader = byIdsFetcher ;
             return this;
         }
 
-        public Builder<Id, Data> addListener(
-                ProcessingResultListener<Id, Data> listener ) {
+        public AbstractBuilder<Id, Data, ProcessingResult> addListener(
+                ProcessingResultListener<Id, ProcessingResult> listener ) {
             builder.addListener( listener );
             return this;
         }
 
-        public Builder<Id, Data> removeListener(
-                ProcessingResultListener<Id, Data> listener ) {
+        public AbstractBuilder<Id, Data, ProcessingResult> removeListener(
+                ProcessingResultListener<Id, ProcessingResult> listener ) {
             builder.removeListener( listener );
             return this;
         }
 
-        public Builder<Id, Data> setFileWriterAdapter( FileWriterAdapter<Id, Data> persistenceAdapter ) {
-            this.fileWriter = Processors.controlledFileWriter(configuration.getDownloadDirPath(), configuration.getControlFileEnding(), persistenceAdapter);
-            return this;
+        protected void setFileWriter(
+                Processor<FetchedItem<Id>, Data, ProcessingResult> fileWriter) {
+            this.fileWriter = fileWriter;
         }
 
-        public Builder<Id, Data> setBatchFileWriterAdapter( FileWriterAdapter<List<Id>, List<Data>> persistenceAdapter ) {
-            this.fileWriter = Processors.controlledBatchFileWriter(
-                    configuration.getDownloadDirPath(),
-                    configuration.getControlFileEnding(),
-                    persistenceAdapter
-                    );
-            return this;
-        }
 
-        public CtlDownloaderJob<Id, Data> build() {
-            builder.addListener( new BatchStatisticsLoggingListener<Id, Data>(LOG_NAME_BATCH) );
-            builder.addListener( new ItemProgressLoggingListener<Id, Data>(LOG_NAME_ITEM) );
-            if (fileWriter == null) {
-                setFileWriterAdapter(new AbstractStringFileWriterAdapter<Id, Data>() {});
-                Preconditions.checkNotNull(fileWriter);
-            }
-            Processor<Id, Id, ?> p = Processors.compose(fileWriter, builder.getPersistence());
-            return new CtlDownloaderJob<Id, Data>(
+        public CtlDownloaderJob<Id, ProcessingResult> build() {
+            builder.addListener( new BatchStatisticsLoggingListener<Id, ProcessingResult>(LOG_NAME_BATCH) );
+            builder.addListener( new ItemProgressLoggingListener<Id, ProcessingResult>(LOG_NAME_ITEM) );
+            Preconditions.checkNotNull(fileWriter, "You need to call setFileWriterAdapter first");
+            Processor<FetchedItem<Id>, Id, ProcessingResult> p = Processors.compose(fileWriter, downloader);
+            return new CtlDownloaderJob<Id, ProcessingResult>(
                     builder.getDescription(),
                     builder.getProcessingBatchSize(),
                     builder.getFetcher(),
@@ -160,13 +320,12 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         }
 
     }
-
     private CtlDownloaderJob(
             String description,
             int processingBatchSize,
             Fetcher<Id> fetcher,
             Configuration configuration,
-            Processor<Id, Id, ?> persistence,
+            Processor<FetchedItem<Id>, Id, Data> persistence,
             List<ProcessingResultListener<Id, Data>> listeners ) {
         super( description, processingBatchSize, fetcher, persistence, listeners );
     }

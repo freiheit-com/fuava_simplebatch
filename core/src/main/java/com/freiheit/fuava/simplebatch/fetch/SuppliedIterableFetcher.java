@@ -12,7 +12,7 @@ public final class SuppliedIterableFetcher<T> implements Fetcher<T>{
     }
 
     @Override
-    public Iterable<Result<T, T>> fetchAll() {
+    public Iterable<Result<FetchedItem<T>, T>> fetchAll() {
         try {
             return new IterableFetcherWrapper<T>(this.supplier.get());
         } catch (Throwable t) {

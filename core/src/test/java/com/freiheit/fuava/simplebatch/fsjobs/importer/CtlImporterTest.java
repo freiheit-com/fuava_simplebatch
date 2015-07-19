@@ -15,6 +15,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.freiheit.fuava.simplebatch.MapBasedBatchDownloader;
+import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetchers;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob.ConfigurationImpl;
@@ -51,9 +52,9 @@ public class CtlImporterTest {
                 .setDownloaderBatchSize(100)
                 .setIdsFetcher(Fetchers.iterable(data.keySet()))
                 .setDownloader(Processors.retryableBatchedFunction(new MapBasedBatchDownloader<Integer, String>(data)))
-                .setFileWriterAdapter(new StringFileWriterAdapter<Integer>() {
+                .setFileWriterAdapter(new StringFileWriterAdapter<FetchedItem<Integer>>() {
                     @Override
-                    public String getFileName(Result<Integer, String> result) {
+                    public String getFileName(Result<FetchedItem<Integer>, String> result) {
                         return counter.incrementAndGet() + ".tmp";
                     }
                 })

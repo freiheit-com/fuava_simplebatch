@@ -2,10 +2,11 @@ package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
 import java.io.File;
 
+import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.processor.AbstractSingleItemProcessor;
 import com.freiheit.fuava.simplebatch.result.Result;
 
-public class FileMovingPersistence<D> extends AbstractSingleItemProcessor<ControlFile, D, D> {
+public class FileMovingPersistence<D> extends AbstractSingleItemProcessor<FetchedItem<ControlFile>, D, D> {
 
     private final FileMover fileMover = new FileMover();
     private final String processingDir;
@@ -20,18 +21,18 @@ public class FileMovingPersistence<D> extends AbstractSingleItemProcessor<Contro
     }
 
     @Override
-    public Result<ControlFile, D> processItem(Result<ControlFile, D> r) {
-        final ControlFile input = r.getInput();
-
+    public Result<FetchedItem<ControlFile>, D> processItem(Result<FetchedItem<ControlFile>, D> r) {
+        final FetchedItem<ControlFile> input = r.getInput();
+        final ControlFile controlFile = input.getValue();
         try {
             if (r.isFailed()) {
-                moveBoth(input, failedDir);
+                moveBoth(controlFile, failedDir);
             } else {
-                moveBoth(input, archivedDir);
+                moveBoth(controlFile, archivedDir);
             }
             return Result.success(input, r.getOutput());
         } catch ( Throwable e ) {
-            return Result.<ControlFile, D>builder(r).failed(e);
+            return Result.<FetchedItem<ControlFile>, D>builder(r).failed(e);
         }
 
     }
