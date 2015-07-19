@@ -72,7 +72,7 @@ public class BatchJob<Input, Output> {
         }
 
 
-        public Builder<Input, Output> setPersistence( Processor<FetchedItem<Input>, Input, Output> writer ) {
+        public Builder<Input, Output> setProcessor( Processor<FetchedItem<Input>, Input, Output> writer ) {
             this.persistence = writer;
             return this;
         }

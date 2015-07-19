@@ -107,7 +107,7 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, ResultStatistic
         private final List<ProcessingResultListener<ControlFile, ResultStatistics>> fileProcessingListeners = new ArrayList<>();
 
         private final List<ProcessingResultListener<Data, Data>> contentProcessingListeners = new ArrayList<>();
-        private Processor<FetchedItem<Data>, Data, Data> contentPersistence;
+        private Processor<FetchedItem<Data>, Data, Data> contentProcessor;
         private String description;
 
         public Builder() {
@@ -159,7 +159,7 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, ResultStatistic
          * The size of the list which is passed to this persistence is controlled by {@link #setContentBatchSize(int)}
          */
         public Builder<Data> setContentProcessor(Processor<FetchedItem<Data>, Data, Data> persistence) {
-            contentPersistence = persistence;
+            contentProcessor = persistence;
             return this;
         }
 
@@ -184,7 +184,7 @@ public class CtlImporterJob<Data>  extends BatchJob<ControlFile, ResultStatistic
 
             final BatchJob.Builder<Data, Data> builder = BatchJob.<Data, Data>builder()
                     .setProcessingBatchSize(processingBatchSize)
-                    .setPersistence(contentPersistence);
+                    .setProcessor(contentProcessor);
 
             for (ProcessingResultListener<Data, Data> l: contentProcessingListeners) {
                 builder.addListener(l);
