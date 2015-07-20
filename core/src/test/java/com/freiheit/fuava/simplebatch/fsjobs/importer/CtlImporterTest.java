@@ -27,6 +27,7 @@ import com.freiheit.fuava.simplebatch.util.FileUtils;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 @Test
 public class CtlImporterTest {
@@ -102,7 +103,8 @@ public class CtlImporterTest {
         Assert.assertFalse(importResults.isAllFailed());
 
 
-        Assert.assertEquals(data.values(), importedLines);
+        // ignore ordering, because reading of the input files currently is not ordered. 
+        Assert.assertEquals(ImmutableSet.copyOf(importedLines), ImmutableSet.copyOf(data.values()));
         Assert.assertTrue(importedLines.size() == 4);
 
         File baseDir = new File(testDirBase);
