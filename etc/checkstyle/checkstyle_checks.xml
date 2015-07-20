@@ -9,7 +9,7 @@
     Description: none
 -->
 <module name="Checker">
-    <property name="severity" value="error"/>
+    <property name="severity" value="warning"/>
     <property name="charset" value="UTF-8"/>
     <module name="TreeWalker">
         <property name="tabWidth" value="4"/>

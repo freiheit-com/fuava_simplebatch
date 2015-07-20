@@ -24,6 +24,7 @@ import com.freiheit.fuava.simplebatch.processor.StringFileWriterAdapter;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -80,7 +81,7 @@ public class CtlImporterTest {
                     @Override
                     public Iterable<String> apply( final InputStream input ) {
                         try {
-                            try ( BufferedReader ir = new BufferedReader( new InputStreamReader( input ) ) ) {
+                            try ( BufferedReader ir = new BufferedReader( new InputStreamReader( input, Charsets.UTF_8 ) ) ) {
                                 return ImmutableList.of( ir.readLine() );
                             }
                         } catch ( final IOException e ) {

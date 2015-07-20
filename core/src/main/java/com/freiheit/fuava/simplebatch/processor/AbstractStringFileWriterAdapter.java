@@ -17,9 +17,11 @@ public class AbstractStringFileWriterAdapter<Input, Output> implements FileWrite
 
     @Override
     public void write( final Writer writer, final Output data ) throws IOException {
-        writer.write( data == null
-            ? null
-            : data.toString() );
+        if ( writer != null ) {
+            writer.write( data == null
+                ? ""
+                : data.toString() );
+        }
     }
 
 }

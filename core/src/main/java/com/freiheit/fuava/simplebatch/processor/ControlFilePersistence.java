@@ -1,13 +1,14 @@
 package com.freiheit.fuava.simplebatch.processor;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.freiheit.fuava.simplebatch.result.Result;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 
 /**
@@ -44,7 +45,7 @@ class ControlFilePersistence<Input> extends
                                                                      * ()
                                                                      */);
             LOG.info( "Writing ctl file " + ctl + " (exists: " + ctl.exists() + ") " + trimOut( r.getOutput() ) );
-            final OutputStreamWriter fos2 = new FileWriter( ctl );
+            final OutputStreamWriter fos2 = new OutputStreamWriter( new FileOutputStream( ctl ), Charsets.UTF_8 );
             try {
                 fos2.write( f.getName() );
             } finally {

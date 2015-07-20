@@ -1,13 +1,14 @@
 package com.freiheit.fuava.simplebatch.processor;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.freiheit.fuava.simplebatch.result.Result;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 
 /**
@@ -44,7 +45,7 @@ class FilePersistence<Input, Output> extends AbstractSingleItemProcessor<Input, 
             final String itemDescription = adapter.getFileName( r );
             f = new File( basedir, itemDescription );
             LOG.info( "Writing data file " + f + " (exists: " + f.exists() + ") " + trimOut( r.getOutput() ) );
-            try ( OutputStreamWriter fos = new FileWriter( f ) ) {
+            try ( OutputStreamWriter fos = new OutputStreamWriter( new FileOutputStream( f ), Charsets.UTF_8 ) ) {
                 adapter.write( fos, r.getOutput() );
                 fos.flush();
             }

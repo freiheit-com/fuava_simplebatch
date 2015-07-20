@@ -13,9 +13,12 @@ package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 
 /**
@@ -32,7 +35,7 @@ public class ReadControlFileFunction implements Function<File, ControlFile> {
     @Override
     public ControlFile apply( final File file ) {
         try {
-            final FileReader in = new FileReader( file );
+            final Reader in = new InputStreamReader( new FileInputStream( file ), Charsets.UTF_8 );
             try ( BufferedReader br = new BufferedReader( in ) ) {
                 final String nameOfDownloadedMiscDocument = br.readLine();
                 return new ControlFile( this.baseDir, nameOfDownloadedMiscDocument, file );

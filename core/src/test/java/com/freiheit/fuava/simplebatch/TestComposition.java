@@ -14,6 +14,8 @@ package com.freiheit.fuava.simplebatch;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +29,7 @@ import org.testng.annotations.Test;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.result.Result;
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -68,8 +71,8 @@ public class TestComposition {
     @BeforeClass
     public void makeTestData() throws IOException {
         for ( final FileContentPair fileContentPair : testFileContentPairs.values() ) {
-            try ( FileOutputStream fos = new FileOutputStream( fileContentPair.file ) ) {
-                fos.write( fileContentPair.content.getBytes() );
+            try ( Writer fos = new OutputStreamWriter( new FileOutputStream( fileContentPair.file ), Charsets.UTF_8 ) ) {
+                fos.write( fileContentPair.content );
             }
         }
     }
