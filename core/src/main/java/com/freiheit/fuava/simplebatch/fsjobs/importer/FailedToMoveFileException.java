@@ -27,4 +27,8 @@ public class FailedToMoveFileException extends Exception {
                     ? "Neither " + toMove.getAbsolutePath() + " exists nor " + moveTo.getAbsolutePath() + " exists"
                     : "" );
     }
+
+    public FailedToMoveFileException( final String msg ) {
+        super( msg );
+    }
 }

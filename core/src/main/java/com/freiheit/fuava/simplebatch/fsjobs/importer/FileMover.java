@@ -36,7 +36,7 @@ public class FileMover {
             return moveTo;
         }
 
-        throw new FailedToMoveFileException( toMove.getAbsolutePath() + " => " + moveTo.getAbsolutePath() );
+        throw new FailedToMoveFileException( toMove, moveTo);
 
     }
 }
