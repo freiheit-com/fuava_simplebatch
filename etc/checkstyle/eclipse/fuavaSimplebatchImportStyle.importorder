@@ -1,0 +1,17 @@
+#Organize Import Order
+#Sat Oct 05 23:30:15 CEST 2013
+14=\#jargs
+13=jargs
+12=\#com
+11=com
+10=\#org
+9=org
+8=\#oracle
+7=oracle
+6=groovy
+5=javapns
+4=\#javax
+3=javax
+2=javanet
+1=\#java
+0=java

@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!-- http://findbugs.sourceforge.net/manual/filter.html -->
+<FindBugsFilter>
+  <!-- Don't check freiheit.properties, generated code -->
+  <Match>
+    <Package name="com.freiheit.configuration.*" />
+  </Match>
+  <Match>
+    <Package name="com.freiheit.configuration.cassandra.*" />
+  </Match>
+  <Match>
+      <Package name="~io\.swagger\..*" />
+  </Match>
+  <Match>
+      <Class name="~.*\.*Test"/>
+  </Match>
+</FindBugsFilter>
