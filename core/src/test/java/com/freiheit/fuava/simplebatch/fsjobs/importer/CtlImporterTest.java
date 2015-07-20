@@ -48,68 +48,64 @@ public class CtlImporterTest {
                 );
 
         final AtomicLong counter = new AtomicLong();
-        ResultStatistics downloadResults = new CtlDownloaderJob.Builder<Integer, String>()
-                .setConfiguration(new ConfigurationImpl().setDownloadDirPath(testDirDownloads))
-                .setDownloaderBatchSize(100)
-                .setIdsFetcher(Fetchers.iterable(data.keySet()))
-                .setDownloader(Processors.retryableBatchedFunction(new MapBasedBatchDownloader<Integer, String>(data)))
-                .setFileWriterAdapter(new StringFileWriterAdapter<FetchedItem<Integer>>() {
+        final ResultStatistics downloadResults = new CtlDownloaderJob.Builder<Integer, String>()
+                .setConfiguration( new ConfigurationImpl().setDownloadDirPath( testDirDownloads ) )
+                .setDownloaderBatchSize( 100 )
+                .setIdsFetcher( Fetchers.iterable( data.keySet() ) )
+                .setDownloader( Processors.retryableBatchedFunction( new MapBasedBatchDownloader<Integer, String>( data ) ) )
+                .setFileWriterAdapter( new StringFileWriterAdapter<FetchedItem<Integer>>() {
                     @Override
-                    public String getFileName(Result<FetchedItem<Integer>, String> result) {
+                    public String getFileName( final Result<FetchedItem<Integer>, String> result ) {
                         return counter.incrementAndGet() + ".tmp";
                     }
-                })
+                } )
                 .build()
                 .run();
 
-        Assert.assertTrue(downloadResults.isAllSuccess());
-        Assert.assertFalse(downloadResults.isAllFailed());
-
+        Assert.assertTrue( downloadResults.isAllSuccess() );
+        Assert.assertFalse( downloadResults.isAllFailed() );
 
         final List<String> importedLines = new ArrayList<String>();
 
-        ResultStatistics importResults = new CtlImporterJob.Builder<String>()
+        final ResultStatistics importResults = new CtlImporterJob.Builder<String>()
                 .setConfiguration(
                         new CtlImporterJob.ConfigurationImpl()
-                        .setArchivedDirPath(testDirArchive)
-                        .setDownloadDirPath(testDirDownloads)
-                        .setFailedDirPath(testDirFails)
-                        .setProcessingDirPath(testDirProcessing)
-                        )
-                        .setFileInputStreamReader(new Function<InputStream, Iterable<String>>() {
+                                .setArchivedDirPath( testDirArchive )
+                                .setDownloadDirPath( testDirDownloads )
+                                .setFailedDirPath( testDirFails )
+                                .setProcessingDirPath( testDirProcessing )
+                )
+                .setFileInputStreamReader( new Function<InputStream, Iterable<String>>() {
 
-                            @Override
-                            public Iterable<String> apply(InputStream input) {
-                                try {
-                                    try (BufferedReader ir = new BufferedReader(new InputStreamReader(input))) {
-                                        return ImmutableList.of(ir.readLine());
-                                    }
-                                } catch (IOException e) {
-                                    throw new RuntimeException(e);
-                                }
+                    @Override
+                    public Iterable<String> apply( final InputStream input ) {
+                        try {
+                            try ( BufferedReader ir = new BufferedReader( new InputStreamReader( input ) ) ) {
+                                return ImmutableList.of( ir.readLine() );
                             }
-                        })
-                        .setContentProcessor(Processors.retryableBatchedFunction(new Function<List<String>, List<String>>() {
+                        } catch ( final IOException e ) {
+                            throw new RuntimeException( e );
+                        }
+                    }
+                } )
+                .setContentProcessor( Processors.retryableBatchedFunction( new Function<List<String>, List<String>>() {
 
-                            @Override
-                            public List<String> apply(List<String> input) {
-                                importedLines.addAll(input);
-                                return input;
-                            }
-                        }))
-                        .build()
-                        .run();
-        Assert.assertTrue(importResults.isAllSuccess());
-        Assert.assertFalse(importResults.isAllFailed());
-
+                    @Override
+                    public List<String> apply( final List<String> input ) {
+                        importedLines.addAll( input );
+                        return input;
+                    }
+                } ) )
+                .build()
+                .run();
+        Assert.assertTrue( importResults.isAllSuccess() );
+        Assert.assertFalse( importResults.isAllFailed() );
 
         // ignore ordering, because reading of the input files currently is not ordered. 
-        Assert.assertEquals(ImmutableSet.copyOf(importedLines), ImmutableSet.copyOf(data.values()));
-        Assert.assertTrue(importedLines.size() == 4);
+        Assert.assertEquals( ImmutableSet.copyOf( importedLines ), ImmutableSet.copyOf( data.values() ) );
+        Assert.assertTrue( importedLines.size() == 4 );
 
-        File baseDir = new File(testDirBase);
-        FileUtils.deleteDirectoryRecursively(baseDir);
+        final File baseDir = new File( testDirBase );
+        FileUtils.deleteDirectoryRecursively( baseDir );
     }
 }
-
-

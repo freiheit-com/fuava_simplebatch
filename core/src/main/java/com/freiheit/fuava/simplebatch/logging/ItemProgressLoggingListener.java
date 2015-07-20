@@ -28,27 +28,27 @@ public class ItemProgressLoggingListener<Input, Output> implements ProcessingRes
     private final Logger log;
     private String prefix;
 
-    public ItemProgressLoggingListener(String logName) {
+    public ItemProgressLoggingListener( final String logName ) {
         log = LoggerFactory.getLogger( logName );
     }
 
     @Override
-    public void onBeforeRun(String description) {
+    public void onBeforeRun( final String description ) {
         prefix = description;
     }
 
     @Override
     public void onFetchResult( final Result<FetchedItem<Input>, Input> result ) {
         if ( result.isFailed() ) {
-            log.info( ResultItemStat.formatted(Event.FETCH, result.getFailureMessages(), result.getThrowables(),  result.getInput() ) );
+            log.info( ResultItemStat.formatted( Event.FETCH, result.getFailureMessages(), result.getThrowables(), result.getInput() ) );
         }
     }
-
 
     @Override
     public void onProcessingResult( final Result<FetchedItem<Input>, Output> result ) {
         if ( result.isFailed() ) {
-            log.info( ResultItemStat.formatted( Event.PERSIST, result.getFailureMessages(), result.getThrowables(), result.getInput() ) );
+            log.info( ResultItemStat.formatted( Event.PERSIST, result.getFailureMessages(), result.getThrowables(),
+                    result.getInput() ) );
         }
     }
 

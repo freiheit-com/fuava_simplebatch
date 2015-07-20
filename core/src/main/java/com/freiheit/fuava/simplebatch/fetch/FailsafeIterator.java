@@ -11,42 +11,41 @@ public final class FailsafeIterator<T> implements Iterator<Result<FetchedItem<T>
     private Boolean forceHasNext;
     private int num = 0;
 
-    public FailsafeIterator(Iterator<T> iterator) {
+    public FailsafeIterator( final Iterator<T> iterator ) {
         this.iterator = iterator;
     }
 
     @Override
     public boolean hasNext() {
-        if (forceHasNext != null) {
+        if ( forceHasNext != null ) {
             return forceHasNext.booleanValue();
         }
         try {
             return iterator.hasNext();
-        } catch (Throwable t) {
+        } catch ( final Throwable t ) {
             forceHasNext = Boolean.TRUE;
-            forceNextElement = Result.failed(nextFetchedItem(null), "Failed to call hasNext on delegate iterator", t);
+            forceNextElement = Result.failed( nextFetchedItem( null ), "Failed to call hasNext on delegate iterator", t );
             return forceHasNext.booleanValue();
         }
     }
 
-    private FetchedItem<T> nextFetchedItem(T value) {
-        return FetchedItem.of(value, num++);
+    private FetchedItem<T> nextFetchedItem( final T value ) {
+        return FetchedItem.of( value, num++ );
     }
 
     @Override
     public Result<FetchedItem<T>, T> next() {
-        if (forceNextElement != null) {
-            Result<FetchedItem<T>, T> r = forceNextElement;
+        if ( forceNextElement != null ) {
+            final Result<FetchedItem<T>, T> r = forceNextElement;
             forceHasNext = Boolean.FALSE;
             return r;
         }
         try {
-            T value = iterator.next();
-            return Result.success(nextFetchedItem(value), value);
-        } catch (Throwable t) {
-            return Result.failed(nextFetchedItem(null), "Failed to call next for delegate iterator" , t);
+            final T value = iterator.next();
+            return Result.success( nextFetchedItem( value ), value );
+        } catch ( final Throwable t ) {
+            return Result.failed( nextFetchedItem( null ), "Failed to call next for delegate iterator", t );
         }
     }
-
 
 }

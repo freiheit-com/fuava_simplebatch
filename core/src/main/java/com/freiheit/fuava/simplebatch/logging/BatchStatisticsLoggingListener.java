@@ -27,22 +27,22 @@ import com.google.common.collect.FluentIterable;
 public class BatchStatisticsLoggingListener<Input, Output> implements ProcessingResultListener<Input, Output> {
     private final Logger log;
 
-    public BatchStatisticsLoggingListener(String logFileName) {
-        log = LoggerFactory.getLogger(logFileName);
+    public BatchStatisticsLoggingListener( final String logFileName ) {
+        log = LoggerFactory.getLogger( logFileName );
     }
 
     @Override
-    public void onFetchResults(final Iterable<Result<FetchedItem<Input>, Input>> result) {
-        final int failed = FluentIterable.from(result).filter(Result::isFailed).size();
-        final int success = FluentIterable.from(result).filter(Result::isSuccess).size();
-        log.info(ResultBatchStat.of(Event.FETCH, failed, success));
+    public void onFetchResults( final Iterable<Result<FetchedItem<Input>, Input>> result ) {
+        final int failed = FluentIterable.from( result ).filter( Result::isFailed ).size();
+        final int success = FluentIterable.from( result ).filter( Result::isSuccess ).size();
+        log.info( ResultBatchStat.of( Event.FETCH, failed, success ) );
     }
 
     @Override
-    public void onProcessingResults(final Iterable<? extends Result<FetchedItem<Input>, Output>> iterable) {
-        final int failed = FluentIterable.from(iterable).filter(Result::isFailed).size();
-        final int success = FluentIterable.from(iterable).filter(Result::isSuccess).size();
-        log.info(ResultBatchStat.of(Event.PERSIST, failed, success));
+    public void onProcessingResults( final Iterable<? extends Result<FetchedItem<Input>, Output>> iterable ) {
+        final int failed = FluentIterable.from( iterable ).filter( Result::isFailed ).size();
+        final int success = FluentIterable.from( iterable ).filter( Result::isSuccess ).size();
+        log.info( ResultBatchStat.of( Event.PERSIST, failed, success ) );
 
     }
 }

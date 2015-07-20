@@ -11,20 +11,20 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 public class FileUtils {
 
-    public static void deleteDirectoryRecursively(File dir) throws IOException {
-        Files.walkFileTree(Paths.get(dir.toURI()), new SimpleFileVisitor<Path>() {
+    public static void deleteDirectoryRecursively( final File dir ) throws IOException {
+        Files.walkFileTree( Paths.get( dir.toURI() ), new SimpleFileVisitor<Path>() {
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.delete(file);
+            public FileVisitResult visitFile( final Path file, final BasicFileAttributes attrs ) throws IOException {
+                Files.delete( file );
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                Files.delete(dir);
+            public FileVisitResult postVisitDirectory( final Path dir, final IOException exc ) throws IOException {
+                Files.delete( dir );
                 return FileVisitResult.CONTINUE;
             }
 
-        });
+        } );
     }
 }

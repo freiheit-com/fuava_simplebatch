@@ -31,8 +31,7 @@ public class FileToInputStreamFunction<T> implements Function<File, T> {
     private final Function<InputStream, T> func;
 
     public FileToInputStreamFunction(
-    		Function<InputStream, T> func
-	) {
+            final Function<InputStream, T> func ) {
         this.func = func;
     }
 
@@ -43,7 +42,7 @@ public class FileToInputStreamFunction<T> implements Function<File, T> {
             return func.apply( fis );
         } catch ( final Exception e ) {
             LOG.error( e.getMessage(), e );
-            throw new RuntimeException(e);
+            throw new RuntimeException( e );
         }
     }
 }

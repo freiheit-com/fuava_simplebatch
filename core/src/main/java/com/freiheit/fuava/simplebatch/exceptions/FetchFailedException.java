@@ -2,11 +2,11 @@ package com.freiheit.fuava.simplebatch.exceptions;
 
 public class FetchFailedException extends RuntimeException {
 
-    public FetchFailedException( String msg ) {
+    public FetchFailedException( final String msg ) {
         super( msg );
     }
 
-    public FetchFailedException( Throwable t ) {
+    public FetchFailedException( final Throwable t ) {
         super( t );
     }
 }

@@ -47,7 +47,8 @@ public class BatchJob<Input, Output> {
         private Fetcher<Input> fetcher;
         private Processor<FetchedItem<Input>, Input, Output> processor;
 
-        private final ArrayList<ProcessingResultListener<Input, Output>> listeners = new ArrayList<ProcessingResultListener<Input, Output>>();
+        private final ArrayList<ProcessingResultListener<Input, Output>> listeners =
+                new ArrayList<ProcessingResultListener<Input, Output>>();
         private String description;
 
         public Builder() {
@@ -57,12 +58,12 @@ public class BatchJob<Input, Output> {
             return processingBatchSize;
         }
 
-        public Builder<Input, Output> setProcessingBatchSize( int processingBatchSize ) {
+        public Builder<Input, Output> setProcessingBatchSize( final int processingBatchSize ) {
             this.processingBatchSize = processingBatchSize;
             return this;
         }
 
-        public Builder<Input, Output> setFetcher( Fetcher<Input> idsFetcher ) {
+        public Builder<Input, Output> setFetcher( final Fetcher<Input> idsFetcher ) {
             this.fetcher = idsFetcher;
             return this;
         }
@@ -71,8 +72,7 @@ public class BatchJob<Input, Output> {
             return fetcher;
         }
 
-
-        public Builder<Input, Output> setProcessor( Processor<FetchedItem<Input>, Input, Output> writer ) {
+        public Builder<Input, Output> setProcessor( final Processor<FetchedItem<Input>, Input, Output> writer ) {
             this.processor = writer;
             return this;
         }
@@ -81,13 +81,13 @@ public class BatchJob<Input, Output> {
             return processor;
         }
 
-        public Builder<Input, Output> addListener(ProcessingResultListener<Input, Output> listener) {
-            this.listeners.add(listener);
+        public Builder<Input, Output> addListener( final ProcessingResultListener<Input, Output> listener ) {
+            this.listeners.add( listener );
             return this;
         }
 
-        public Builder<Input, Output> removeListener(ProcessingResultListener<Input, Output> listener) {
-            this.listeners.remove(listener);
+        public Builder<Input, Output> removeListener( final ProcessingResultListener<Input, Output> listener ) {
+            this.listeners.remove( listener );
             return this;
         }
 
@@ -95,15 +95,14 @@ public class BatchJob<Input, Output> {
             return listeners;
         }
 
-        public Builder<Input, Output> setDescription(String desc) {
+        public Builder<Input, Output> setDescription( final String desc ) {
             this.description = desc;
             return this;
         }
 
         public BatchJob<Input, Output> build() {
-            return new BatchJob<Input, Output>(description, processingBatchSize, fetcher, processor, listeners);
+            return new BatchJob<Input, Output>( description, processingBatchSize, fetcher, processor, listeners );
         }
-
 
         public String getDescription() {
             return description;
@@ -119,17 +118,16 @@ public class BatchJob<Input, Output> {
     private final String description;
 
     protected BatchJob(
-            String description,
-            int processingBatchSize,
-            Fetcher<Input> fetcher,
-            Processor<FetchedItem<Input>, Input, Output> persistence,
-            List<ProcessingResultListener<Input, Output>> listeners
-            ) {
+            final String description,
+            final int processingBatchSize,
+            final Fetcher<Input> fetcher,
+            final Processor<FetchedItem<Input>, Input, Output> persistence,
+            final List<ProcessingResultListener<Input, Output>> listeners ) {
         this.description = description;
         this.processingBatchSize = processingBatchSize;
         this.fetcher = fetcher;
         this.persistence = persistence;
-        this.listeners = ImmutableList.copyOf(listeners);
+        this.listeners = ImmutableList.copyOf( listeners );
     }
 
     public static <Input, Output> Builder<Input, Output> builder() {
@@ -138,28 +136,30 @@ public class BatchJob<Input, Output> {
 
     @CheckReturnValue
     public final ResultStatistics run() {
-        ResultStatistics.Builder<Input, Output> resultBuilder = ResultStatistics.builder();
+        final ResultStatistics.Builder<Input, Output> resultBuilder = ResultStatistics.builder();
 
-        DelegatingProcessingResultListener<Input, Output> listeners = new DelegatingProcessingResultListener<Input, Output>(
-                ImmutableList.<ProcessingResultListener<Input, Output>>builder().add(resultBuilder).addAll(this.listeners).build()
+        final DelegatingProcessingResultListener<Input, Output> listeners =
+                new DelegatingProcessingResultListener<Input, Output>(
+                        ImmutableList.<ProcessingResultListener<Input, Output>> builder().add( resultBuilder ).addAll(
+                                this.listeners ).build()
                 );
 
-        listeners.onBeforeRun(this.description);
+        listeners.onBeforeRun( this.description );
 
         final Iterable<Result<FetchedItem<Input>, Input>> sourceIterable = fetcher.fetchAll();
 
-        for ( List<Result<FetchedItem<Input>, Input>> sourceResults : Iterables.partition( sourceIterable, processingBatchSize ) ) {
+        for ( final List<Result<FetchedItem<Input>, Input>> sourceResults : Iterables.partition( sourceIterable,
+                processingBatchSize ) ) {
 
-            listeners.onFetchResults(sourceResults);
+            listeners.onFetchResults( sourceResults );
 
-            Iterable<? extends Result<FetchedItem<Input>, Output>> processingResults = persistence.process( sourceResults );
+            final Iterable<? extends Result<FetchedItem<Input>, Output>> processingResults = persistence.process( sourceResults );
 
-            listeners.onProcessingResults(processingResults);
+            listeners.onProcessingResults( processingResults );
         }
 
         listeners.onAfterRun();
-        resultBuilder.setListenerDelegationFailures(listeners.hasDelegationFailures());
-
+        resultBuilder.setListenerDelegationFailures( listeners.hasDelegationFailures() );
 
         // TODO: persist the state of the downloader (offset or downloader), so it can be
         //       provided the next time

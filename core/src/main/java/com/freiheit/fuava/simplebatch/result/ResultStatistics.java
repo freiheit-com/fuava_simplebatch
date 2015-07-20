@@ -2,7 +2,6 @@ package com.freiheit.fuava.simplebatch.result;
 
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 
-
 public class ResultStatistics {
 
     public static final class Builder<Input, Output> implements ProcessingResultListener<Input, Output> {
@@ -15,23 +14,21 @@ public class ResultStatistics {
             return new ResultStatistics(
                     fetch.build(),
                     processing.build(),
-                    hasListenerDelegationFailures
-                    );
+                    hasListenerDelegationFailures );
         }
 
-        public void setListenerDelegationFailures(boolean b) {
+        public void setListenerDelegationFailures( final boolean b ) {
             hasListenerDelegationFailures = b;
         }
 
         @Override
-        public void onFetchResult(Result<FetchedItem<Input>, Input> result) {
-            fetch.add(result);
+        public void onFetchResult( final Result<FetchedItem<Input>, Input> result ) {
+            fetch.add( result );
         }
 
-
         @Override
-        public void onProcessingResult(Result<FetchedItem<Input>, Output> result) {
-            processing.add(result);
+        public void onProcessingResult( final Result<FetchedItem<Input>, Output> result ) {
+            processing.add( result );
         }
 
     }
@@ -40,7 +37,7 @@ public class ResultStatistics {
     private final Counts processing;
     private final boolean hasListenerDelegationFailures;
 
-    public ResultStatistics(Counts fetch, Counts persist, boolean hasListenerDelegationFailures) {
+    public ResultStatistics( final Counts fetch, final Counts persist, final boolean hasListenerDelegationFailures ) {
         this.fetch = fetch;
         this.processing = persist;
         this.hasListenerDelegationFailures = hasListenerDelegationFailures;
@@ -50,29 +47,27 @@ public class ResultStatistics {
         return fetch;
     }
 
-
     public Counts getProcessingCounts() {
         return processing;
     }
 
-
-    private static boolean allFailed(Counts counts) {
+    private static boolean allFailed( final Counts counts ) {
         return counts.getError() != 0 && counts.getSuccess() == 0;
     }
 
-    private static boolean allSuccess(Counts counts) {
+    private static boolean allSuccess( final Counts counts ) {
         return counts.getError() == 0;
     }
 
     public boolean isAllFailed() {
-        return allFailed(fetch)
-                || allFailed(processing);
+        return allFailed( fetch )
+                || allFailed( processing );
 
     }
 
     public boolean isAllSuccess() {
-        return allSuccess(fetch)
-                && allSuccess(processing)
+        return allSuccess( fetch )
+                && allSuccess( processing )
                 && !hasListenerDelegationFailures();
     }
 

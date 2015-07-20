@@ -22,16 +22,16 @@ import com.google.common.collect.FluentIterable;
 /**
  * @author tim.lessner@freiheit.com
  */
-class DirectoryFileFetcher<T> implements Supplier<Iterable<T>>{
+class DirectoryFileFetcher<T> implements Supplier<Iterable<T>> {
 
     private final String filter;
     private final String uri;
     private final Function<File, T> func;
 
-    public DirectoryFileFetcher( final String uri, final String filter, Function<File, T> func) {
-        this.uri = Preconditions.checkNotNull(uri);
-        this.filter = Preconditions.checkNotNull(filter);
-        this.func = Preconditions.checkNotNull(func);
+    public DirectoryFileFetcher( final String uri, final String filter, final Function<File, T> func ) {
+        this.uri = Preconditions.checkNotNull( uri );
+        this.filter = Preconditions.checkNotNull( filter );
+        this.func = Preconditions.checkNotNull( func );
     }
 
     @Override
@@ -41,5 +41,6 @@ class DirectoryFileFetcher<T> implements Supplier<Iterable<T>>{
             return name != null && name.endsWith( filter );
         } );
 
-        return FluentIterable.from(Arrays.asList(files)).transform(func);
-    }}
+        return FluentIterable.from( Arrays.asList( files ) ).transform( func );
+    }
+}

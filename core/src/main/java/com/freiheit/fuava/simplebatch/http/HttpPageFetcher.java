@@ -11,19 +11,20 @@ public class HttpPageFetcher<T> implements PageFetcher<T> {
     private final HttpFetcher fetcher;
     private final Function<InputStream, T> converter;
 
-    public HttpPageFetcher( HttpFetcher fetcher, PagingRequestSettings<T> settings, Function<InputStream, T> converter ) {
+    public HttpPageFetcher( final HttpFetcher fetcher, final PagingRequestSettings<T> settings,
+            final Function<InputStream, T> converter ) {
         this.settings = settings;
         this.fetcher = fetcher;
         this.converter = converter;
     }
 
     @Override
-    public Result<PagingInput, T> fetch( int from, int pageSize ) {
-        PagingInput pi = new PagingInput( from, pageSize );
+    public Result<PagingInput, T> fetch( final int from, final int pageSize ) {
+        final PagingInput pi = new PagingInput( from, pageSize );
         try {
-            T fetched = fetcher.fetch( converter, settings.createFetchUri(from, pageSize), settings.getRequestHeaders() );
+            final T fetched = fetcher.fetch( converter, settings.createFetchUri( from, pageSize ), settings.getRequestHeaders() );
             return Result.success( pi, fetched );
-        } catch ( Throwable t ) {
+        } catch ( final Throwable t ) {
             return Result.failed( pi, t );
         }
     }

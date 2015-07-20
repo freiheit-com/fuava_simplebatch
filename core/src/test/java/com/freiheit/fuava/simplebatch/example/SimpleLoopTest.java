@@ -20,28 +20,28 @@ import com.google.common.collect.Iterables;
 public class SimpleLoopTest {
 
     @Test
-    public  void testLoop() {
+    public void testLoop() {
         final Counts.Builder statistics = Counts.builder();
 
-        final Fetcher<Integer> fetcher = Fetchers.iterable(ImmutableList.<Integer>of(1, 2, 3, 4));
+        final Fetcher<Integer> fetcher = Fetchers.iterable( ImmutableList.<Integer> of( 1, 2, 3, 4 ) );
         final Processor<FetchedItem<Integer>, Integer, Long> processor =
-                Processors.retryableBatchedFunction(new Function<List<Integer>, List<Long>>() {
+                Processors.retryableBatchedFunction( new Function<List<Integer>, List<Long>>() {
 
                     @Override
-                    public List<Long> apply(List<Integer> ids) {
+                    public List<Long> apply( final List<Integer> ids ) {
                         // Do interesting stuff, maybe using the ids to fetch the Article
                         // and then to store it
-                        return ids.stream().map(id -> id.longValue()).collect(Collectors.toList());
+                        return ids.stream().map( id -> id.longValue() ).collect( Collectors.toList() );
                     }
-                });
-        Iterable<List<Result<FetchedItem<Integer>, Integer>>> partitions = Iterables.partition( fetcher.fetchAll(), 100 ) ;
-        for ( List<Result<FetchedItem<Integer>, Integer>> sourceResults : partitions) {
-            statistics.addAll(processor.process( sourceResults ));
+                } );
+        final Iterable<List<Result<FetchedItem<Integer>, Integer>>> partitions = Iterables.partition( fetcher.fetchAll(), 100 );
+        for ( final List<Result<FetchedItem<Integer>, Integer>> sourceResults : partitions ) {
+            statistics.addAll( processor.process( sourceResults ) );
         }
 
-        Counts counts = statistics.build();
-        System.out.println("Num Errors: " + counts.getError());
-        System.out.println("Num Success: " + counts.getSuccess());
+        final Counts counts = statistics.build();
+        System.out.println( "Num Errors: " + counts.getError() );
+        System.out.println( "Num Success: " + counts.getSuccess() );
 
     }
 }

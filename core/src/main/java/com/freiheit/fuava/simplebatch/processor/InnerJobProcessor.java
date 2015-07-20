@@ -11,30 +11,29 @@ final class InnerJobProcessor<Input, Data> extends AbstractSingleItemProcessor<I
     private final BatchJob.Builder<Data, Data> builder;
 
     public InnerJobProcessor(
-            Function<Input, String> jobDescriptionFunc,
-            BatchJob.Builder<Data, Data> builder
-            ) {
+            final Function<Input, String> jobDescriptionFunc,
+            final BatchJob.Builder<Data, Data> builder ) {
         this.builder = builder;
         this.jobDescriptionFunc = jobDescriptionFunc;
     }
 
     @Override
-    public Result<Input, ResultStatistics> processItem(Result<Input, Iterable<Data>> previous) {
-        if (previous.isFailed()) {
+    public Result<Input, ResultStatistics> processItem( final Result<Input, Iterable<Data>> previous ) {
+        if ( previous.isFailed() ) {
             // nothing we can do for failed processing items
-            return Result.<Input, ResultStatistics>builder(previous).failed();
+            return Result.<Input, ResultStatistics> builder( previous ).failed();
         }
-        Input i = previous.getInput();
-        Iterable<Data> output = previous.getOutput();
-        String desc = jobDescriptionFunc.apply(i);
-        final BatchJob<Data, Data> job = builder.setFetcher(Fetchers.iterable(output)).setDescription(desc).build();
+        final Input i = previous.getInput();
+        final Iterable<Data> output = previous.getOutput();
+        final String desc = jobDescriptionFunc.apply( i );
+        final BatchJob<Data, Data> job = builder.setFetcher( Fetchers.iterable( output ) ).setDescription( desc ).build();
         final ResultStatistics statistics = job.run();
 
-        if (statistics.isAllFailed()) {
-            return Result.failed(i, "Processing of all Items failed. Please check the log files.");
+        if ( statistics.isAllFailed() ) {
+            return Result.failed( i, "Processing of all Items failed. Please check the log files." );
         }
 
-        return Result.success(i, statistics);
+        return Result.success( i, statistics );
     }
 
 }

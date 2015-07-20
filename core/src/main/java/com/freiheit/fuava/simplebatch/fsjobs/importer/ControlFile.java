@@ -23,32 +23,32 @@ public class ControlFile {
     private final File controlledFile;
     private final File file;
 
-    public ControlFile(String sourceDir, final String pathToControlledFile, final File file) {
-        this.controlledFile = new File(sourceDir, pathToControlledFile);
+    public ControlFile( final String sourceDir, final String pathToControlledFile, final File file ) {
+        this.controlledFile = new File( sourceDir, pathToControlledFile );
         this.file = file;
     }
 
     public File getControlledFile() {
-    	return controlledFile;
+        return controlledFile;
     }
 
     public String getControlledFileName() {
-    	return controlledFile.getName();
+        return controlledFile.getName();
     }
 
     public String getFileName() {
-    	return file.getName();
+        return file.getName();
     }
-    
+
     public File getFile() {
         return file;
     }
-    
+
     @Override
     public String toString() {
-    	return MoreObjects.toStringHelper(this)
-    			.add("file", controlledFile)
-    			.add("ctl", file)
-    			.toString();
+        return MoreObjects.toStringHelper( this )
+                .add( "file", controlledFile )
+                .add( "ctl", file )
+                .toString();
     }
 }

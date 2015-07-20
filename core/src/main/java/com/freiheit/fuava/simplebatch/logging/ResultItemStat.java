@@ -24,7 +24,7 @@ public class ResultItemStat {
     private final Iterable<Throwable> throwables;
     private final String input;
 
-    private ResultItemStat( final Event event, Iterable<String> failureMessage, final Iterable<Throwable> throwables,
+    private ResultItemStat( final Event event, final Iterable<String> failureMessage, final Iterable<Throwable> throwables,
             final String input ) {
         this.event = event;
         this.failureMessage = failureMessage;
@@ -32,9 +32,11 @@ public class ResultItemStat {
         this.input = input;
     }
 
-    public static String formatted( final Event event, Iterable<String> failureMessage, final Iterable<Throwable> throwables,
+    public static String formatted( final Event event, final Iterable<String> failureMessage, final Iterable<Throwable> throwables,
             final Object input ) {
-        return new ResultItemStat( event, failureMessage, throwables, input == null ? null : input.toString() ).format();
+        return new ResultItemStat( event, failureMessage, throwables, input == null
+            ? null
+            : input.toString() ).format();
     }
 
     private String format() {

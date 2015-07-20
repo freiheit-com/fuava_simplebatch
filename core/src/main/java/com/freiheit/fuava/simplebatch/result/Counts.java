@@ -1,6 +1,5 @@
 package com.freiheit.fuava.simplebatch.result;
 
-
 public final class Counts {
     public static final class Builder {
         private int success;
@@ -17,34 +16,32 @@ public final class Counts {
         }
 
         public Counts build() {
-            return new Counts(success, error);
+            return new Counts( success, error );
         }
 
-        public void addAll(Iterable<? extends Result<?, ?>> it) {
-            for (Result<?, ?> r: it) {
-                add(r);
+        public void addAll( final Iterable<? extends Result<?, ?>> it ) {
+            for ( final Result<?, ?> r : it ) {
+                add( r );
             }
         }
 
-        public void add(Result<?, ?> result) {
-            if (result.isFailed()) {
+        public void add( final Result<?, ?> result ) {
+            if ( result.isFailed() ) {
                 failed();
             } else {
                 success();
             }
         }
 
-
     }
 
     private final int success;
     private final int error;
 
-    public Counts(int success, int error) {
+    public Counts( final int success, final int error ) {
         this.success = success;
         this.error = error;
     }
-
 
     public int getSuccess() {
         return success;
@@ -57,6 +54,5 @@ public final class Counts {
     public static final Counts.Builder builder() {
         return new Builder();
     }
-
 
 }

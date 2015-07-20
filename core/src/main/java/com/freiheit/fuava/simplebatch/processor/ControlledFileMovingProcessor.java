@@ -25,23 +25,23 @@ class ControlledFileMovingProcessor<Input> extends AbstractSingleItemProcessor<I
     private final FileMover fileMover = new FileMover();
     private final String processingDir;
 
-    public ControlledFileMovingProcessor( final String processingDir) {
+    public ControlledFileMovingProcessor( final String processingDir ) {
         this.processingDir = processingDir;
     }
 
     @Override
-    public Result<Input, File> processItem(Result<Input, ControlFile> data) {
-        if (data.isFailed()) {
+    public Result<Input, File> processItem( final Result<Input, ControlFile> data ) {
+        if ( data.isFailed() ) {
             // Creation of the control file faile, there is nothing we can do
-            return Result.<Input, File>builder(data).failed();
+            return Result.<Input, File> builder( data ).failed();
         }
-        Input input = data.getInput();
-        ControlFile ctl = data.getOutput();
+        final Input input = data.getInput();
+        final ControlFile ctl = data.getOutput();
         try {
-            File targetDir = new File(processingDir);
-            if (!targetDir.exists()) {
-                if (!targetDir.mkdirs()) {
-                    throw new IllegalStateException("Failed to create directory " + targetDir.getAbsolutePath());
+            final File targetDir = new File( processingDir );
+            if ( !targetDir.exists() ) {
+                if ( !targetDir.mkdirs() ) {
+                    throw new IllegalStateException( "Failed to create directory " + targetDir.getAbsolutePath() );
                 }
             }
             //Move ctl file before processing. Do never work in the directory where all the data is written to!
@@ -51,9 +51,9 @@ class ControlledFileMovingProcessor<Input> extends AbstractSingleItemProcessor<I
             final File controlledFile = ctl.getControlledFile();
             final File processingFile = fileMover.moveFile( controlledFile, processingDir );
 
-            return Result.success( input, processingFile ) ;
-        } catch ( Throwable e ) {
-            return Result.failed( input, e ) ;
+            return Result.success( input, processingFile );
+        } catch ( final Throwable e ) {
+            return Result.failed( input, e );
         }
     }
 }

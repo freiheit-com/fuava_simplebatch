@@ -27,23 +27,23 @@ class FileMovingProcessor<Input> extends AbstractSingleItemProcessor<Input, File
     }
 
     @Override
-    public Result<Input, File> processItem(Result<Input, File> data) {
-        if (data.isFailed()) {
+    public Result<Input, File> processItem( final Result<Input, File> data ) {
+        if ( data.isFailed() ) {
             // The input (creation of the file) failed - no sense in trying to move it.
-            return Result.<Input, File>builder(data).failed();
+            return Result.<Input, File> builder( data ).failed();
         }
-        Input input = data.getInput();
-        File toMove = data.getOutput();
+        final Input input = data.getInput();
+        final File toMove = data.getOutput();
         final File moveTo = new File( toDir + "/" + toMove.getName() );
         try {
 
             if ( toMove.renameTo( moveTo ) ) {
-                return Result.success( input, moveTo) ;
+                return Result.success( input, moveTo );
             } else {
-                return Result.failed( input, "Failed to move file"  ) ;
+                return Result.failed( input, "Failed to move file" );
             }
         } catch ( final Throwable t ) {
-            return Result.failed( input, t ) ;
+            return Result.failed( input, t );
         }
 
     }

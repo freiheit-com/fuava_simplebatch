@@ -10,59 +10,63 @@ import org.slf4j.LoggerFactory;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Preconditions;
 
-
 /**
  * @param <Input>
  * @param <Output>
  */
 class FilePersistence<Input, Output> extends AbstractSingleItemProcessor<Input, Output, FilePersistenceOutputInfo> {
     private static final Logger LOG = LoggerFactory.getLogger( FilePersistence.class );
-   
 
-    private FileWriterAdapter<Input, Output> adapter;
-	private File basedir;
-    
-    public FilePersistence(String dir, FileWriterAdapter<Input, Output> adapter) {
-		this.adapter = Preconditions.checkNotNull(adapter);
-		this.basedir = new File( Preconditions.checkNotNull(dir) );
-		if (!this.basedir.exists()) {
-			if (this.basedir.mkdirs()) {
-				LOG.info("Created base dir ", basedir);
-			} else {
-				LOG.error("Could not create base dir ", basedir);
-			}
-		}
-	}
-    
+    private final FileWriterAdapter<Input, Output> adapter;
+    private final File basedir;
+
+    public FilePersistence( final String dir, final FileWriterAdapter<Input, Output> adapter ) {
+        this.adapter = Preconditions.checkNotNull( adapter );
+        this.basedir = new File( Preconditions.checkNotNull( dir ) );
+        if ( !this.basedir.exists() ) {
+            if ( this.basedir.mkdirs() ) {
+                LOG.info( "Created base dir ", basedir );
+            } else {
+                LOG.error( "Could not create base dir ", basedir );
+            }
+        }
+    }
+
     @Override
-    public Result<Input, FilePersistenceOutputInfo> processItem(Result<Input, Output> r) {
-    	if (r.isFailed()) {
-			return Result.<Input, FilePersistenceOutputInfo>builder(r).failed();
-		}
-		
-    	Input input = r.getInput();
-		File f = null;
-		try {
-			String itemDescription = adapter.getFileName(r);
-			f = new File( basedir, itemDescription);
-			LOG.info("Writing data file " + f  + " (exists: " + f.exists()  + ") " + trimOut(r.getOutput()));
-		    try ( OutputStreamWriter fos = new FileWriter( f ) ) {
-		    	adapter.write(fos, r.getOutput());
-		    	fos.flush();
-		    }
-			if (!f.exists()) {
-				return Result.failed(input, "Control file does not exist after write: " + f);
-			}
-			LOG.info("Wrote data file " + f);
-			return Result.success(input, new FilePersistenceOutputInfo(f));
+    public Result<Input, FilePersistenceOutputInfo> processItem( final Result<Input, Output> r ) {
+        if ( r.isFailed() ) {
+            return Result.<Input, FilePersistenceOutputInfo> builder( r ).failed();
+        }
 
-		} catch ( final Throwable t ) {
-			return Result.failed(input, "Failed writing to file " + (f == null ? null : f.getAbsolutePath()), t);
-		}
-	}
+        final Input input = r.getInput();
+        File f = null;
+        try {
+            final String itemDescription = adapter.getFileName( r );
+            f = new File( basedir, itemDescription );
+            LOG.info( "Writing data file " + f + " (exists: " + f.exists() + ") " + trimOut( r.getOutput() ) );
+            try ( OutputStreamWriter fos = new FileWriter( f ) ) {
+                adapter.write( fos, r.getOutput() );
+                fos.flush();
+            }
+            if ( !f.exists() ) {
+                return Result.failed( input, "Control file does not exist after write: " + f );
+            }
+            LOG.info( "Wrote data file " + f );
+            return Result.success( input, new FilePersistenceOutputInfo( f ) );
 
-	private String trimOut(Output output) {
-		String os = output == null ? "null" : output.toString();
-		return output == null? "null" : os.substring(0,  Math.min(20, os.length()));
-	}
+        } catch ( final Throwable t ) {
+            return Result.failed( input, "Failed writing to file " + ( f == null
+                ? null
+                : f.getAbsolutePath() ), t );
+        }
+    }
+
+    private String trimOut( final Output output ) {
+        final String os = output == null
+            ? "null"
+            : output.toString();
+        return output == null
+            ? "null"
+            : os.substring( 0, Math.min( 20, os.length() ) );
+    }
 }

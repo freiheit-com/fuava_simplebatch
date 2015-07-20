@@ -62,7 +62,7 @@ public class TestComposition {
             );
 
     final ImmutableList<Result<File, File>> nonExistingFiles = ImmutableList.of(
-            asResult(new File( "/tmp/a/a" ))
+            asResult( new File( "/tmp/a/a" ) )
             );
 
     @BeforeClass
@@ -74,8 +74,8 @@ public class TestComposition {
         }
     }
 
-    private <T> Result<T, T> asResult(T data) {
-        return Result.success(data, data);
+    private <T> Result<T, T> asResult( final T data ) {
+        return Result.success( data, data );
     }
 
     @Test
@@ -85,7 +85,7 @@ public class TestComposition {
                 .values()
                 .stream()
                 .map( fileContentPair -> fileContentPair.file )
-                .map( file -> Result.success(file, file) )
+                .map( file -> Result.success( file, file ) )
                 .collect( Collectors.toList() );
         final Iterable<Result<File, String>> processed = compose.process( testFiles );
 
@@ -110,8 +110,8 @@ public class TestComposition {
     }
 
     private Processor<File, File, String> makeComposedProcessorFileStringProcessor() {
-        final Processor<File ,File, File> prepareControlledFileProcessor = Processors.fileMover("/tmp" );
-        final Processor<File ,File, String> readFilesToStringTestProcessor = makeReadFilesToStringTestProcessor();
+        final Processor<File, File, File> prepareControlledFileProcessor = Processors.fileMover( "/tmp" );
+        final Processor<File, File, String> readFilesToStringTestProcessor = makeReadFilesToStringTestProcessor();
 
         return Processors.compose(
                 readFilesToStringTestProcessor,
@@ -120,7 +120,7 @@ public class TestComposition {
     }
 
     private Processor<File, File, String> makeReadFilesToStringTestProcessor() {
-        return Processors.singleItemFunction(new Function<File, String>() {
+        return Processors.singleItemFunction( new Function<File, String>() {
             @Nullable
             @Override
             public String apply( final File input ) {

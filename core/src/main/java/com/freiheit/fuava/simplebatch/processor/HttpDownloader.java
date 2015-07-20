@@ -18,25 +18,24 @@ class HttpDownloader<Input, Id, T> extends AbstractSingleItemProcessor<Input, Id
     public HttpDownloader(
             final HttpClient client,
             final HttpDownloaderSettings<Id> settings,
-            final Function<InputStream, T> converter
-            ) {
+            final Function<InputStream, T> converter ) {
         this.fetcher = new HttpFetcher( client );
         this.settings = settings;
         this.converter = converter;
     }
 
     @Override
-    public Result<Input, T> processItem(Result<Input, Id> data) {
-        if (data.isFailed()) {
-            return Result.<Input, T>builder(data).failed();
+    public Result<Input, T> processItem( final Result<Input, Id> data ) {
+        if ( data.isFailed() ) {
+            return Result.<Input, T> builder( data ).failed();
         }
-        Input input = data.getInput();
-        Id id = data.getOutput();
+        final Input input = data.getInput();
+        final Id id = data.getOutput();
         try {
             final T result = fetcher.fetch( converter, settings.createFetchUrl( id ), settings.getRequestHeaders() );
             return Result.success( input, result );
-        } catch ( Throwable e ) {
-            return Result.failed( input , e );
+        } catch ( final Throwable e ) {
+            return Result.failed( input, e );
         }
 
     }
