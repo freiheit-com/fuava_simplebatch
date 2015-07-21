@@ -80,15 +80,26 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
      */
     public static final class Builder<Id, Data> extends AbstractBuilder<Id, Data, ControlFilePersistenceOutputInfo> {
 
+        private FileWriterAdapter<FetchedItem<Id>, Data> persistenceAdapter;
+
         public Builder<Id, Data> setFileWriterAdapter(
                 final FileWriterAdapter<FetchedItem<Id>, Data> persistenceAdapter
                 ) {
-            setFileWriter( Processors.controlledFileWriter(
-                    getConfiguration().getDownloadDirPath(),
-                    getConfiguration().getControlFileEnding(),
+
+            this.persistenceAdapter = persistenceAdapter;
+            return this;
+        }
+
+        public CtlDownloaderJob<Id, ControlFilePersistenceOutputInfo> build() {
+            final Configuration configuration = getConfiguration();
+            Preconditions.checkNotNull( configuration, "Configuration missing" );
+            Preconditions.checkNotNull( persistenceAdapter, "File Writer Adapter missing" );
+
+            return build( Processors.controlledFileWriter(
+                    configuration.getDownloadDirPath(),
+                    configuration.getControlFileEnding(),
                     persistenceAdapter
                     ) );
-            return this;
         }
 
         @Override
@@ -164,14 +175,12 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
     public static final class BatchFileWritingBuilder<Id, Data> extends
             AbstractBuilder<Id, Data, BatchProcessorResult<ControlFilePersistenceOutputInfo>> {
 
+        private FileWriterAdapter<List<FetchedItem<Id>>, List<Data>> persistenceAdapter;
+
         public BatchFileWritingBuilder<Id, Data> setBatchFileWriterAdapter(
                 final FileWriterAdapter<List<FetchedItem<Id>>, List<Data>> persistenceAdapter
                 ) {
-            setFileWriter( Processors.controlledBatchFileWriter(
-                    getConfiguration().getDownloadDirPath(),
-                    getConfiguration().getControlFileEnding(),
-                    persistenceAdapter
-                    ) );
+            this.persistenceAdapter = persistenceAdapter;
             return this;
         }
 
@@ -234,13 +243,24 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             return this;
         }
 
+        public CtlDownloaderJob<Id, BatchProcessorResult<ControlFilePersistenceOutputInfo>> build() {
+            final Configuration configuration = getConfiguration();
+            Preconditions.checkNotNull( configuration, "Configuration missing" );
+            Preconditions.checkNotNull( persistenceAdapter, "File Writer Adapter missing" );
+
+            return build( Processors.controlledBatchFileWriter(
+                    configuration.getDownloadDirPath(),
+                    configuration.getControlFileEnding(),
+                    persistenceAdapter
+                    ) );
+        }
     }
 
     public static abstract class AbstractBuilder<Id, Data, ProcessingResult> {
         private static final String LOG_NAME_BATCH = "ITEMS DOWNLOADED";
         private static final String LOG_NAME_ITEM = "ITEM";
         private final BatchJob.Builder<Id, ProcessingResult> builder = BatchJob.builder();
-        private Processor<FetchedItem<Id>, Data, ProcessingResult> fileWriter;
+
         private Processor<FetchedItem<Id>, Id, Data> downloader;
 
         private Configuration configuration;
@@ -305,20 +325,18 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             return this;
         }
 
-        protected void setFileWriter(
-                final Processor<FetchedItem<Id>, Data, ProcessingResult> fileWriter ) {
-            this.fileWriter = fileWriter;
-        }
+        protected CtlDownloaderJob<Id, ProcessingResult> build( final Processor<FetchedItem<Id>, Data, ProcessingResult> fileWriter ) {
+            Preconditions.checkNotNull( fileWriter, "You need to call setFileWriterAdapter first" );
+            final Fetcher<Id> fetcher = builder.getFetcher();
+            Preconditions.checkNotNull( fetcher, "Fetcher missing." );
 
-        public CtlDownloaderJob<Id, ProcessingResult> build() {
             builder.addListener( new BatchStatisticsLoggingListener<Id, ProcessingResult>( LOG_NAME_BATCH ) );
             builder.addListener( new ItemProgressLoggingListener<Id, ProcessingResult>( LOG_NAME_ITEM ) );
-            Preconditions.checkNotNull( fileWriter, "You need to call setFileWriterAdapter first" );
             final Processor<FetchedItem<Id>, Id, ProcessingResult> p = Processors.compose( fileWriter, downloader );
             return new CtlDownloaderJob<Id, ProcessingResult>(
                     builder.getDescription(),
                     builder.getProcessingBatchSize(),
-                    builder.getFetcher(),
+                    fetcher,
                     this.configuration == null
                         ? new ConfigurationImpl()
                         : this.configuration,
