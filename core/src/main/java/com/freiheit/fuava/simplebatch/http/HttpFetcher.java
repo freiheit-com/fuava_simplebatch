@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.freiheit.fuava.simplebatch.exceptions.AuthorizationException;
 import com.freiheit.fuava.simplebatch.exceptions.FetchFailedException;
-import com.freiheit.fuava.simplebatch.util.StringUtils;
+import com.freiheit.fuava.simplebatch.util.IOStreamUtils;
 import com.google.common.base.Function;
 
 public class HttpFetcher {
@@ -46,7 +46,7 @@ public class HttpFetcher {
                 // TODO: maybe we need to handle responses in a better way?
                 throw new FetchFailedException(
                         String.format( "Failed to add articles for url %s. Response is %s ", uri,
-                                StringUtils.consumeAsString( response ) ) );
+                                IOStreamUtils.consumeAsString( response.getEntity().getContent() ) ) );
             }
 
             try ( InputStream stream = response.getEntity().getContent() ) {
