@@ -9,7 +9,7 @@ import com.freiheit.fuava.simplebatch.logging.BatchStatisticsLoggingListener;
 import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
 import com.freiheit.fuava.simplebatch.processor.BatchProcessorResult;
 import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo;
-import com.freiheit.fuava.simplebatch.processor.FileWriterAdapter;
+import com.freiheit.fuava.simplebatch.processor.FileOutputStreamAdapter;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
@@ -80,10 +80,10 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
      */
     public static final class Builder<Id, Data> extends AbstractBuilder<Id, Data, ControlFilePersistenceOutputInfo> {
 
-        private FileWriterAdapter<FetchedItem<Id>, Data> persistenceAdapter;
+        private FileOutputStreamAdapter<FetchedItem<Id>, Data> persistenceAdapter;
 
         public Builder<Id, Data> setFileWriterAdapter(
-                final FileWriterAdapter<FetchedItem<Id>, Data> persistenceAdapter
+                final FileOutputStreamAdapter<FetchedItem<Id>, Data> persistenceAdapter
                 ) {
 
             this.persistenceAdapter = persistenceAdapter;
@@ -175,10 +175,10 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
     public static final class BatchFileWritingBuilder<Id, Data> extends
             AbstractBuilder<Id, Data, BatchProcessorResult<ControlFilePersistenceOutputInfo>> {
 
-        private FileWriterAdapter<List<FetchedItem<Id>>, List<Data>> persistenceAdapter;
+        private FileOutputStreamAdapter<List<FetchedItem<Id>>, List<Data>> persistenceAdapter;
 
         public BatchFileWritingBuilder<Id, Data> setBatchFileWriterAdapter(
-                final FileWriterAdapter<List<FetchedItem<Id>>, List<Data>> persistenceAdapter
+                final FileOutputStreamAdapter<List<FetchedItem<Id>>, List<Data>> persistenceAdapter
                 ) {
             this.persistenceAdapter = persistenceAdapter;
             return this;

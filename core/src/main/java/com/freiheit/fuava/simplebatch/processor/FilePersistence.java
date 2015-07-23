@@ -17,10 +17,10 @@ import com.google.common.base.Preconditions;
 class FilePersistence<Input, Output> extends AbstractSingleItemProcessor<Input, Output, FilePersistenceOutputInfo> {
     private static final Logger LOG = LoggerFactory.getLogger( FilePersistence.class );
 
-    private final FileOutputAdapter<Input, Output> adapter;
+    private final FileOutputStreamAdapter<Input, Output> adapter;
     private final File basedir;
 
-    public FilePersistence( final String dir, final FileOutputAdapter<Input, Output> adapter ) {
+    public FilePersistence( final String dir, final FileOutputStreamAdapter<Input, Output> adapter ) {
         this.adapter = Preconditions.checkNotNull( adapter );
         this.basedir = new File( Preconditions.checkNotNull( dir ) );
         if ( !this.basedir.exists() ) {

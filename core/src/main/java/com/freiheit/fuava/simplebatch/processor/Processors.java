@@ -82,7 +82,7 @@ public class Processors {
      *         file in the given directory.
      */
     public static <Input, Output> Processor<Input, Output, FilePersistenceOutputInfo> fileWriter(
-            final String dirName, final FileOutputAdapter<Input, Output> adapter
+            final String dirName, final FileOutputStreamAdapter<Input, Output> adapter
             ) {
         return new FilePersistence<Input, Output>( dirName, adapter );
     }
@@ -100,7 +100,7 @@ public class Processors {
     public static <Input, Output> Processor<Input, Output, ControlFilePersistenceOutputInfo> controlledFileWriter(
             final String dirName,
             final String controlFileEnding,
-            final FileOutputAdapter<Input, Output> adapter
+            final FileOutputStreamAdapter<Input, Output> adapter
             ) {
         return Processors.compose(
                 new ControlFilePersistence<Input>( new ControlFilePersistenceConfigImpl( dirName, controlFileEnding ) ),
@@ -143,7 +143,7 @@ public class Processors {
     public static <Input, Output> Processor<Input, Output, BatchProcessorResult<ControlFilePersistenceOutputInfo>> controlledBatchFileWriter(
             final String dirName,
             final String controlFileEnding,
-            final FileWriterAdapter<List<Input>, List<Output>> adapter
+            final FileOutputStreamAdapter<List<Input>, List<Output>> adapter
             ) {
         return new BatchProcessor<Input, Output, ControlFilePersistenceOutputInfo>( controlledFileWriter( dirName,
                 controlFileEnding, adapter ) );

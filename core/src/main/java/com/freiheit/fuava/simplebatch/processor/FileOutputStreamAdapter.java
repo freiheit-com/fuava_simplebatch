@@ -5,7 +5,7 @@ import java.io.OutputStream;
 
 import com.freiheit.fuava.simplebatch.result.Result;
 
-public interface FileOutputAdapter<Input, Output> {
+public interface FileOutputStreamAdapter<Input, Output> {
     String getFileName( Result<Input, Output> result );
 
     void writeToStream( OutputStream outputStream, Output data ) throws IOException;

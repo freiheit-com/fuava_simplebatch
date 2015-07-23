@@ -7,7 +7,7 @@ import java.io.Writer;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Charsets;
 
-public interface FileWriterAdapter<Input, Output> extends FileOutputAdapter<Input, Output> {
+public interface FileWriterAdapter<Input, Output> extends FileOutputStreamAdapter<Input, Output> {
     @Override
     String getFileName( Result<Input, Output> result );
 
