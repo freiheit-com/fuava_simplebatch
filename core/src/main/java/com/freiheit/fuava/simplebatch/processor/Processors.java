@@ -82,7 +82,7 @@ public class Processors {
      *         file in the given directory.
      */
     public static <Input, Output> Processor<Input, Output, FilePersistenceOutputInfo> fileWriter(
-            final String dirName, final FileWriterAdapter<Input, Output> adapter
+            final String dirName, final FileOutputAdapter<Input, Output> adapter
             ) {
         return new FilePersistence<Input, Output>( dirName, adapter );
     }
@@ -100,7 +100,7 @@ public class Processors {
     public static <Input, Output> Processor<Input, Output, ControlFilePersistenceOutputInfo> controlledFileWriter(
             final String dirName,
             final String controlFileEnding,
-            final FileWriterAdapter<Input, Output> adapter
+            final FileOutputAdapter<Input, Output> adapter
             ) {
         return Processors.compose(
                 new ControlFilePersistence<Input>( new ControlFilePersistenceConfigImpl( dirName, controlFileEnding ) ),

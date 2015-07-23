@@ -2,13 +2,12 @@ package com.freiheit.fuava.simplebatch.processor;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
+import java.io.OutputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 
 /**
@@ -18,10 +17,10 @@ import com.google.common.base.Preconditions;
 class FilePersistence<Input, Output> extends AbstractSingleItemProcessor<Input, Output, FilePersistenceOutputInfo> {
     private static final Logger LOG = LoggerFactory.getLogger( FilePersistence.class );
 
-    private final FileWriterAdapter<Input, Output> adapter;
+    private final FileOutputAdapter<Input, Output> adapter;
     private final File basedir;
 
-    public FilePersistence( final String dir, final FileWriterAdapter<Input, Output> adapter ) {
+    public FilePersistence( final String dir, final FileOutputAdapter<Input, Output> adapter ) {
         this.adapter = Preconditions.checkNotNull( adapter );
         this.basedir = new File( Preconditions.checkNotNull( dir ) );
         if ( !this.basedir.exists() ) {
@@ -45,8 +44,8 @@ class FilePersistence<Input, Output> extends AbstractSingleItemProcessor<Input, 
             final String itemDescription = adapter.getFileName( r );
             f = new File( basedir, itemDescription );
             LOG.info( "Writing data file " + f + " (exists: " + f.exists() + ") " + trimOut( r.getOutput() ) );
-            try ( OutputStreamWriter fos = new OutputStreamWriter( new FileOutputStream( f ), Charsets.UTF_8 ) ) {
-                adapter.write( fos, r.getOutput() );
+            try ( OutputStream fos = new FileOutputStream( f ) ) {
+                adapter.writeToStream( fos, r.getOutput() );
                 fos.flush();
             }
             if ( !f.exists() ) {
