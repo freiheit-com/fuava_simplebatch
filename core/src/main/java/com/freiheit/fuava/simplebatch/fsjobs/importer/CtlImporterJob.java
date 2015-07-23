@@ -107,12 +107,13 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         private static final String LOG_NAME_CONTENT_PROCESSING_BATCH = "PROCESSED CONTENT";
         private Configuration configuration;
         private int processingBatchSize = 1000;
-        private Function<InputStream, Iterable<Data>> documentReader;
+
         private final List<ProcessingResultListener<ControlFile, ResultStatistics>> fileProcessingListeners = new ArrayList<>();
 
         private final List<ProcessingResultListener<Data, Data>> contentProcessingListeners = new ArrayList<>();
         private Processor<FetchedItem<Data>, Data, Data> contentProcessor;
         private String description;
+        private Processor<FetchedItem<ControlFile>, File, Iterable<Data>> fileProcessor;
 
         public Builder() {
         }
@@ -147,14 +148,42 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
          * The given function is used for each file to convert the contents of
          * that file (accessed by an {@link InputStream}) into an iterable.
          *
+         * <p>
          * Note that your Iterable will be processed lazily by creating
          * partitions of size {@link #setContentBatchSize(int)}. After that, it
          * will be passed to the persistence configured in
          * {@link #setContentProcessor(Processor)}.
+         * </p>
          *
+         * <p>
+         * This function is a simple alternative to
+         * {@link #setFileProcessor(Processor)}.
+         * </p>
          */
         public Builder<Data> setFileInputStreamReader( final Function<InputStream, Iterable<Data>> documentReader ) {
-            this.documentReader = documentReader;
+            final Function<File, Iterable<Data>> fileProcessorFunction = new FileToInputStreamFunction<>( documentReader );
+            fileProcessor = Processors.singleItemFunction( fileProcessorFunction );
+            return this;
+        }
+
+        /**
+         * Set the processor which is used to convert the File into an iterable
+         * of Data items.
+         *
+         * <p>
+         * Note that your Iterable will be processed lazily by creating
+         * partitions of size {@link #setContentBatchSize(int)}. After that, it
+         * will be passed to the persistence configured in
+         * {@link #setContentProcessor(Processor)}.
+         * </p>
+         * 
+         * <p>
+         * This function is a powerful alternative to
+         * {@link #setFileInputStreamReader(Function)}.
+         * </p>
+         */
+        public Builder<Data> setFileProcessor( final Processor<FetchedItem<ControlFile>, File, Iterable<Data>> processor ) {
+            this.fileProcessor = processor;
             return this;
         }
 
@@ -197,9 +226,6 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                 builder.addListener( l );
             }
 
-            final Function<File, Iterable<Data>> fileProcessorFunction = new FileToInputStreamFunction<>( this.documentReader );
-            final Processor<FetchedItem<ControlFile>, File, Iterable<Data>> fileProcessor =
-                    Processors.singleItemFunction( fileProcessorFunction );
             final Processor<FetchedItem<ControlFile>, ControlFile, File> controlledFileMover =
                     Processors.controlledFileMover( configuration.getProcessingDirPath() );
             final Processor<FetchedItem<ControlFile>, ControlFile, Iterable<Data>> fileProcessorAndMover =
