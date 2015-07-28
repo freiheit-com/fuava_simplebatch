@@ -14,6 +14,7 @@ public class LazyPageFetchingIterable<T> implements Iterator<Result<PagingInput,
     private int from;
 
     private Result<PagingInput, T> next;
+    private boolean hasNext;
 
     public LazyPageFetchingIterable(
             final PageFetcher<T> fetcher, final int initialFrom,
@@ -22,24 +23,31 @@ public class LazyPageFetchingIterable<T> implements Iterator<Result<PagingInput,
         this.from = initialFrom;
         this.pageSize = pageSize;
         this.settings = settings;
-        next = advance();
+        advance();
     }
 
     @Override
     public boolean hasNext() {
-        return settings.hasNext( from, pageSize, next );
+        return hasNext;
     }
 
     @Override
     public Result<PagingInput, T> next() {
         final Result<PagingInput, T> v = next;
-        next = advance();
+        // let the settings control wether or not we expect to see more results and thus need another page call
+        if ( !settings.hasNext( from, pageSize, next ) ) {
+            hasNext = false;
+            next = null;
+        } else {
+            advance();
+        }
         return v;
     }
 
-    private Result<PagingInput, T> advance() {
+    private void advance() {
         final Result<PagingInput, T> v = fetcher.fetch( from, pageSize );
         from += pageSize;
-        return v;
+        hasNext = v != null;
+        next = v;
     }
 }

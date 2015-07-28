@@ -7,6 +7,7 @@ import java.util.Map;
 import org.apache.http.client.HttpClient;
 
 import com.freiheit.fuava.simplebatch.http.HttpFetcher;
+import com.freiheit.fuava.simplebatch.http.HttpFetcherImpl;
 import com.freiheit.fuava.simplebatch.http.HttpPagingFetcher;
 import com.freiheit.fuava.simplebatch.http.PagingRequestSettings;
 import com.google.common.base.Function;
@@ -39,11 +40,18 @@ public class Fetchers {
     public static <Item> Fetcher<Item> httpFetcher(
             final HttpClient client,
             final String uri,
-
             final Map<String, String> headers,
             final Function<InputStream, Iterable<Item>> converter
             ) {
-        final HttpFetcher httpFetcher = new HttpFetcher( client );
+        return httpFetcher( new HttpFetcherImpl( client ), uri, headers, converter );
+    }
+
+    public static <Item> Fetcher<Item> httpFetcher(
+            final HttpFetcher httpFetcher,
+            final String uri,
+            final Map<String, String> headers,
+            final Function<InputStream, Iterable<Item>> converter
+            ) {
         return new SuppliedIterableFetcher<Item>( new Supplier<Iterable<Item>>() {
 
             @Override
@@ -61,11 +69,27 @@ public class Fetchers {
     public static <Item> Fetcher<Item> httpPagingFetcher(
             final HttpClient client,
             final PagingRequestSettings<Iterable<Item>> settings,
-            final Function<InputStream, Iterable<Item>> converter,
+            final Function<? super InputStream, Iterable<Item>> converter,
             final int initialFrom,
             final int pageSize
             ) {
-        return new HttpPagingFetcher<Item>( client, settings, converter, initialFrom, pageSize );
+        return httpPagingFetcher( new HttpFetcherImpl( client ), settings, converter, initialFrom, pageSize );
+
+    }
+
+    /**
+     * Creates a Fetcher which fetches the Items lazily via http, always
+     * requesting a page of the data and transparently continuing to the next
+     * page.
+     */
+    public static <Item> Fetcher<Item> httpPagingFetcher(
+            final HttpFetcher fetcher,
+            final PagingRequestSettings<Iterable<Item>> settings,
+            final Function<? super InputStream, Iterable<Item>> converter,
+            final int initialFrom,
+            final int pageSize
+            ) {
+        return new HttpPagingFetcher<Item>( fetcher, settings, converter, initialFrom, pageSize );
 
     }
 

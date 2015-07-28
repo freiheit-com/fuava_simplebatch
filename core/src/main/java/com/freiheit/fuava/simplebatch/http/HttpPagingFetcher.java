@@ -18,9 +18,22 @@ public class HttpPagingFetcher<T> implements Fetcher<T> {
 
     private final HttpFetcher fetcher;
     private final PagingRequestSettings<Iterable<T>> settings;
-    private final Function<InputStream, Iterable<T>> converter;
+    private final Function<? super InputStream, Iterable<T>> converter;
     private final int initialFrom;
     private final int pageSize;
+
+    public HttpPagingFetcher(
+            final HttpFetcher fetcher,
+            final PagingRequestSettings<Iterable<T>> settings,
+            final Function<? super InputStream, Iterable<T>> converter,
+            final int initialFrom,
+            final int pageSize ) {
+        this.fetcher = fetcher;
+        this.converter = converter;
+        this.settings = settings;
+        this.initialFrom = initialFrom;
+        this.pageSize = pageSize;
+    }
 
     public HttpPagingFetcher(
             final HttpClient client,
@@ -28,11 +41,7 @@ public class HttpPagingFetcher<T> implements Fetcher<T> {
             final Function<InputStream, Iterable<T>> converter,
             final int initialFrom,
             final int pageSize ) {
-        this.fetcher = new HttpFetcher( client );
-        this.converter = converter;
-        this.settings = settings;
-        this.initialFrom = initialFrom;
-        this.pageSize = pageSize;
+        this( new HttpFetcherImpl( client ), settings, converter, initialFrom, pageSize );
     }
 
     private static final class ResultTransformer<T> implements

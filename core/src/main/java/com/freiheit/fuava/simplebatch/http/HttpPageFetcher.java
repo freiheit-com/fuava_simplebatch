@@ -9,10 +9,10 @@ import com.google.common.base.Function;
 public class HttpPageFetcher<T> implements PageFetcher<T> {
     private final PagingRequestSettings<T> settings;
     private final HttpFetcher fetcher;
-    private final Function<InputStream, T> converter;
+    private final Function<? super InputStream, T> converter;
 
     public HttpPageFetcher( final HttpFetcher fetcher, final PagingRequestSettings<T> settings,
-            final Function<InputStream, T> converter ) {
+            final Function<? super InputStream, T> converter ) {
         this.settings = settings;
         this.fetcher = fetcher;
         this.converter = converter;
