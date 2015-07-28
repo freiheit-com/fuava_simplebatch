@@ -228,4 +228,7 @@ job.addContentProcessingListener(new ProcessingResultListener<Article, Article>(
 
 Note that there are convenience Implementations for those loggers available, for example `ItemProgressLoggingListener` and `BatchStatisticsLoggingListener`.
 
+## Changes
 
+### 0.3.4 (2015-07-28)
+ - Fixed HttpPager: did not process data of last page - if the very first page was less than page size, it did not return any data
