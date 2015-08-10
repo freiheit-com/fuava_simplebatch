@@ -163,6 +163,135 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
     }
 
+    
+    /**
+     * Builder for jobs which create one file per downloaded item and copy it in two different folders
+     * 
+     * @author dmitrijs.barbarins
+     *
+     * @param <Id>
+     *            The type of those items that should be used to really download
+     *            the data in the downloader.
+     * @param <Data>
+     *            The type of the data retrieved by the downloader
+     */
+    public static final class TwinCopyBuilder<Id, Data> extends AbstractBuilder<Id, Data, ControlFilePersistenceOutputInfo> {
+
+		private FileOutputStreamAdapter<FetchedItem<Id>, Data> firstAdapter;
+		private FileOutputStreamAdapter<FetchedItem<Id>, Data> secondAdapter;
+		private String firstAdapterRelativePath;
+		private String secondAdapterRelativePath;
+
+	    /**
+	     * Add's file writer adapters to the builder
+	     * 
+	     * @author dmitrijs.barbarins
+	     *
+	     * @param <firstAdapter>
+	     *            writer adapter for the first copy of the file.
+	     * @param <firstAdapterRelativePath>
+	     *            path relative to the base path, where the first copy will be stored. Make sure it starts with proper path delimiter.
+	     * @param <secondAdapter>
+	     *            writer adapter for the second copy of the file.
+	     * @param <secondAdapterRelativePath>
+	     *            path relative to the base path, where the second copy will be stored.  Make sure it starts with proper path delimiter.
+	     */
+        public TwinCopyBuilder<Id, Data> setFileWriterAdapters( 
+        		final FileOutputStreamAdapter<FetchedItem<Id>, Data> firstAdapter,
+        		final String firstAdapterRelativePath,
+        		final FileOutputStreamAdapter<FetchedItem<Id>, Data> secondAdapter,
+        		final String secondAdapterRelativePath
+                ) {
+
+        	this.firstAdapter = firstAdapter;
+        	this.secondAdapter = firstAdapter;
+        	
+        	this.firstAdapterRelativePath = firstAdapterRelativePath;
+        	this.secondAdapterRelativePath = secondAdapterRelativePath;
+        	
+            return this;
+        }
+
+        public CtlDownloaderJob<Id, ControlFilePersistenceOutputInfo> build() {
+            final Configuration configuration = getConfiguration();
+            Preconditions.checkNotNull( configuration, "Configuration missing" );
+            Preconditions.checkNotNull( firstAdapter, "First Writer Adapter missing" );
+            Preconditions.checkNotNull( secondAdapter, "Second Writer Adapter missing" );
+            Preconditions.checkNotNull( firstAdapterRelativePath, "Relative path for the first writer adapter is missing" );
+            Preconditions.checkNotNull( secondAdapterRelativePath, "Relative path for the second writer adapter is missing" );
+
+            return build( Processors.controlledTwinFileWriter(
+                    configuration.getDownloadDirPath(),
+                    configuration.getControlFileEnding(),
+                    firstAdapter,
+                    firstAdapterRelativePath,
+                    secondAdapter,
+                    secondAdapterRelativePath
+                    ) );
+        }
+
+        @Override
+        public TwinCopyBuilder<Id, Data> setConfiguration( final Configuration configuration ) {
+            super.setConfiguration( configuration );
+            return this;
+        }
+
+        @Override
+        public TwinCopyBuilder<Id, Data> setDescription( final String description ) {
+            super.setDescription( description );
+            return this;
+        }
+
+        /**
+         * The amount of items from the fetch stage that are put together in a
+         * list and passed on to the "Downloader" stage. If your downloader
+         * supports batch fetching, you can use this setting to control the
+         * amount of items in one batch.
+         */
+        @Override
+        public TwinCopyBuilder<Id, Data> setDownloaderBatchSize(
+                final int processingBatchSize ) {
+            super.setDownloaderBatchSize( processingBatchSize );
+            return this;
+        }
+
+        /**
+         * Fetches the Ids of the documents to download.
+         */
+        @Override
+        public TwinCopyBuilder<Id, Data> setIdsFetcher(
+                final Fetcher<Id> idsFetcher ) {
+            super.setIdsFetcher( idsFetcher );
+            return this;
+        }
+
+        /**
+         * Uses the Ids to download the data.
+         */
+        @Override
+        public TwinCopyBuilder<Id, Data> setDownloader(
+                final Processor<FetchedItem<Id>, Id, Data> byIdsFetcher ) {
+            super.setDownloader( byIdsFetcher );
+            return this;
+        }
+
+        @Override
+        public TwinCopyBuilder<Id, Data> addListener(
+                final ProcessingResultListener<Id, ControlFilePersistenceOutputInfo> listener ) {
+            super.addListener( listener );
+            return this;
+        }
+
+        @Override
+        public TwinCopyBuilder<Id, Data> removeListener(
+                final ProcessingResultListener<Id, ControlFilePersistenceOutputInfo> listener ) {
+            super.removeListener( listener );
+            return this;
+        }
+
+    }
+
+    
     /**
      * Builder for jobs that put multiple downloaded items together in one file,
      * called "batch file".

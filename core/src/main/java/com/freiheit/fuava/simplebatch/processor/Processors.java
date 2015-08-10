@@ -25,6 +25,15 @@ public class Processors {
     }
 
     /**
+     * Combine two processors. 
+     * Runs both processor on the same input and collects outputs.
+     */
+    public static <A, B, C> Processor<A, B, C> parallel( final Processor<A, B, C> g, final Processor<A, B, C> f ) {
+        return new ParallelProcessor<A, B, C>( g, f );
+    }
+
+    
+    /**
      * Wraps a function that transforms a list of input values into a list of
      * output values and is expected to process or persist the data in some way.
      * Note that the function <b>must</b> support retries, meaning that a
@@ -109,6 +118,41 @@ public class Processors {
 
     }
 
+    
+    /**
+     * Like {@link #fileWriter(String, FileWriterAdapter)}, but additionally
+     * writes a control-file that can be used for waiting until this file has
+     * been completely written. Unlike {@link #controlledFileWriter(String, String, FileOutputStreamAdapter<Input, Output>)}
+     * makes two copies of the file, each in it's own folder.
+     *
+     * @param dirName
+     * @param controlFileEnding
+     * @param adapter
+     * @return
+     */
+    public static <Input, Output> Processor<Input, Output, ControlFilePersistenceOutputInfo> controlledTwinFileWriter(
+            final String dirName,
+            final String controlFileEnding,
+            final FileOutputStreamAdapter<Input, Output> firstAdapter,
+            final String firstAdapterRelativePath,
+            final FileOutputStreamAdapter<Input, Output> secondAdapter,
+            final String secondAdapterRelativePath
+            ) {
+
+    	Processor<Input, Output, ControlFilePersistenceOutputInfo> firstProcessor = Processors.compose(
+                new ControlFilePersistence<Input>( new ControlFilePersistenceConfigImpl( dirName + firstAdapterRelativePath, controlFileEnding ) ),
+    			new FilePersistence<Input, Output>( dirName + firstAdapterRelativePath, firstAdapter )
+    	);
+
+    	Processor<Input, Output, ControlFilePersistenceOutputInfo> secondProcessor = Processors.compose(
+                new ControlFilePersistence<Input>( new ControlFilePersistenceConfigImpl( dirName + secondAdapterRelativePath, controlFileEnding ) ),
+                new FilePersistence<Input, Output>( dirName + secondAdapterRelativePath, secondAdapter )
+                );
+
+    	return Processors.parallel(secondProcessor, firstProcessor);
+    }
+
+    
     /**
      * Writes a batch (aka partition) of the processed data into one file.
      *
