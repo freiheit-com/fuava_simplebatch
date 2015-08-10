@@ -11,7 +11,7 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'eclipse'
     apply plugin: 'checkstyle'
-//    apply plugin: 'findbugs'
+    apply plugin: 'findbugs'
 
     sourceCompatibility = JavaVersion.VERSION_1_8
 
@@ -25,13 +25,13 @@ subprojects {
         toolVersion = '6.5'
     }
 
-//    findbugs {
-//        toolVersion = "3.0.1"
-//        reportsDir = file("${project.buildDir}/findbugsReports")
-//        effort = "max"
-//        reportLevel = "high"
-//        excludeFilter = file("${rootProject.projectDir}/etc/findbugs/exclude-filter.xml")
-//    }
+    findbugs {
+        toolVersion = "3.0.1"
+        reportsDir = file("${project.buildDir}/findbugsReports")
+        effort = "max"
+        reportLevel = "high"
+        excludeFilter = file("${rootProject.projectDir}/etc/findbugs/exclude-filter.xml")
+    }
 
     sourceCompatibility = JavaVersion.VERSION_1_8
 
