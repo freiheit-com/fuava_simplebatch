@@ -13,39 +13,35 @@ package com.freiheit.fuava.simplebatch.fetch;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Optional;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
 
 /**
  * @author tim.lessner@freiheit.com
  */
 class DirectoryFileFetcher<T> implements Supplier<Iterable<T>> {
 
-    private final String filter;
-    private final String uri;
-    private final Function<File, T> func;
+	private final String filter;
+	private final String uri;
+	private final Function<File, T> func;
 
-    public DirectoryFileFetcher( final String uri, final String filter, final Function<File, T> func ) {
-        this.uri = Preconditions.checkNotNull( uri );
-        this.filter = Preconditions.checkNotNull( filter );
-        this.func = Preconditions.checkNotNull( func );
-    }
+	public DirectoryFileFetcher(final String uri, final String filter, final Function<File, T> func) {
+		this.uri = Preconditions.checkNotNull(uri);
+		this.filter = Preconditions.checkNotNull(filter);
+		this.func = Preconditions.checkNotNull(func);
+	}
 
-    @Override
-    public Iterable<T> get() {
-        final File dir = new File( uri );
-        final File[] files = dir.listFiles( ( dir1, name ) -> {
-            return name != null && name.endsWith( filter );
-        } );
+	@Override
+	public Iterable<T> get() {
+		final File dir = new File(uri);
+		final File[] files = dir.listFiles((dir1, name) -> {
+			return name != null && name.endsWith(filter);
+		});
 
-        if (files == null) {
-        	return ImmutableList.of();
-        }
-        
-        return FluentIterable.from( Arrays.asList( files ) ).transform( func );
-    }
+		return FluentIterable.from(Arrays.asList(Optional.ofNullable(files).orElse(new File[0]))).transform(func);
+	}
 }
