@@ -18,6 +18,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
 
 /**
  * @author tim.lessner@freiheit.com
@@ -41,6 +42,10 @@ class DirectoryFileFetcher<T> implements Supplier<Iterable<T>> {
             return name != null && name.endsWith( filter );
         } );
 
+        if (files == null) {
+        	return ImmutableList.of();
+        }
+        
         return FluentIterable.from( Arrays.asList( files ) ).transform( func );
     }
 }
