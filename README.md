@@ -230,6 +230,9 @@ Note that there are convenience Implementations for those loggers available, for
 
 ## Changes
 
+### 0.3.6 (2015-08-25)
+ - Further improvements to BatchStatistics logging
+
 ### 0.3.5 (2015-08-25)
  - Improved Logging: Format of logging for BatchStatistics changed, included more infos
  - Improved Logging: Log info, if processing a list failed and singleton lists are retried
