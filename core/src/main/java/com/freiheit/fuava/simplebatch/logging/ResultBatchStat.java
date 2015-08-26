@@ -42,6 +42,7 @@ public class ResultBatchStat {
             : ( success == 0
                 ? "FAILED"
                 : "PARTIAL_SUCCESS" );
-        return String.format( "%s | %s | success: %s failed: %s | %s ", event, summary, failed, success, description );
+        return String.format( "%s | %s | success: %s | failed: %s | total: %s | %s ", event, summary, success, failed,
+                success + failed, description );
     }
 }
