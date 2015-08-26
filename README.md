@@ -230,5 +230,11 @@ Note that there are convenience Implementations for those loggers available, for
 
 ## Changes
 
+### 0.3.5 (2015-08-25)
+ - Improved Logging: Format of logging for BatchStatistics changed, included more infos
+ - Improved Logging: Log info, if processing a list failed and singleton lists are retried
+ - Improved documentation for Processor interface
+ - gradlew should work now 
+
 ### 0.3.4 (2015-07-28)
  - Fixed HttpPager: did not process data of last page - if the very first page was less than page size, it did not return any data
