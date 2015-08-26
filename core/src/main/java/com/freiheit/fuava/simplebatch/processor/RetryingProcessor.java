@@ -2,6 +2,9 @@ package com.freiheit.fuava.simplebatch.processor;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
@@ -28,6 +31,7 @@ import com.google.common.collect.Iterables;
  */
 class RetryingProcessor<Input, Output, ProcessorResult> implements Processor<Input, Output, ProcessorResult> {
     private final Function<List<Output>, List<ProcessorResult>> _func;
+    private static final Logger LOG = LoggerFactory.getLogger( RetryingProcessor.class );
 
     /**
      * Creates a new processor that delegates to the given function.
@@ -64,6 +68,8 @@ class RetryingProcessor<Input, Output, ProcessorResult> implements Processor<Inp
                 final Result<Input, Output> result = inputList.get( 0 );
                 return ImmutableList.of( Result.<Input, ProcessorResult> builder( result ).failed( t ) );
             }
+            LOG.info( "Caught Exception during processing of batch with " + inputList.size()
+                    + " items, will RETRY in single item batches", t );
             final ImmutableList.Builder<Result<Input, ProcessorResult>> retriedResults = ImmutableList.builder();
             for ( final Result<Input, Output> input : inputList ) {
                 final Iterable<Result<Input, ProcessorResult>> outputs = process( ImmutableList.of( input ) );

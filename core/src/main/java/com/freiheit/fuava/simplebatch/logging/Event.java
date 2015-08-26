@@ -8,5 +8,5 @@ package com.freiheit.fuava.simplebatch.logging;
 public enum Event {
         FETCH,
         PROCESS,
-        PERSIST;
+        PROCESSING;
 }
