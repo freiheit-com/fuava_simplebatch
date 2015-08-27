@@ -325,7 +325,15 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             return this;
         }
 
-        protected CtlDownloaderJob<Id, ProcessingResult> build( final Processor<FetchedItem<Id>, Data, ProcessingResult> fileWriter ) {
+        /**
+         * Build a Downloader job with full control over the file writing
+         * processor. Note that you need to ensure yourself that the intendend
+         * protocol (e. g. control file writing) is followed - for example by
+         * using Processors.controlledFileWriter() .
+         * 
+         * @return the job
+         */
+        public CtlDownloaderJob<Id, ProcessingResult> build( final Processor<FetchedItem<Id>, Data, ProcessingResult> fileWriter ) {
             Preconditions.checkNotNull( fileWriter, "You need to call setFileWriterAdapter first" );
             final Fetcher<Id> fetcher = builder.getFetcher();
             Preconditions.checkNotNull( fetcher, "Fetcher missing." );
