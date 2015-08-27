@@ -12,12 +12,12 @@
 package com.freiheit.fuava.simplebatch.fetch;
 
 import java.io.File;
-import java.util.Arrays;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
 
 /**
  * @author tim.lessner@freiheit.com
@@ -41,6 +41,8 @@ class DirectoryFileFetcher<T> implements Supplier<Iterable<T>> {
             return name != null && name.endsWith( filter );
         } );
 
-        return FluentIterable.from( Arrays.asList( files ) ).transform( func );
+        return FluentIterable.from( files == null
+            ? ImmutableList.of()
+            : ImmutableList.copyOf( files ) ).transform( func );
     }
 }
