@@ -230,6 +230,10 @@ Note that there are convenience Implementations for those loggers available, for
 
 ## Changes
 
+### 0.3.7 (2015-08-26)
+ - Fixed NPE in DirectoryFetcher
+ - Exposed more powerful API in Downloader Job
+
 ### 0.3.6 (2015-08-25)
  - Further improvements to BatchStatistics logging
 
