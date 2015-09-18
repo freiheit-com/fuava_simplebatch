@@ -230,6 +230,9 @@ Note that there are convenience Implementations for those loggers available, for
 
 ## Changes
 
+### 0.3.8 (2015-09-18)
+ - Fixed: Directory Fetcher did not sort filenames, causing behaviour to be unpredictable. Now, files are sorted by name so you should ensure that for example the timestamp or serial number of your file is a sortable part of your filename.
+
 ### 0.3.7 (2015-08-26)
  - Fixed NPE in DirectoryFetcher
  - Exposed more powerful API in Downloader Job
