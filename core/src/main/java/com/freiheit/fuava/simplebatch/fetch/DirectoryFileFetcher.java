@@ -18,17 +18,26 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Ordering;
 
 /**
  * @author tim.lessner@freiheit.com
  */
 class DirectoryFileFetcher<T> implements Supplier<Iterable<T>> {
 
+    public static final Ordering<File> ORDERING_FILE_BY_PATH = Ordering.natural().onResultOf( File::getPath );
     private final String filter;
     private final String uri;
     private final Function<File, T> func;
+    private final Ordering<File> fileOrdering;
 
     public DirectoryFileFetcher( final String uri, final String filter, final Function<File, T> func ) {
+        this( uri, filter, func, ORDERING_FILE_BY_PATH );
+    }
+
+    public DirectoryFileFetcher( final String uri, final String filter, final Function<File, T> func,
+            final Ordering<File> fileOrdering ) {
+        this.fileOrdering = Preconditions.checkNotNull( fileOrdering );
         this.uri = Preconditions.checkNotNull( uri );
         this.filter = Preconditions.checkNotNull( filter );
         this.func = Preconditions.checkNotNull( func );
@@ -41,8 +50,10 @@ class DirectoryFileFetcher<T> implements Supplier<Iterable<T>> {
             return name != null && name.endsWith( filter );
         } );
 
-        return FluentIterable.from( files == null
-            ? ImmutableList.of()
-            : ImmutableList.copyOf( files ) ).transform( func );
+        if ( files == null ) {
+            return ImmutableList.of();
+        }
+        final Iterable<File> sorted = FluentIterable.of( files ).toSortedList( fileOrdering );
+        return FluentIterable.from( sorted ).transform( func ).toList();
     }
 }

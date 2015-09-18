@@ -14,6 +14,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.Ordering;
 
 public class Fetchers {
 
@@ -98,7 +99,7 @@ public class Fetchers {
      * specified fileEnding and converts them with the given function.
      */
     public static <T> Fetcher<T> folderFetcher( final String dirName, final String fileEnding, final Function<File, T> fileFunction ) {
-        return supplied( new DirectoryFileFetcher<T>( dirName, fileEnding, fileFunction ) );
+        return folderFetcher( dirName, fileEnding, fileFunction, DirectoryFileFetcher.ORDERING_FILE_BY_PATH );
     }
 
     /**
@@ -106,7 +107,24 @@ public class Fetchers {
      * specified fileEnding.
      */
     public static Fetcher<File> folderFetcher( final String dirName, final String fileEnding ) {
-        return supplied( new DirectoryFileFetcher<File>( dirName, fileEnding, Functions.<File> identity() ) );
+        return folderFetcher( dirName, fileEnding, DirectoryFileFetcher.ORDERING_FILE_BY_PATH );
+    }
+
+    /**
+     * Iterates over all files in the given directory that end with the
+     * specified fileEnding and converts them with the given function.
+     */
+    public static <T> Fetcher<T> folderFetcher( final String dirName, final String fileEnding, final Function<File, T> fileFunction,
+            final Ordering<File> fileOrdering ) {
+        return supplied( new DirectoryFileFetcher<T>( dirName, fileEnding, fileFunction, fileOrdering ) );
+    }
+
+    /**
+     * Iterates over all files in the given directory that end with the
+     * specified fileEnding.
+     */
+    public static Fetcher<File> folderFetcher( final String dirName, final String fileEnding, final Ordering<File> fileOrdering ) {
+        return supplied( new DirectoryFileFetcher<File>( dirName, fileEnding, Functions.<File> identity(), fileOrdering ) );
     }
 
 }
