@@ -9,11 +9,15 @@ import com.freiheit.fuava.simplebatch.result.Result;
 public class FileMovingPersistence<D> extends AbstractSingleItemProcessor<FetchedItem<ControlFile>, D, D> {
 
     private final FileMover fileMover = new FileMover();
-    private final String processingDir;
-    private final String archivedDir;
-    private final String failedDir;
+    private final File processingDir;
+    private final File archivedDir;
+    private final File failedDir;
 
     public FileMovingPersistence( final String processingDir, final String archivedDir, final String failedDir ) {
+        this( new File( processingDir ), new File( archivedDir ), new File( failedDir ) );
+    }
+
+    public FileMovingPersistence( final File processingDir, final File archivedDir, final File failedDir ) {
         super();
         this.processingDir = processingDir;
         this.archivedDir = archivedDir;
@@ -41,16 +45,15 @@ public class FileMovingPersistence<D> extends AbstractSingleItemProcessor<Fetche
 
     }
 
-    private void moveBoth( final ControlFile input, final String targetDirName ) throws FailedToMoveFileException {
-        final File dir = new File( processingDir );
-        final File targetDir = new File( targetDirName );
+    private void moveBoth( final ControlFile input, final File targetDir ) throws FailedToMoveFileException {
+        final File dir = processingDir;
         if ( !targetDir.exists() ) {
             if ( !targetDir.mkdirs() ) {
                 throw new FailedToMoveFileException( "could not create directory " + processingDir );
             }
         }
-        fileMover.moveFile( new File( dir, input.getFileName() ), targetDirName );
-        fileMover.moveFile( new File( dir, input.getControlledFileName() ), targetDirName );
+        fileMover.moveFile( new File( dir, input.getFileName() ), targetDir );
+        fileMover.moveFile( new File( dir, input.getControlledFileName() ), targetDir );
     }
 
 }

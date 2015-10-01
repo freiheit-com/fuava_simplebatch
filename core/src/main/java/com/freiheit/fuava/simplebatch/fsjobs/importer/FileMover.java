@@ -28,8 +28,12 @@ public class FileMover {
         return builder.build();
     }
 
-    public File moveFile( final File toMove, final String destination ) throws FailedToMoveFileException {
-        final File moveTo = new File( destination + "/" + toMove.getName() );
+    public File moveFile( final File toMove, final String destinationDir ) throws FailedToMoveFileException {
+        return moveFile( toMove, new File( destinationDir ) );
+    }
+
+    public File moveFile( final File toMove, final File destinationDir ) throws FailedToMoveFileException {
+        final File moveTo = new File( destinationDir, toMove.getName() );
         final boolean succeeded = toMove.renameTo( moveTo );
 
         if ( succeeded ) {

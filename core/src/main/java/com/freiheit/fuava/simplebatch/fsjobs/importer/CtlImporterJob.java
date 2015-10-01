@@ -2,6 +2,8 @@ package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
 import java.io.File;
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -246,11 +248,13 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processfileAndMove =
                     Processors.compose( innerJobProcessor, fileProcessorAndMover );
 
+            final String dateDirString = LocalDate.now().format( DateTimeFormatter.BASIC_ISO_DATE );
+
             final Processor<FetchedItem<ControlFile>, ResultStatistics, ResultStatistics> fileMovingPersistence =
                     new FileMovingPersistence<ResultStatistics>(
-                            configuration.getProcessingDirPath(),
-                            configuration.getArchivedDirPath(),
-                            configuration.getFailedDirPath()
+                            new File( configuration.getProcessingDirPath() ),
+                            new File( configuration.getArchivedDirPath(), dateDirString ),
+                            new File( configuration.getFailedDirPath(), dateDirString ) 
                     );
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor =
                     Processors.compose( fileMovingPersistence, processfileAndMove );
