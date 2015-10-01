@@ -27,10 +27,14 @@ public class FileMovingPersistence<D> extends AbstractSingleItemProcessor<Fetche
         try {
             if ( r.isFailed() ) {
                 moveBoth( controlFile, failedDir );
+                // even though this operation was successful, we must not say success if the original item failed!
+                return Result.<FetchedItem<ControlFile>, D> builder( r ).failed();
+
             } else {
                 moveBoth( controlFile, archivedDir );
+                return Result.success( input, r.getOutput() );
             }
-            return Result.success( input, r.getOutput() );
+
         } catch ( final Throwable e ) {
             return Result.<FetchedItem<ControlFile>, D> builder( r ).failed( e );
         }
