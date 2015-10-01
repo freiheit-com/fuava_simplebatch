@@ -230,6 +230,10 @@ Note that there are convenience Implementations for those loggers available, for
 
 ## Changes
 
+### 0.3.9 (2015-10-01)
+ - Fixed: FileMovingPersistence changed state of result item from failed to success
+ - Fixed: FileMovingPersistence did not move files to date-named directories
+
 ### 0.3.8 (2015-09-18)
  - Fixed: Directory Fetcher did not sort filenames, causing behaviour to be unpredictable. Now, files are sorted by name so you should ensure that for example the timestamp or serial number of your file is a sortable part of your filename.
 
