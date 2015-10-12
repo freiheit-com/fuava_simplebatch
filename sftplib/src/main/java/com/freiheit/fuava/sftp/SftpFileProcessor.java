@@ -24,10 +24,10 @@ import java.io.InputStream;
  *
  * @author Thomas Ostendorf (thomas.ostendorf@freiheit.com)
  */
-public class SftpLatestFileProcessor extends
+public class SftpFileProcessor extends
         AbstractSingleItemProcessor<FetchedItem<SftpFilename>, SftpFilename, InputStream> {
 
-    private static final Logger LOG = LoggerFactory.getLogger( SftpLatestFileProcessor.class );
+    private static final Logger LOG = LoggerFactory.getLogger( SftpFileProcessor.class );
 
     private final RemoteClient client;
     private final String archivedFolder;
@@ -40,7 +40,7 @@ public class SftpLatestFileProcessor extends
      *            Processed (downloaded) files are moved to this folder on
      *            remote server.
      */
-    public SftpLatestFileProcessor( final RemoteClient client, final String archivedFolder ) {
+    public SftpFileProcessor( final RemoteClient client, final String archivedFolder ) {
         this.client = client;
         this.archivedFolder = archivedFolder;
     }

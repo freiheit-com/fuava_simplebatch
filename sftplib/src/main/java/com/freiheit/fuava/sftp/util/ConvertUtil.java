@@ -52,7 +52,7 @@ public class ConvertUtil {
      * @param input is input stream from sftp file
      * @param output stream to downloaded csv file
      */
-    public static long copyLarge( final InputStream input, final OutputStream output ) throws IOException {
+    public static long copyLargeWithLoggingProgress( final InputStream input, final OutputStream output ) throws IOException {
         final byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
         long count = 0;
         long writtenBytesCounter = 0;

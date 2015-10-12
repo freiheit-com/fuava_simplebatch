@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Thomas Ostendorf (thomas.ostendorf@freiheit.com)
  */
-public class SftpDownloadLatestFileFileWriterAadapter implements FileOutputStreamAdapter<FetchedItem<SftpFilename>, InputStream> {
+public class ProgressLoggingFileWriterAdapter implements FileOutputStreamAdapter<FetchedItem<SftpFilename>, InputStream> {
     private final String prefix = "" + System.currentTimeMillis();
     private final AtomicLong counter = new AtomicLong();
 
@@ -44,7 +44,7 @@ public class SftpDownloadLatestFileFileWriterAadapter implements FileOutputStrea
      */
     @Override
     public void writeToStream( final OutputStream outputStream, final InputStream inputStream ) throws IOException {
-        ConvertUtil.copyLarge( inputStream, outputStream );
+        ConvertUtil.copyLargeWithLoggingProgress( inputStream, outputStream );
     }
 
 

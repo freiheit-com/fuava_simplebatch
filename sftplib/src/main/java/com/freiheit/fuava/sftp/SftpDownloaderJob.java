@@ -46,10 +46,10 @@ public class SftpDownloaderJob {
             final FileType fileType ) {
         final Processor<FetchedItem<SftpFilename>, InputStream, ControlFilePersistenceOutputInfo>
                 localFilePersister = Processors.controlledFileWriter( config.getDownloadDirPath(), config.getControlFileEnding(),
-                new SftpDownloadLatestFileFileWriterAadapter() );
+                new ProgressLoggingFileWriterAdapter() );
 
-        final SftpLatestFileProcessor downloader =
-                new SftpLatestFileProcessor( client, client.getRemoteConfiguration().getArchivedFolder() );
+        final SftpFileProcessor downloader =
+                new SftpFileProcessor( client, client.getRemoteConfiguration().getArchivedFolder() );
 
         SftpResultFileMover remoteFileMover =
                 new SftpResultFileMover( client, client.getRemoteConfiguration().getArchivedFolder() );
@@ -57,9 +57,9 @@ public class SftpDownloaderJob {
                 .setFetcher(
                         new SftpOldFilesMovingLatestFileFetcher(
                                 client,
-                                client.getRemoteConfiguration().getLocationFolder(),
                                 client.getRemoteConfiguration().getSkippedFolder(),
                                 client.getRemoteConfiguration().getProcessingFolder(),
+                                client.getRemoteConfiguration().getLocationFolder(),
                                 fileType ) )
                 .addListener( new BatchStatisticsLoggingListener<>( "BATCH" ) )
                 .addListener( new ItemProgressLoggingListener<>( "ITEM" ) )

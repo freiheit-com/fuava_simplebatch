@@ -218,51 +218,6 @@ public class SftpOldFilesMovingLatestFileFetcher implements Fetcher<SftpFilename
         }
     }
 
-//    /**
-//     * Moves files on sftp server.
-//     *
-//     * @param latestTimestamp is used to decide whether a file is moved on the sftp server or not.
-//     * @param fileType identifies the file that needs to be processed.
-//     * @param okFile name is is used to extract the timestamp of the existing files on the sftp server.
-//     * @return
-//     */
-//    protected Result<FetchedItem<SftpFilename>, SftpFilename> moveFiles( final long latestTimestamp, final SftpFileType fileType,
-//            final String okFile ) {
-//        final long timestamp = FilenameUtil.getDateFromFilename( okFile );
-//        if ( timestamp < latestTimestamp ) {
-//            // this file is older then the latest one, move it to the skipped folder
-//            try {
-//                remoteClient.moveDataAndOkFileToDesiredFolder( okFile, fileType, filesLocationFolder, skippedFolder );
-//            } catch ( final SftpException e ) {
-//                // ignore this error, since this file might have been just processed by another downloader
-//                LOG.error( e.getMessage(), e );
-//            }
-//
-//            return null;
-//        } else {
-//
-//            try {
-//                final String dataFilename = FilenameUtil.getDataFileOfOkFile( fileType, okFile );
-//                final String fullPathAndName =
-//                        remoteClient.moveDataAndOkFileToDesiredFolder( okFile, fileType, filesLocationFolder, processingFolder );
-//
-//                final SftpFilename sftpFilename =
-//                        new SftpFilename( dataFilename, fullPathAndName, fileType, Long.toString( latestTimestamp ) );
-//                final FetchedItem<SftpFilename> fetchedItem = FetchedItem.of( sftpFilename, 1 );
-//
-//                return Result.success( fetchedItem, sftpFilename );
-//
-//            } catch ( final SftpException e ) {
-//                //HINT: failure may be logged in case another downloader instance just "stole" the file
-//                final FetchedItem<SftpFilename> fetchedItem =
-//                        FetchedItem.of( new SftpFilename( filesLocationFolder, "", fileType, "no timestamp" ), 1 );
-//                return Result.<FetchedItem<SftpFilename>, SftpFilename> failed( fetchedItem, e );
-//            }
-//
-//        }
-//
-//    }
-
 
     /**
      * Returns a filename for an lsEntry.
