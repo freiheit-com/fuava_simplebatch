@@ -14,8 +14,8 @@
 package com.freiheit.fuava.sftp;
 
 import com.freiheit.fuava.sftp.util.ConvertUtil;
-import com.freiheit.fuava.sftp.util.FilenameUtil;
 import com.freiheit.fuava.sftp.util.FileType;
+import com.freiheit.fuava.sftp.util.FilenameUtil;
 import com.jcraft.jsch.*;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.CheckForNull;
 import java.io.InputStream;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Simple SFTP client.
@@ -34,16 +35,37 @@ public class SftpClient implements RemoteClient {
 
     private static final String CHANNEL_TYPE_SFTP = "sftp";
 
+    private final String host;
+    private final Integer port;
+    private final String username;
+    private final String password;
+
     private final SftpServerConfiguration configuration;
     private ChannelSftp sftpChannel;
-
 
 
     public  String getRemoteSystemType() {
         return CHANNEL_TYPE_SFTP;
     }
 
-    public SftpServerConfiguration getRemoteConfiguration() {
+
+    @Override public String getHost() {
+        return host;
+    }
+
+    @Override public Integer getPort() {
+        return port;
+    }
+
+    @Override public String getUsername() {
+        return username;
+    }
+
+    @Override public String getPassword() {
+        return password;
+    }
+
+    SftpServerConfiguration getRemoteConfiguration() {
         return configuration;
     }
 
@@ -53,7 +75,12 @@ public class SftpClient implements RemoteClient {
      * @param configuration
      *            Environment configuration object
      */
-    public SftpClient( final SftpServerConfiguration configuration ) {
+    public SftpClient( final String host, final Integer port, final String username, final String password,
+            final SftpServerConfiguration configuration  ) {
+        this.host = host;
+        this.port = port;
+        this.username = username;
+        this.password = password;
         this.configuration = configuration;
     }
 
@@ -72,9 +99,9 @@ public class SftpClient implements RemoteClient {
     protected Session createSession() throws JSchException {
         final JSch jsch = new JSch();
         final Session session = jsch.getSession(
-                configuration.getUsername(),
-                configuration.getHost(),
-                configuration.getPort()
+                username,
+                host,
+                port
                 );
 
         //        If this property is set to ``yes'', jsch will never automatically add
@@ -83,7 +110,7 @@ public class SftpClient implements RemoteClient {
         //        to manually add all new hosts.  If this property is set to ``no'',
         //        jsch will automatically add new host keys to the user known hosts files.
         session.setConfig( "StrictHostKeyChecking", "no" );
-        session.setPassword( configuration.getPassword() );
+        session.setPassword( password );
 
         return session;
     }
@@ -106,15 +133,17 @@ public class SftpClient implements RemoteClient {
      *
      * @param pathToFiles
      *            Path on the remote folder
-     * @return List of all entries
+     * @return List of all entry filenames
      * @throws JSchException
      *             is thrown in case there are any problems with the SFTP
      *             channel
      */
     @SuppressWarnings( "unchecked" )
     // justification: we assume 'Object', therefore we are safe, although unchecked.
-    public List<ChannelSftp.LsEntry> listFolder( final String pathToFiles ) throws JSchException, SftpException {
-        return ConvertUtil.convertList( channel().ls( pathToFiles ), SftpClient::toLsEntry );
+    public List<String> listFolder( final String pathToFiles ) throws JSchException, SftpException {
+        List<ChannelSftp.LsEntry> listOfLsEntries =  ConvertUtil.convertList( channel().ls( pathToFiles ), SftpClient::toLsEntry );
+        return listOfLsEntries.stream().map( SftpOldFilesMovingLatestFileFetcher::lsEntryToFilename )
+                .collect( Collectors.toList() );
     }
 
     @CheckForNull

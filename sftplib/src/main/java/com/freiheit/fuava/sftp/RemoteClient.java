@@ -13,7 +13,6 @@
 package com.freiheit.fuava.sftp;
 
 import com.freiheit.fuava.sftp.util.FileType;
-import com.freiheit.fuava.sftp.util.RemoteConfiguration;
 
 import java.io.InputStream;
 import java.util.List;
@@ -21,11 +20,9 @@ import java.util.List;
 /**
  * Interface for the remote client operations.
  *
- * @param <FOLDER> The type of a folder object.
- *
  * @author Thomas Ostendorf (thomas.ostendorf@freiheit.com)
  */
-public interface RemoteClient<FOLDER> {
+public interface RemoteClient {
 
     /**
      * type of the remote system, i.e. "sftp", "opsenssh" etc
@@ -36,11 +33,35 @@ public interface RemoteClient<FOLDER> {
     String getRemoteSystemType();
 
     /**
-     * Returns the remote configuration for the remote system.
+     * Account user name of the remote system
      *
-     * @return configuration of remote system.
+     * @return user name for the remote system.
      */
-    RemoteConfiguration getRemoteConfiguration();
+
+    String getUsername();
+
+    /**
+     * Returns password for remote system.
+     *
+     * @return password for remote system.
+     */
+    String getPassword();
+
+    /**
+     *
+     * Returns Host IP of remote system.
+     *
+     * @return host ip of remote system.
+     */
+    String getHost();
+
+    /**
+     * Port for access to remote system.
+     *
+     * @return port of remote system.
+     */
+
+    Integer getPort();
 
     /**
      * Returns input stream from a given file path on the remote system in order to download the file.
@@ -67,7 +88,7 @@ public interface RemoteClient<FOLDER> {
      * List of objects in a given directory on the remote system.
      *
      */
-    List<FOLDER> listFolder( String pathToFiles ) throws Exception;
+    List<String> listFolder( String pathToFiles ) throws Exception;
 
     /**
      * Moves files defined in file type on remote system from one folder to another.

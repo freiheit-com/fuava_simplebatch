@@ -12,6 +12,7 @@
 package com.freiheit.fuava.sftp;
 
 import com.freiheit.fuava.sftp.util.FileType;
+import com.freiheit.fuava.sftp.util.RemoteConfiguration;
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob;
@@ -43,23 +44,24 @@ public class SftpDownloaderJob {
     public static BatchJob<SftpFilename, ControlFilePersistenceOutputInfo> makeDownloaderJob(
             final CtlDownloaderJob.Configuration config,
             final RemoteClient client,
+            final RemoteConfiguration remoteConfiguration,
             final FileType fileType ) {
         final Processor<FetchedItem<SftpFilename>, InputStream, ControlFilePersistenceOutputInfo>
                 localFilePersister = Processors.controlledFileWriter( config.getDownloadDirPath(), config.getControlFileEnding(),
                 new ProgressLoggingFileWriterAdapter() );
 
         final SftpFileProcessor downloader =
-                new SftpFileProcessor( client, client.getRemoteConfiguration().getArchivedFolder() );
+                new SftpFileProcessor( client, remoteConfiguration.getArchivedFolder() );
 
         SftpResultFileMover remoteFileMover =
-                new SftpResultFileMover( client, client.getRemoteConfiguration().getArchivedFolder() );
+                new SftpResultFileMover( client, remoteConfiguration.getArchivedFolder() );
         return new BatchJob.Builder<SftpFilename, ControlFilePersistenceOutputInfo>()
                 .setFetcher(
                         new SftpOldFilesMovingLatestFileFetcher(
                                 client,
-                                client.getRemoteConfiguration().getSkippedFolder(),
-                                client.getRemoteConfiguration().getProcessingFolder(),
-                                client.getRemoteConfiguration().getLocationFolder(),
+                                remoteConfiguration.getSkippedFolder(),
+                                remoteConfiguration.getProcessingFolder(),
+                                remoteConfiguration.getLocationFolder(),
                                 fileType ) )
                 .addListener( new BatchStatisticsLoggingListener<>( "BATCH" ) )
                 .addListener( new ItemProgressLoggingListener<>( "ITEM" ) )

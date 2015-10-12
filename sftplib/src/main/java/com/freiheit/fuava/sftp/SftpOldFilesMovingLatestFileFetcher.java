@@ -11,12 +11,11 @@
 
 package com.freiheit.fuava.sftp;
 
+import com.freiheit.fuava.sftp.util.FileType;
 import com.freiheit.fuava.sftp.util.FilenameUtil;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.freiheit.fuava.sftp.util.ConvertUtil;
-import com.freiheit.fuava.sftp.util.FileType;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
@@ -44,7 +43,7 @@ public class SftpOldFilesMovingLatestFileFetcher implements Fetcher<SftpFilename
 
     private static final Logger LOG = LoggerFactory.getLogger( SftpOldFilesMovingLatestFileFetcher.class );
 
-    private final RemoteClient<ChannelSftp.LsEntry> remoteClient;
+    private final RemoteClient remoteClient;
 
     private final String skippedFolder;
     private final String processingFolder;
@@ -67,7 +66,7 @@ public class SftpOldFilesMovingLatestFileFetcher implements Fetcher<SftpFilename
      *            The type of file to be downloaded.
      */
     public SftpOldFilesMovingLatestFileFetcher(
-            final RemoteClient<ChannelSftp.LsEntry> remoteClient,
+            final RemoteClient remoteClient,
             final String skippedFolder,
             final String processingFolder,
             final String filesLocationFolder, final FileType fileType ) {
@@ -87,19 +86,12 @@ public class SftpOldFilesMovingLatestFileFetcher implements Fetcher<SftpFilename
     @Override
     public Iterable<Result<FetchedItem<SftpFilename>, SftpFilename>> fetchAll() {
         try {
-            final List<ChannelSftp.LsEntry> entryList = remoteClient.listFolder( filesLocationFolder );
-            final ImmutableList.Builder<Result<FetchedItem<SftpFilename>, SftpFilename>> processedFiles =
-                    new ImmutableList.Builder();
-            final List<String> fileNamesList = ConvertUtil.convertList( entryList, SftpOldFilesMovingLatestFileFetcher::lsEntryToFilename );
+            final List entryFileNameList = remoteClient.listFolder( filesLocationFolder );
 
             //process only the current file type
             final List<String> filteredFileNamesList =
-                    FilenameUtil.getAllMatchingFilenames( "", fileType, fileNamesList, RemoteFileStatus.OK );
-            final Iterable<Result<FetchedItem<SftpFilename>, SftpFilename>> results =
-                    moveOldFilesToSkippedAndReturnLatestFilename( filteredFileNamesList, fileType );
-            processedFiles.addAll( results );
-
-            return processedFiles.build();
+                    FilenameUtil.getAllMatchingFilenames( "", fileType, entryFileNameList, RemoteFileStatus.OK );
+            return moveOldFilesToSkippedAndReturnLatestFilename( filteredFileNamesList, fileType );
         } catch ( final Throwable e ) {
             LOG.error( "Failed to acquire file list from remote server!" );
             final FetchedItem<SftpFilename> fetchedItem =
@@ -148,58 +140,62 @@ public class SftpOldFilesMovingLatestFileFetcher implements Fetcher<SftpFilename
 
         // move all skipped files to skipped folder, add all files for download to the result list
         for ( final String okFile : okFiles ) {
-            Result<FetchedItem<SftpFilename>, SftpFilename> latestFileInProcessing;
             if ( okFile != null ) {
 
                 final long timestamp = FilenameUtil.getDateFromFilename( okFile );
-                if ( !isLatestFile( timestamp, latestTimestamp ) ) {
-                    // this file is older then the latest one, move it to the skipped folder
-
-                    try {
-                        // move files from location folder to skipped folder.
-                        remoteClient.moveFileAndControlFileFromOneDirectoryToAnother( okFile, this.fileType, filesLocationFolder,
-                                skippedFolder );
-                    } catch ( final Exception e ) {
-                        // ignore this error, since this file might have been just processed by another downloader
-                        LOG.error( e.getMessage(), e );
-                    }
-                    return null;
+                if ( isLatestFile( timestamp, latestTimestamp ) ) {
+                    files.add( moveToProcessing( latestTimestamp, okFile ) );
                 } else {
-
-                    try {
-                        // Get file name of latest file for creating the SftpFilename
-                        final String dataFilenameOfLatestFile = FilenameUtil.getDataFileOfOkFile( this.fileType, okFile );
-
-                        // Get full path and name for latest file
-                        final String fullPathAndNameOfLatestFile =
-                                remoteClient.moveFileAndControlFileFromOneDirectoryToAnother( okFile, this.fileType,
-                                        filesLocationFolder,
-                                        processingFolder );
-
-                        // Create the sftp file name.
-                        final SftpFilename sftpFilenameOfLatestFile =
-                                new SftpFilename( dataFilenameOfLatestFile, fullPathAndNameOfLatestFile, this.fileType, Long.toString( latestTimestamp ) );
-                        final FetchedItem<SftpFilename> fetchedItem = FetchedItem.of( sftpFilenameOfLatestFile, 1 );
-
-                        latestFileInProcessing =  Result.success( fetchedItem, sftpFilenameOfLatestFile );
-
-                    } catch ( final Exception e ) {
-                        //HINT: failure may be logged in case another downloader instance just "stole" the file
-                        final FetchedItem<SftpFilename> fetchedItem =
-                                FetchedItem.of( new SftpFilename( filesLocationFolder, "", this.fileType, "no timestamp" ), 1 );
-
-                        latestFileInProcessing = Result.<FetchedItem<SftpFilename>, SftpFilename> failed( fetchedItem, e );
-                    }
-
-                }
-
-                if ( latestFileInProcessing != null ) {
-                    files.add( latestFileInProcessing );
+                    // this file is older then the latest one, move it to the skipped folder
+                    silentlyMoveToSkipped( okFile );
                 }
             }
         }
 
-        return files.build();
+        final ImmutableList<Result<FetchedItem<SftpFilename>, SftpFilename>> result = files.build();
+        // warn if too many or too few items returned
+        if ( result.size() != 1 ) {
+            LOG.warn( "Unexpected number of Items in result: " + result );
+        }
+        return result;
+    }
+
+    private Result<FetchedItem<SftpFilename>, SftpFilename> moveToProcessing( final long latestTimestamp, final String okFile ) {
+        try {
+            // Get file name of latest file for creating the SftpFilename
+            final String dataFilenameOfLatestFile = FilenameUtil.getDataFileOfOkFile( this.fileType, okFile );
+
+            // Get full path and name for latest file
+            final String fullPathAndNameOfLatestFile =
+                    remoteClient.moveFileAndControlFileFromOneDirectoryToAnother( okFile, this.fileType,
+                            filesLocationFolder,
+                            processingFolder );
+
+            // Create the sftp file name.
+            final SftpFilename sftpFilenameOfLatestFile =
+                    new SftpFilename( dataFilenameOfLatestFile, fullPathAndNameOfLatestFile, this.fileType, Long.toString( latestTimestamp ) );
+            final FetchedItem<SftpFilename> fetchedItem = FetchedItem.of( sftpFilenameOfLatestFile, 1 );
+
+            return Result.success( fetchedItem, sftpFilenameOfLatestFile );
+
+        } catch ( final Exception e ) {
+            //HINT: failure may be logged in case another downloader instance just "stole" the file
+            final FetchedItem<SftpFilename> fetchedItem =
+                    FetchedItem.of( new SftpFilename( filesLocationFolder, "", this.fileType, "no timestamp" ), 1 );
+
+            return Result.<FetchedItem<SftpFilename>, SftpFilename> failed( fetchedItem, e );
+        }
+    }
+
+    private void silentlyMoveToSkipped( final String okFile ) {
+        try {
+            // move files from location folder to skipped folder.
+            remoteClient.moveFileAndControlFileFromOneDirectoryToAnother( okFile, this.fileType, filesLocationFolder,
+                    skippedFolder );
+        } catch ( final Exception e ) {
+            // ignore this error, since this file might have been just processed by another downloader
+            LOG.error( e.getMessage(), e );
+        }
     }
 
     /**
@@ -223,7 +219,7 @@ public class SftpOldFilesMovingLatestFileFetcher implements Fetcher<SftpFilename
      * Returns a filename for an lsEntry.
      */
     @CheckForNull
-    protected static String lsEntryToFilename( final ChannelSftp.LsEntry lsEntry ) {
+    public static String lsEntryToFilename( final ChannelSftp.LsEntry lsEntry ) {
         if ( lsEntry != null ) {
             final String filename = lsEntry.getFilename();
             if ( !Strings.isNullOrEmpty( filename ) ) {

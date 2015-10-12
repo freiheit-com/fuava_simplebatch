@@ -24,8 +24,6 @@ import javax.annotation.Nonnull;
  */
 public class FileType {
 
-    // examples
-    public final static FileType PRODUCT_GROUP_DATA = new FileType("pwhg","_ho_pwg_dat{1}");
     public final static FileType ALL_FILES = new FileType("all","*");
 
     private final String interfaceName;
