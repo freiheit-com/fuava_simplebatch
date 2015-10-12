@@ -1,11 +1,42 @@
 package com.freiheit.fuava.sftp.util;
 
 /**
- * Configuration for directories on SFTP server.
+ * Configuration for directories on SFTP server for a given file type.
  *
  * @author Thomas Ostendorf (thomas.ostendorf@freiheit.com)
  */
 public interface RemoteConfiguration {
+
+    /**
+     * Account user name of the remote system
+     *
+     * @return user name for the remote system.
+     */
+
+    String getUsername();
+
+    /**
+     * Returns password for remote system.
+     *
+     * @return password for remote system.
+     */
+    String getPassword();
+
+    /**
+     *
+     * Returns Host IP of remote system.
+     *
+     * @return host ip of remote system.
+     */
+    String getHost();
+
+    /**
+     * Port for access to remote system.
+     *
+     * @return port of remote system.
+     */
+
+    Integer getPort();
 
     /**
      * Directory on the sftp where the requested files are located.
@@ -37,13 +68,7 @@ public interface RemoteConfiguration {
 
     String getProcessingFolder();
 
-    /**
-     * File type one wants to download from SFTP.
-     *
-     * @return file type
-     */
 
-    SftpFileType getFileType();
 
 
 

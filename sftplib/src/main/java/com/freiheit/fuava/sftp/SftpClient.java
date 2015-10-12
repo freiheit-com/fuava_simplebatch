@@ -15,7 +15,7 @@ package com.freiheit.fuava.sftp;
 
 import com.freiheit.fuava.sftp.util.ConvertUtil;
 import com.freiheit.fuava.sftp.util.FilenameUtil;
-import com.freiheit.fuava.sftp.util.SftpFileType;
+import com.freiheit.fuava.sftp.util.FileType;
 import com.jcraft.jsch.*;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
@@ -29,13 +29,23 @@ import java.util.List;
  *
  * @author Dmitrijs Barbarins (dmitrijs.barbarins@freiheit.com) on 22.07.15.
  */
-public class SftpClient {
+public class SftpClient implements RemoteClient {
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger( SftpClient.class );
+
     private static final String CHANNEL_TYPE_SFTP = "sftp";
 
-    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger( SftpClient.class );
-    private final ServerConfiguration configuration;
-
+    private final SftpServerConfiguration configuration;
     private ChannelSftp sftpChannel;
+
+
+
+    public  String getRemoteSystemType() {
+        return CHANNEL_TYPE_SFTP;
+    }
+
+    public SftpServerConfiguration getRemoteConfiguration() {
+        return configuration;
+    }
 
     /**
      * ctor.
@@ -43,7 +53,7 @@ public class SftpClient {
      * @param configuration
      *            Environment configuration object
      */
-    public SftpClient( final ServerConfiguration configuration ) {
+    public SftpClient( final SftpServerConfiguration configuration ) {
         this.configuration = configuration;
     }
 
@@ -140,7 +150,7 @@ public class SftpClient {
      * @throws SftpException
      *             is thrown in case of errors.
      */
-    public InputStream getFile( final String file ) throws JSchException, SftpException {
+    public InputStream downloadRemoteFile( final String file ) throws JSchException, SftpException {
         return channel().get( file );
     }
 
@@ -155,7 +165,7 @@ public class SftpClient {
      * @throws SftpException
      *             is thrown in case of errors.
      */
-    public void moveFile( final String sourceFile, final String destinationFile ) throws SftpException, JSchException {
+    public void moveFileOnRemoteSystem( final String sourceFile, final String destinationFile ) throws SftpException, JSchException {
         channel().rename( sourceFile, destinationFile );
     }
 
@@ -187,7 +197,7 @@ public class SftpClient {
      * @throws SftpException
      *             exception thrown in case of errors.
      */
-    public String moveDataAndOkFile( final String okFile, SftpFileType fileType, final String fromFolder,
+    public String moveFileAndControlFileFromOneDirectoryToAnother( final String okFile, FileType fileType, final String fromFolder,
             final String toFolder ) throws SftpException {
         // this file is older then the latest one, move it to the skipped folder
         final String dataFilename = FilenameUtil.getDataFileOfOkFile( fileType, okFile );
@@ -202,7 +212,7 @@ public class SftpClient {
 
         try {
             // first move the data file
-            moveFile( origDataFile, destDataFile );
+            moveFileOnRemoteSystem( origDataFile, destDataFile );
             LOG.info( "Moved file " + origDataFile + " to folder " + destDataFile );
         } catch ( final JSchException | SftpException e ) {
             throw new SftpException( 1, "Failed to move data file " + origDataFile + " to folder " + destDataFile, e );
@@ -210,7 +220,7 @@ public class SftpClient {
 
         try {
             // then move .ok file
-            moveFile( origOkFile, destOkFile );
+            moveFileOnRemoteSystem( origOkFile, destOkFile );
             LOG.info( "Moved .ok file " + origOkFile );
         } catch ( final JSchException | SftpException e ) {
             throw new SftpException( 1, "Failed to move .ok file after moving the data file " + origDataFile
@@ -227,7 +237,7 @@ public class SftpClient {
      * @param folderName
      *            remote folder.
      */
-    public void createIfNotExists( final String folderName ) throws JSchException, SftpException {
+    public void createFolderIfNotExist( final String folderName ) throws JSchException, SftpException {
         String[] complPath = folderName.split( "/" );
         channel().cd( "/" );
         for ( String dir : complPath ) {

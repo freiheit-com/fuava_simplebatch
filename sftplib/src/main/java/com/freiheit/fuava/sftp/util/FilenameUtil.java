@@ -55,7 +55,7 @@ public class FilenameUtil {
      */
     @CheckForNull
     public static String getFilename( final String requestedTimestamp,
-            final SftpFileType fileType, final List<String> entryList, @Nullable final RemoteFileStatus status ) {
+            final FileType fileType, final List<String> entryList, @Nullable final RemoteFileStatus status ) {
         final List<String> result = getAllMatchingFilenames( requestedTimestamp, fileType, entryList, status );
 
         if ( result == null || result.isEmpty() ) {
@@ -68,7 +68,7 @@ public class FilenameUtil {
      * Returns the filename of the data file for given ok file
      */
     @CheckForNull
-    public static String getDataFileOfOkFile( @Nonnull final SftpFileType type, @Nonnull final String filename ) {
+    public static String getDataFileOfOkFile( @Nonnull final FileType type, @Nonnull final String filename ) {
         if ( filename.endsWith( type.getOkFileExtention() ) ) {
             final StringBuilder b = new StringBuilder( filename );
             b.replace( filename.lastIndexOf( type.getOkFileExtention() ), filename.lastIndexOf( type.getOkFileExtention() )
@@ -83,7 +83,7 @@ public class FilenameUtil {
      * Returns the filename of the data file for given ok file
      */
     @CheckForNull
-    public static String getOkFileForDataFile( @Nonnull final SftpFileType type, @Nonnull final String filename ) {
+    public static String getOkFileForDataFile( @Nonnull final FileType type, @Nonnull final String filename ) {
         if ( filename.endsWith( type.getExtention() ) ) {
             StringBuilder b = new StringBuilder( filename );
             b.replace( filename.lastIndexOf( type.getExtention() ), filename.lastIndexOf( type.getExtention() )
@@ -100,7 +100,7 @@ public class FilenameUtil {
      * conditions.
      */
     public static List<String> getAllMatchingFilenames( final String requestedTimestamp,
-            final SftpFileType fileType, final List<String> entryList, @Nullable final RemoteFileStatus status ) {
+            final FileType fileType, final List<String> entryList, @Nullable final RemoteFileStatus status ) {
         return entryList.stream().filter( p -> p != null )
                 .filter( f -> FilenameUtil.matchesSearchedFile( f, fileType, requestedTimestamp, status ) )
                 .collect( Collectors.toList() );
@@ -111,7 +111,7 @@ public class FilenameUtil {
      * Returns the lastest date/time from a list of filenames.
      */
     @CheckForNull
-    public static String extractLatestDateFromFilenames( final List<String> entryList, final SftpFileType fileType,
+    public static String extractLatestDateFromFilenames( final List<String> entryList, final FileType fileType,
             @Nullable final RemoteFileStatus status ) throws ParseException {
         final Optional<String> maxDate =
                 entryList.stream()
@@ -175,7 +175,7 @@ public class FilenameUtil {
      * Checks, whether a filename matches the pattern of a file on the server.
      */
     public static boolean matchesSearchedFile( final String filename,
-            final SftpFileType fileType, @Nullable final String lastDateTime, @Nullable final RemoteFileStatus status ) {
+            final FileType fileType, @Nullable final String lastDateTime, @Nullable final RemoteFileStatus status ) {
 
         return getFilenamePattern( fileType, lastDateTime, status ).matcher( filename ).find();
     }
@@ -202,11 +202,11 @@ public class FilenameUtil {
      * fileType.
      */
     @Nonnull
-    private static Pattern getFilenamePattern( final SftpFileType type,
+    private static Pattern getFilenamePattern( final FileType type,
             @Nullable final String lastDateTime,
             @Nullable final RemoteFileStatus status ) {
 
-        return Pattern.compile( ".*" + ( type == SftpFileType.ALL_FILES
+        return Pattern.compile( ".*" + ( type == FileType.ALL_FILES
             ? ""
             : type.getFileIdentifier() ) + ".*_"
                 + getDateTimePattern( lastDateTime )
@@ -219,7 +219,7 @@ public class FilenameUtil {
      * <p>
      * Example: if status=Status.OK, the extension will be ".csv.ok"
      */
-    private static String getFileExtension( @Nullable final RemoteFileStatus status, final SftpFileType fileType ) {
+    private static String getFileExtension( @Nullable final RemoteFileStatus status, final FileType fileType ) {
         return status == null
             ? fileType.getExtention()
             : fileType.getOkFileExtention();

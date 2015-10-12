@@ -1,3 +1,14 @@
+/*
+ * (c) Copyright 2015 freiheit.com technologies GmbH
+ *
+ * Created on 09.10.15 by thomas.ostendorf@freiheit.com
+ *
+ * This file contains unpublished, proprietary trade secret information of
+ * freiheit.com technologies GmbH. Use, transcription, duplication and
+ * modification are strictly prohibited without prior written consent of
+ * freiheit.com technologies GmbH.
+ */
+
 package com.freiheit.fuava.sftp;
 
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
@@ -9,7 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Processor that moves the processed file to the archived folder.
+ * Processor that moves the successdully processed file to the archived folder.
+ *
+ * Note that files with an error are not touched, but moved into a failed folder on the remote system.
  *
  * @author Thomas Ostendorf (thomas.ostendorf@freiheit.com)
  */
@@ -18,7 +31,7 @@ public class SftpResultFileMover extends
 
     private static final Logger LOG = LoggerFactory.getLogger( SftpResultFileMover.class );
 
-    private final SftpClient client;
+    private final RemoteClient client;
     private final String archiveFolder;
 
     /**
@@ -30,7 +43,7 @@ public class SftpResultFileMover extends
      *            Processed (downloaded) files are moved to this folder on
      *            remote server.
      */
-    public SftpResultFileMover( final SftpClient client, final String archiveFolder ) {
+    public SftpResultFileMover( final RemoteClient client, final String archiveFolder ) {
         this.client = client;
         this.archiveFolder = archiveFolder;
     }
@@ -53,8 +66,8 @@ public class SftpResultFileMover extends
                 final String archivedOkFile = archiveFolder + okFilename;
 
                 // move the file to archive
-                client.moveFile( dataFile, archivedDataFile );
-                client.moveFile( okFile, archivedOkFile );
+                client.moveFileOnRemoteSystem( dataFile, archivedDataFile );
+                client.moveFileOnRemoteSystem( okFile, archivedOkFile );
                 LOG.info( "Moved downloaded file " + dataFilename + " to the archive folder on remote server" );
 
                 return Result.success( data.getInput(), data.getOutput() );
