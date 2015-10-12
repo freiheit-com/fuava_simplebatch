@@ -13,7 +13,7 @@
 
 package com.freiheit.fuava.sftp;
 
-import com.freiheit.fuava.sftp.util.SftpFileType;
+import com.freiheit.fuava.sftp.util.FileType;
 
 /**
  * Simple storage for remote file name (and may be in the future sme more
@@ -25,7 +25,7 @@ public class SftpFilename {
     private final String filename;
     private final String timestamp;
     private final String remoteFullPath;
-    private final SftpFileType fileType;
+    private final FileType fileType;
 
     /**
      * ctor.
@@ -33,7 +33,7 @@ public class SftpFilename {
      * @param filename
      *            fully qualified file name on the remote server.
      */
-    public SftpFilename( final String filename, final String remoteFullPath, final SftpFileType fileType, final String timestamp ) {
+    public SftpFilename( final String filename, final String remoteFullPath, final FileType fileType, final String timestamp ) {
         this.timestamp = timestamp;
         this.filename = filename;
         this.fileType = fileType;
@@ -52,7 +52,7 @@ public class SftpFilename {
         return timestamp;
     }
 
-    public SftpFileType getFileType() {
+    public FileType getFileType() {
         return fileType;
     }
 

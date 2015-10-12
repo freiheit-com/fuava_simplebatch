@@ -22,26 +22,26 @@ import javax.annotation.Nonnull;
  *
  * @author dmitrijs.barbarins@freiheit.com
  */
-public class SftpFileType {
+public class FileType {
 
     // examples
-    public final static SftpFileType PRODUCT_GROUP_DATA = new SftpFileType("pwhg","_ho_pwg_dat{1}");
-    public final static SftpFileType ALL_FILES = new SftpFileType("all","*");
+    public final static FileType PRODUCT_GROUP_DATA = new FileType("pwhg","_ho_pwg_dat{1}");
+    public final static FileType ALL_FILES = new FileType("all","*");
 
     private final String interfaceName;
     private final String fileIdentifierPattern;
     private final String fileExtention;
     private final String okFileExtention;
 
-    public SftpFileType(@Nonnull final String interfaceName, @Nonnull final String fileIdentifier) {
+    public FileType( @Nonnull final String interfaceName, @Nonnull final String fileIdentifier ) {
         this.interfaceName = interfaceName;
         this.fileIdentifierPattern = fileIdentifier;
         this.fileExtention = ".csv";
         this.okFileExtention = ".ok";
     }
 
-    public SftpFileType(@Nonnull final String interfaceName, @Nonnull final String fileIdentifier,
-                        @Nonnull final String fileExtention, @Nonnull final String okFileExtention ) {
+    public FileType( @Nonnull final String interfaceName, @Nonnull final String fileIdentifier,
+            @Nonnull final String fileExtention, @Nonnull final String okFileExtention ) {
         this.interfaceName = interfaceName;
         this.fileIdentifierPattern = fileIdentifier;
         this.fileExtention = fileExtention;

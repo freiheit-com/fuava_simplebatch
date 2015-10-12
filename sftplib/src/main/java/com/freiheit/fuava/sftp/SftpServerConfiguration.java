@@ -13,14 +13,14 @@
 
 package com.freiheit.fuava.sftp;
 
+import com.freiheit.fuava.sftp.util.RemoteConfiguration;
+
 /**
  * The SFTP-Server Configuration.
  *
  * @author dmitrijs.barbarins@freiheit.com
  */
-public class ServerConfiguration {
-
-    public static final String PATH_DELIMETER = "/";
+public class SftpServerConfiguration implements RemoteConfiguration {
 
     private final String host;
     private final Integer port;
@@ -45,8 +45,9 @@ public class ServerConfiguration {
      * @param remoteArchivedFolder location of files have been downloaded successfully from sftp server
      *
      */
-    public ServerConfiguration( final String host, final Integer port, final String username, final String password,
-            final String remoteFilesLocationFolder, final String remoteProcessingFolder, final String remoteSkippedFolder, final String remoteArchivedFolder ) {
+    public SftpServerConfiguration( final String host, final Integer port, final String username, final String password,
+            final String remoteFilesLocationFolder, final String remoteProcessingFolder, final String remoteSkippedFolder,
+            final String remoteArchivedFolder ) {
         this.host = host;
         this.port = port;
         this.username = username;
@@ -71,23 +72,23 @@ public class ServerConfiguration {
         return username;
     }
 
-    public int getPort() {
+    public Integer getPort() {
         return port;
     }
 
-    public String getRemoteFilesLocationFolder() {
+    public String getLocationFolder() {
         return remoteFilesLocationFolder;
     }
 
-    public String getRemoteProcessingFolder() {
+    public String getProcessingFolder() {
         return remoteProcessingFolder;
     }
 
-    public String getRemoteSkippedFolder() {
+    public String getSkippedFolder() {
         return remoteSkippedFolder;
     }
 
-    public String getRemoteArchivedFolder() {
+    public String getArchivedFolder() {
         return remoteArchivedFolder;
     }
 }
