@@ -33,6 +33,15 @@ public class FileType {
 
     /**
      *  Constructs a file type from interface name and file identifier.
+     *
+     * @param interfaceName
+     *          the name of the interface where the data is from. That is important if data comes from different sources.
+     *          Inn general this is the beginning pattern of the file name, i.e. mcrm, crm etc.
+     * @param fileIdentifier
+     *          everything that is between the interface name and the first number that appears in the file name.
+     *          I.e. crm_test_data_{DATE} (see also {@link FilenameUtil#DATE_TIME_PATTERN }
+     *          Usually, the first number indicates a date starting. The pattern of the date following has to be:
+     *          YYYYMMDD_HHMMSS, followd by the file extension or okFileExtension
      */
     public FileType( @Nonnull final String interfaceName, @Nonnull final String fileIdentifier ) {
         this.interfaceName = interfaceName;
@@ -43,6 +52,18 @@ public class FileType {
 
     /**
      * Constructs a file type from interface name, file identifier, file extension and ok file extension.
+
+     *
+     * @param interfaceName
+     *          the name of the interface where the data is from. That is important if data comes from different sources.
+     *          Inn general this is the beginning pattern of the file name, i.e. mcrm, crm etc.
+     * @param fileIdentifier
+     *          everything that is between the interface name and the first number that appears in the file name.
+     *          I.e. crm_test_data_{DATE} (see also {@link FilenameUtil#DATE_TIME_PATTERN }
+     *          Usually, the first number indicates a date starting. The pattern of the date following has to be:
+     *          YYYYMMDD_HHMMSS, followd by the
+     * @param fileExtention or
+     * @param okFileExtention of the file.
      */
     public FileType( @Nonnull final String interfaceName, @Nonnull final String fileIdentifier,
             @Nonnull final String fileExtention, @Nonnull final String okFileExtention ) {

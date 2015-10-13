@@ -1,11 +1,5 @@
 package com.freiheit.fuava.sftp.testclient;
 
-import java.io.File;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.freiheit.fuava.sftp.RemoteClient;
 import com.freiheit.fuava.sftp.util.FileType;
 import com.freiheit.fuava.sftp.util.FilenameUtil;
@@ -16,6 +10,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Ordering;
 import com.jcraft.jsch.SftpException;
+
+import java.io.File;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 
 public final class InMemoryTestRemoteClient<T> implements RemoteClient {
 
@@ -103,11 +102,13 @@ public final class InMemoryTestRemoteClient<T> implements RemoteClient {
     }
 
     private String getDirName( final String pathToFile ) {
-        return new File( pathToFile ).getParent();
+        final String parent = new File( pathToFile ).getParent() +"/";
+        return parent;
     }
 
     private String getFileName( final String pathToFile ) {
-        return new File( pathToFile ).getName();
+        final String name = new File( pathToFile ).getName();
+        return name;
     }
 
     @Override
@@ -122,7 +123,7 @@ public final class InMemoryTestRemoteClient<T> implements RemoteClient {
     public void createFolderIfNotExist( final String folderNameToCreate ) throws Exception {
         final String dirPath = folderNameToCreate;
         if ( !this.folders.containsKey( dirPath ) ) {
-            this.folders.put( dirPath, new TestFolder<>( new HashMap<>() ) );
+            this.folders.put( dirPath, new TestFolder<>( ImmutableMap.<String, T>builder().build() ) );
         }
     }
 }
