@@ -65,7 +65,7 @@ public class FilenameUtil {
     }
 
     /**
-     * Returns the filename of the data file for given ok file
+     * Returns the filename of the data file for given ok file.
      */
     @CheckForNull
     public static String getDataFileOfOkFile( @Nonnull final FileType type, @Nonnull final String filename ) {
@@ -80,12 +80,12 @@ public class FilenameUtil {
     }
 
     /**
-     * Returns the filename of the data file for given ok file
+     * Returns the filename of the data file for given ok file.
      */
     @CheckForNull
     public static String getOkFileForDataFile( @Nonnull final FileType type, @Nonnull final String filename ) {
         if ( filename.endsWith( type.getExtention() ) ) {
-            StringBuilder b = new StringBuilder( filename );
+            final StringBuilder b = new StringBuilder( filename );
             b.replace( filename.lastIndexOf( type.getExtention() ), filename.lastIndexOf( type.getExtention() )
                     + type.getExtention().length(), type.getOkFileExtention() );
             return b.toString();
@@ -128,6 +128,11 @@ public class FilenameUtil {
         return String.valueOf( getDateFromFilenameWithDelimiter( max ) );
     }
 
+    /**
+     * Extracts timestamp as long.
+     *
+     * @return timestamp as long.
+     */
     public static long timestampToLong( final String dateTimeWithDelimiter ) {
         try {
             return Long.parseLong( dateTimeWithDelimiter.replace( FILENAME_DELIMITER, "" ) );

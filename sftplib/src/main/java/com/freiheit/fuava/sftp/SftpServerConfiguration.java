@@ -29,6 +29,7 @@ public class SftpServerConfiguration implements RemoteConfiguration {
     private final String remoteArchivedFolder;
 
     /**
+     * server configuration for sftp.
      *
      * @param remoteFilesLocationFolder location of files located on sftp server
      * @param remoteProcessingFolder location of files being processed on sftp server

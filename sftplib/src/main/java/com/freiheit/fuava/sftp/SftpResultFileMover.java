@@ -35,7 +35,7 @@ public class SftpResultFileMover extends
     private final String archiveFolder;
 
     /**
-     *
+     * Constructs SftpResultFileMover.
      *
      * @param client
      *            SFTP client.
@@ -48,6 +48,11 @@ public class SftpResultFileMover extends
         this.archiveFolder = archiveFolder;
     }
 
+    /**
+     *  Moves successfully processed file to archived folder.
+     *
+     * @param data that is moved on sftp.
+     */
     public Result<FetchedItem<SftpFilename>, ControlFilePersistenceOutputInfo> processItem( final Result<FetchedItem<SftpFilename>, ControlFilePersistenceOutputInfo> data ) {
         if ( data.isFailed() ) {
             return Result.<FetchedItem<SftpFilename>, ControlFilePersistenceOutputInfo> builder( data ).failed();

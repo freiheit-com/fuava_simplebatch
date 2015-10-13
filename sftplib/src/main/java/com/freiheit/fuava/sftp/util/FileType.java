@@ -24,13 +24,16 @@ import javax.annotation.Nonnull;
  */
 public class FileType {
 
-    public final static FileType ALL_FILES = new FileType("all","*");
+    public static final FileType ALL_FILES = new FileType( "all", "*" );
 
     private final String interfaceName;
     private final String fileIdentifierPattern;
     private final String fileExtention;
     private final String okFileExtention;
 
+    /**
+     *  Constructs a file type from interface name and file identifier.
+     */
     public FileType( @Nonnull final String interfaceName, @Nonnull final String fileIdentifier ) {
         this.interfaceName = interfaceName;
         this.fileIdentifierPattern = fileIdentifier;
@@ -38,6 +41,9 @@ public class FileType {
         this.okFileExtention = ".ok";
     }
 
+    /**
+     * Constructs a file type from interface name, file identifier, file extension and ok file extension.
+     */
     public FileType( @Nonnull final String interfaceName, @Nonnull final String fileIdentifier,
             @Nonnull final String fileExtention, @Nonnull final String okFileExtention ) {
         this.interfaceName = interfaceName;

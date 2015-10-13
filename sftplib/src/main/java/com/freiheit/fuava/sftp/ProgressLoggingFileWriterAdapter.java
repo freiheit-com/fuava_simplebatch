@@ -37,10 +37,11 @@ public class ProgressLoggingFileWriterAdapter implements FileOutputStreamAdapter
         return prefix + "_" + filename + "_" + counter.incrementAndGet();
     }
     /**
+     * writes InputStream to OutputStream.
      *
      * @param outputStream data written from the sftp server
      * @param inputStream data from the sftp server
-     * @throws IOException
+     * @throws IOException when streaming fails.
      */
     @Override
     public void writeToStream( final OutputStream outputStream, final InputStream inputStream ) throws IOException {

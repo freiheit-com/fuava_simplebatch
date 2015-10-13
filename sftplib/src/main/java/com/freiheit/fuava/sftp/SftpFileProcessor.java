@@ -32,6 +32,7 @@ public class SftpFileProcessor extends
     private final RemoteClient client;
 
     /**
+     * Construct a file processor with the client operations.
      *
      * @param client
      *            SFTP client.
@@ -40,6 +41,12 @@ public class SftpFileProcessor extends
         this.client = client;
     }
 
+    /**
+     *  Downloaded the desired file.
+     *
+     * @param data that is downloaded
+     * @return a result for the file writer.
+     */
     public Result<FetchedItem<SftpFilename>, InputStream> processItem( final Result<FetchedItem<SftpFilename>, SftpFilename> data ) {
         if ( data.isFailed() ) {
             return Result.<FetchedItem<SftpFilename>, InputStream> builder( data ).failed();

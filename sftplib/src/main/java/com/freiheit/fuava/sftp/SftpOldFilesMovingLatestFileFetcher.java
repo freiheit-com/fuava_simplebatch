@@ -106,10 +106,6 @@ public class SftpOldFilesMovingLatestFileFetcher implements Fetcher<SftpFilename
      * @param fileNamesList all files on the sftp server with a desired pattern in the file name.
      * @param fileType the file type that needs to be processed.
      * @return a list of files that need to be downloaded.
-     * @throws SftpException
-     * @throws JSchException
-     * @throws ParseException
-     * @throws FileNotFoundException
      */
     protected Iterable<Result<FetchedItem<SftpFilename>, SftpFilename>> moveOldFilesToSkippedAndReturnLatestFilename(
             final List<String> fileNamesList,
@@ -203,15 +199,10 @@ public class SftpOldFilesMovingLatestFileFetcher implements Fetcher<SftpFilename
      *
      * @param currentFileTimestamp is the time stamps of the possibly new file to download.
      * @param latestSavedTimestamp is the timestamp of the last file downloaded.
-     * @return
+     * @return true or false.
      */
     protected boolean isLatestFile( final long currentFileTimestamp, final long latestSavedTimestamp ) {
-        if ( currentFileTimestamp < latestSavedTimestamp ) {
-            return false;
-        } else
-        {
-            return true;
-        }
+        return currentFileTimestamp >= latestSavedTimestamp;
     }
 
 

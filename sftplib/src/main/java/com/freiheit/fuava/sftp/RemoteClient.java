@@ -58,12 +58,12 @@ public interface RemoteClient {
      * @param fileType file type, especially name setting and ending (i.e. xls, csv etc.)
      * @param sourceFolder folder on remote system where the data shall be moved from.
      * @param destinationFolder folder on then remote system where the data shall be moved to.
-     * @return
+     * @return String of new location.
      */
     String moveFileAndControlFileFromOneDirectoryToAnother( String pathToControlFile,
             FileType fileType,
             String sourceFolder,
-            String destinationFolder) throws Exception;
+            String destinationFolder ) throws Exception;
 
 
 

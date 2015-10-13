@@ -44,10 +44,25 @@ public class SftpClient implements RemoteClient {
     private ChannelSftp sftpChannel;
 
 
+    /**
+     * ctor.
+     *
+     * @param configuration
+     *            Environment configuration object
+     */
+    public SftpClient( final String host, final Integer port, final String username, final String password,
+            final SftpServerConfiguration configuration  ) {
+        this.host = host;
+        this.port = port;
+        this.username = username;
+        this.password = password;
+        this.configuration = configuration;
+    }
+
+
     public  String getRemoteSystemType() {
         return CHANNEL_TYPE_SFTP;
     }
-
 
     public String getHost() {
         return host;
@@ -67,21 +82,6 @@ public class SftpClient implements RemoteClient {
 
     SftpServerConfiguration getRemoteConfiguration() {
         return configuration;
-    }
-
-    /**
-     * ctor.
-     *
-     * @param configuration
-     *            Environment configuration object
-     */
-    public SftpClient( final String host, final Integer port, final String username, final String password,
-            final SftpServerConfiguration configuration  ) {
-        this.host = host;
-        this.port = port;
-        this.username = username;
-        this.password = password;
-        this.configuration = configuration;
     }
 
     /**
@@ -115,7 +115,7 @@ public class SftpClient implements RemoteClient {
         return session;
     }
 
-    protected ChannelSftp login( Session session ) throws JSchException {
+    protected ChannelSftp login( final Session session ) throws JSchException {
         session.connect();
         try {
             session.sendKeepAliveMsg();
@@ -141,7 +141,7 @@ public class SftpClient implements RemoteClient {
     @SuppressWarnings( "unchecked" )
     // justification: we assume 'Object', therefore we are safe, although unchecked.
     public List<String> listFolder( final String pathToFiles ) throws JSchException, SftpException {
-        List<ChannelSftp.LsEntry> listOfLsEntries =  ConvertUtil.convertList( channel().ls( pathToFiles ), SftpClient::toLsEntry );
+        final List<ChannelSftp.LsEntry> listOfLsEntries =  ConvertUtil.convertList( channel().ls( pathToFiles ), SftpClient::toLsEntry );
         return listOfLsEntries.stream().map( SftpOldFilesMovingLatestFileFetcher::lsEntryToFilename )
                 .collect( Collectors.toList() );
     }
@@ -190,7 +190,6 @@ public class SftpClient implements RemoteClient {
      *            path to file.
      * @param destinationFile
      *            path to file.
-     * @return InputStream of the desired file.
      * @throws SftpException
      *             is thrown in case of errors.
      */
@@ -203,8 +202,9 @@ public class SftpClient implements RemoteClient {
      *
      * @param filename
      *            file to delete.
-     * @throws JSchException
-     * @throws SftpException
+     * @throws JSchException is thrown if client fails to disconnect an existing session.
+     *
+     * @throws SftpException is thrown in case of errors.
      */
     public void deleteFile( final String filename ) throws JSchException, SftpException {
         channel().rm( filename );
@@ -226,7 +226,7 @@ public class SftpClient implements RemoteClient {
      * @throws SftpException
      *             exception thrown in case of errors.
      */
-    public String moveFileAndControlFileFromOneDirectoryToAnother( final String okFile, FileType fileType, final String fromFolder,
+    public String moveFileAndControlFileFromOneDirectoryToAnother( final String okFile, final FileType fileType, final String fromFolder,
             final String toFolder ) throws SftpException {
         // this file is older then the latest one, move it to the skipped folder
         final String dataFilename = FilenameUtil.getDataFileOfOkFile( fileType, okFile );
@@ -267,13 +267,13 @@ public class SftpClient implements RemoteClient {
      *            remote folder.
      */
     public void createFolderIfNotExist( final String folderName ) throws JSchException, SftpException {
-        String[] complPath = folderName.split( "/" );
+        final String[] complPath = folderName.split( "/" );
         channel().cd( "/" );
         for ( String dir : complPath ) {
-            if ( StringUtils.isEmpty( dir ) == false ) {
+            if ( !StringUtils.isEmpty( dir ) ) {
                 try {
                     channel().cd( dir );
-                } catch ( SftpException e2 ) {
+                } catch ( final SftpException e2 ) {
                     channel().mkdir( dir );
                     channel().cd( dir );
                 }

@@ -35,11 +35,26 @@ public class SftpDownloaderJob {
     private SftpDownloaderJob() {
     }
 
+    /**
+     * creates the downloader job configuration.
+     *
+     * @param downloadingDir where the files are saved..
+     * @return configuration for downloader job.
+     */
     public static CtlDownloaderJob.Configuration createDownloadConfig( final String downloadingDir ) {
         return new CtlDownloaderJob.ConfigurationImpl().setDownloadDirPath(
                 downloadingDir ).setControlFileEnding( ".ctl" );
     }
 
+    /**
+     * creates the batch job.
+     *
+     * @param config configuration of downloader job.
+     * @param client remote client operations.
+     * @param remoteConfiguration remote client storage configuration.
+     * @param fileType type of file that one wants to download.
+     * @return Batch Job that can be executed.
+     */
     // Make sure that an remote client is disconnected after job is done.
     public static BatchJob<SftpFilename, ControlFilePersistenceOutputInfo> makeDownloaderJob(
             final CtlDownloaderJob.Configuration config,
@@ -53,7 +68,7 @@ public class SftpDownloaderJob {
         final SftpFileProcessor downloader =
                 new SftpFileProcessor( client );
 
-        SftpResultFileMover remoteFileMover =
+        final SftpResultFileMover remoteFileMover =
                 new SftpResultFileMover( client, remoteConfiguration.getArchivedFolder() );
         return new BatchJob.Builder<SftpFilename, ControlFilePersistenceOutputInfo>()
                 .setFetcher(
