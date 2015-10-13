@@ -18,6 +18,5 @@ dependencies {
     compile 'com.jcraft:jsch:0.1.51'
     compile project(':core')
 
-    testCompile 'org.testng:testng:6.9.4'
 }
 
