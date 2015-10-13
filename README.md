@@ -228,7 +228,27 @@ job.addContentProcessingListener(new ProcessingResultListener<Article, Article>(
 
 Note that there are convenience Implementations for those loggers available, for example `ItemProgressLoggingListener` and `BatchStatisticsLoggingListener`.
 
+### SFTP tools
+
+A library of common remote access tools with the focus on SFTP is provided.
+It aims to generalize Downloader Job setups,which is especially helpful in the case of multiple Downloader Jobs being executed in multiple services at the same time.
+
+Customized fetcher, processor and adapter are provided for a specific use case.
+That is that a file containing the same data structure is uploaded on a regular basis on the remote system and one only wants to download the latest file identified by a timestamp in the file name.
+All other (older) files are moved on the SFTP server to a predefined directory for skipped files.
+
+The fetcher extracts the timestamp of each file from the file name and moves all files except the newest one to a predefined directory for skipped files.
+
+The processor is actually a composition of two processors, the first one downloading the file and the second one moving it after downloading to a predefined directory for archived files.
+
+The adapter writes the file while providing logging about the progress.
+
+
 ## Changes
+
+### 0.4.1 (2015-10-13)
+ - Introduced SFTP library to provide remote system tools that make setting up and executing Downloader Job easier and more structured.
+ - Provided customized fetcher, adapter and processor for the Downloader Job as well as several SFTP settings for the purpose of downloading the newest files, defined by a pattern,  in a given directory on an SFTP server while logging the progress.
 
 ### 0.3.9 (2015-10-01)
  - Fixed: FileMovingPersistence changed state of result item from failed to success
