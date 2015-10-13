@@ -13,17 +13,24 @@
 
 package com.freiheit.fuava.sftp;
 
-import com.freiheit.fuava.sftp.util.ConvertUtil;
-import com.freiheit.fuava.sftp.util.FileType;
-import com.freiheit.fuava.sftp.util.FilenameUtil;
-import com.jcraft.jsch.*;
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.CheckForNull;
 import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import javax.annotation.CheckForNull;
+
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.LoggerFactory;
+
+import com.freiheit.fuava.sftp.util.ConvertUtil;
+import com.freiheit.fuava.sftp.util.FileType;
+import com.freiheit.fuava.sftp.util.FilenameUtil;
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
 
 /**
  * Simple SFTP client.
@@ -40,7 +47,6 @@ public class SftpClient implements RemoteClient {
     private final String username;
     private final String password;
 
-    private final SftpServerConfiguration configuration;
     private ChannelSftp sftpChannel;
 
 
@@ -50,13 +56,11 @@ public class SftpClient implements RemoteClient {
      * @param configuration
      *            Environment configuration object
      */
-    public SftpClient( final String host, final Integer port, final String username, final String password,
-            final SftpServerConfiguration configuration  ) {
+    public SftpClient( final String host, final Integer port, final String username, final String password) {
         this.host = host;
         this.port = port;
         this.username = username;
         this.password = password;
-        this.configuration = configuration;
     }
 
 
@@ -64,25 +68,7 @@ public class SftpClient implements RemoteClient {
         return CHANNEL_TYPE_SFTP;
     }
 
-    public String getHost() {
-        return host;
-    }
 
-    public Integer getPort() {
-        return port;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    SftpServerConfiguration getRemoteConfiguration() {
-        return configuration;
-    }
 
     /**
      * Lazy channel initializer.
@@ -138,6 +124,7 @@ public class SftpClient implements RemoteClient {
      *             is thrown in case there are any problems with the SFTP
      *             channel
      */
+    @Override
     @SuppressWarnings( "unchecked" )
     // justification: we assume 'Object', therefore we are safe, although unchecked.
     public List<String> listFolder( final String pathToFiles ) throws JSchException, SftpException {
@@ -179,6 +166,7 @@ public class SftpClient implements RemoteClient {
      * @throws SftpException
      *             is thrown in case of errors.
      */
+    @Override
     public InputStream downloadRemoteFile( final String file ) throws JSchException, SftpException {
         return channel().get( file );
     }
@@ -193,6 +181,7 @@ public class SftpClient implements RemoteClient {
      * @throws SftpException
      *             is thrown in case of errors.
      */
+    @Override
     public void moveFileOnRemoteSystem( final String sourceFile, final String destinationFile ) throws SftpException, JSchException {
         channel().rename( sourceFile, destinationFile );
     }
@@ -206,6 +195,7 @@ public class SftpClient implements RemoteClient {
      *
      * @throws SftpException is thrown in case of errors.
      */
+    @Override
     public void deleteFile( final String filename ) throws JSchException, SftpException {
         channel().rm( filename );
     }
@@ -226,6 +216,7 @@ public class SftpClient implements RemoteClient {
      * @throws SftpException
      *             exception thrown in case of errors.
      */
+    @Override
     public String moveFileAndControlFileFromOneDirectoryToAnother( final String okFile, final FileType fileType, final String fromFolder,
             final String toFolder ) throws SftpException {
         // this file is older then the latest one, move it to the skipped folder
@@ -266,10 +257,11 @@ public class SftpClient implements RemoteClient {
      * @param folderName
      *            remote folder.
      */
+    @Override
     public void createFolderIfNotExist( final String folderName ) throws JSchException, SftpException {
         final String[] complPath = folderName.split( "/" );
         channel().cd( "/" );
-        for ( String dir : complPath ) {
+        for ( final String dir : complPath ) {
             if ( !StringUtils.isEmpty( dir ) ) {
                 try {
                     channel().cd( dir );

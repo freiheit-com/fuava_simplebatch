@@ -30,9 +30,7 @@ public class SftpClientUnitTest {
     public void testFalseHostNameException() {
 
         try {
-            final SftpServerConfiguration
-                    dummyFalseconfig = new SftpServerConfiguration( "/tmp/", "/tmp/process", "/tmp/skipped", "/tmp/archived" );
-            final SftpClient client = new SftpClient( "local,host", 1234, "user", "pass",dummyFalseconfig );
+            final SftpClient client = new SftpClient( "local,host", 1234, "user", "pass" );
             client.listFolder( "Freiheit_com" );
         } catch ( final SftpException e ) {
             Assert.assertTrue( e.getCause().toString().contains( "UnknownHostException" ) );

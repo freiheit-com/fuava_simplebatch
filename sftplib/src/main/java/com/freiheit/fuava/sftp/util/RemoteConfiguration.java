@@ -13,7 +13,7 @@ public interface RemoteConfiguration {
      *
      * @return location folder path.
      */
-    String getLocationFolder();
+    String getIncomingFolder();
 
     /**
      * Directory where the files are located that have already been processed.

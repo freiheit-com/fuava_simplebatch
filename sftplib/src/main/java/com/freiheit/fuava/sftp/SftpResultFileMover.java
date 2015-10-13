@@ -11,13 +11,14 @@
 
 package com.freiheit.fuava.sftp;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.freiheit.fuava.sftp.util.FilenameUtil;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.processor.AbstractSingleItemProcessor;
 import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo;
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.freiheit.fuava.sftp.util.FilenameUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Processor that moves the successdully processed file to the archived folder.
@@ -53,6 +54,7 @@ public class SftpResultFileMover extends
      *
      * @param data that is moved on sftp.
      */
+    @Override
     public Result<FetchedItem<SftpFilename>, ControlFilePersistenceOutputInfo> processItem( final Result<FetchedItem<SftpFilename>, ControlFilePersistenceOutputInfo> data ) {
         if ( data.isFailed() ) {
             return Result.<FetchedItem<SftpFilename>, ControlFilePersistenceOutputInfo> builder( data ).failed();
@@ -69,6 +71,8 @@ public class SftpResultFileMover extends
 
                 final String archivedDataFile = archiveFolder + dataFilename;
                 final String archivedOkFile = archiveFolder + okFilename;
+
+                client.createFolderIfNotExist( archiveFolder );
 
                 // move the file to archive
                 client.moveFileOnRemoteSystem( dataFile, archivedDataFile );

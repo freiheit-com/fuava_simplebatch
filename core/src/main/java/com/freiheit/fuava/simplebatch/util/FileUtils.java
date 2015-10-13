@@ -8,6 +8,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
+import com.google.common.base.Strings;
 
 public class FileUtils {
 
@@ -26,5 +30,15 @@ public class FileUtils {
             }
 
         } );
+    }
+
+    public static String getCurrentDateDirPath( final String path ) {
+        final String dateDirString = LocalDate.now().format( DateTimeFormatter.BASIC_ISO_DATE );
+        if ( Strings.isNullOrEmpty( path ) ) {
+            return dateDirString;
+        }
+        return path.endsWith( File.pathSeparator )
+            ? path + dateDirString
+            : path + File.pathSeparator + dateDirString;
     }
 }

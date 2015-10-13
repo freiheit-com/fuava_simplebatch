@@ -23,9 +23,7 @@ import javax.annotation.Nonnull;
  */
 public enum RemoteFileStatus {
 
-        OK( "ok" ),
-        WORKING( "working" ),
-        ERROR( "error" );
+    OK( "ok" );
 
     private final String fileExtension;
 

@@ -21,8 +21,7 @@ import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
 import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.Processors;
-
-import java.io.InputStream;
+import com.freiheit.fuava.simplebatch.util.FileUtils;
 
 /**
  * Standard Sftp Downloader Job for the purpose of downloading and processing
@@ -36,9 +35,10 @@ public class SftpDownloaderJob {
     }
 
     /**
-     * creates the downloader job configuration.
+     * Creates a downloader job configuration for a given download directory.
      *
-     * @param downloadingDir where the files are saved..
+     * @param downloadingDir
+     *            where the files are saved..
      * @return configuration for downloader job.
      */
     public static CtlDownloaderJob.Configuration createDownloadConfig( final String downloadingDir ) {
@@ -49,39 +49,41 @@ public class SftpDownloaderJob {
     /**
      * creates the batch job.
      *
-     * @param config configuration of downloader job.
-     * @param client remote client operations.
-     * @param remoteConfiguration remote client storage configuration.
-     * @param fileType type of file that one wants to download.
+     * @param config
+     *            configuration of downloader job.
+     * @param client
+     *            remote client operations <b>The caller is responsible to
+     *            release resources after the Job executes, if applicable.<b>
+     * @param remoteConfiguration
+     *            remote client storage configuration.
+     * @param fileType
+     *            type of file that one wants to download.
      * @return Batch Job that can be executed.
      */
-    // Make sure that an remote client is disconnected after job is done.
     public static BatchJob<SftpFilename, ControlFilePersistenceOutputInfo> makeDownloaderJob(
             final CtlDownloaderJob.Configuration config,
             final RemoteClient client,
             final RemoteConfiguration remoteConfiguration,
             final FileType fileType ) {
-        final Processor<FetchedItem<SftpFilename>, InputStream, ControlFilePersistenceOutputInfo>
-                localFilePersister = Processors.controlledFileWriter( config.getDownloadDirPath(), config.getControlFileEnding(),
-                new ProgressLoggingFileWriterAdapter() );
 
-        final SftpFileProcessor downloader =
-                new SftpFileProcessor( client );
+        final Processor<FetchedItem<SftpFilename>, SftpFilename, ControlFilePersistenceOutputInfo> downloader =
+                Processors.controlledFileWriter( config.getDownloadDirPath(), config.getControlFileEnding(),
+                        new SftpDownloadingFileWriterAdapter( client ) );
 
-        final SftpResultFileMover remoteFileMover =
-                new SftpResultFileMover( client, remoteConfiguration.getArchivedFolder() );
+        final SftpResultFileMover remoteFileMover = new SftpResultFileMover( client, FileUtils.getCurrentDateDirPath(remoteConfiguration.getArchivedFolder()) );
+
         return new BatchJob.Builder<SftpFilename, ControlFilePersistenceOutputInfo>()
                 .setFetcher(
                         new SftpOldFilesMovingLatestFileFetcher(
                                 client,
-                                remoteConfiguration.getSkippedFolder(),
+                                FileUtils.getCurrentDateDirPath( remoteConfiguration.getSkippedFolder() ),
                                 remoteConfiguration.getProcessingFolder(),
-                                remoteConfiguration.getLocationFolder(),
+                                remoteConfiguration.getIncomingFolder(),
                                 fileType ) )
                 .addListener( new BatchStatisticsLoggingListener<>( "BATCH" ) )
                 .addListener( new ItemProgressLoggingListener<>( "ITEM" ) )
-                .setProcessor( Processors.compose( Processors.compose( remoteFileMover, localFilePersister ), downloader ) )
-
+                .setProcessor( Processors.compose( remoteFileMover, downloader ) )
+                .setProcessingBatchSize( 1 /*No advantage in processing multiple files at once*/ )
                 .build();
 
     }

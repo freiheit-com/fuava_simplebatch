@@ -23,7 +23,7 @@ import com.freiheit.fuava.sftp.util.RemoteConfiguration;
 public class SftpServerConfiguration implements RemoteConfiguration {
 
 
-    private final String remoteFilesLocationFolder;
+    private final String remoteFilesIncomingFolder;
     private final String remoteProcessingFolder;
     private final String remoteSkippedFolder;
     private final String remoteArchivedFolder;
@@ -31,25 +31,25 @@ public class SftpServerConfiguration implements RemoteConfiguration {
     /**
      * server configuration for sftp.
      *
-     * @param remoteFilesLocationFolder location of files located on sftp server
+     * @param remoteFilesIncomingFolder location of files located on sftp server
      * @param remoteProcessingFolder location of files being processed on sftp server
      * @param remoteSkippedFolder location of files being skipped on sftp server
      * @param remoteArchivedFolder location of files have been downloaded successfully from sftp server
      *
      */
-    public SftpServerConfiguration( final String remoteFilesLocationFolder, final String remoteProcessingFolder, final String remoteSkippedFolder,
+    public SftpServerConfiguration( final String remoteFilesIncomingFolder, final String remoteProcessingFolder, final String remoteSkippedFolder,
             final String remoteArchivedFolder ) {
 
         this.remoteArchivedFolder = remoteArchivedFolder;
-        this.remoteFilesLocationFolder = remoteFilesLocationFolder;
+        this.remoteFilesIncomingFolder = remoteFilesIncomingFolder;
         this.remoteProcessingFolder = remoteProcessingFolder;
         this.remoteSkippedFolder = remoteSkippedFolder;
 
     }
 
 
-    public String getLocationFolder() {
-        return remoteFilesLocationFolder;
+    public String getIncomingFolder() {
+        return remoteFilesIncomingFolder;
     }
 
     public String getProcessingFolder() {

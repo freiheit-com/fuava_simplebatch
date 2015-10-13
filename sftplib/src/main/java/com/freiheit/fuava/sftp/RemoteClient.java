@@ -25,7 +25,7 @@ import java.util.List;
 public interface RemoteClient {
 
     /**
-     * Returns input stream from a given file path on the remote system in order to download the file.
+     * Returns input stream from a given file path on the remote system in order to download the file. The caller must ensure that the stream is closed.
      *
      */
     InputStream downloadRemoteFile( String pathToFile ) throws Exception;
