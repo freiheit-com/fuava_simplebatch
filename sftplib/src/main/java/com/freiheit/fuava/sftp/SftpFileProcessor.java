@@ -30,19 +30,14 @@ public class SftpFileProcessor extends
     private static final Logger LOG = LoggerFactory.getLogger( SftpFileProcessor.class );
 
     private final RemoteClient client;
-    private final String archivedFolder;
 
     /**
      *
      * @param client
      *            SFTP client.
-     * @param archivedFolder
-     *            Processed (downloaded) files are moved to this folder on
-     *            remote server.
      */
-    public SftpFileProcessor( final RemoteClient client, final String archivedFolder ) {
+    public SftpFileProcessor( final RemoteClient client ) {
         this.client = client;
-        this.archivedFolder = archivedFolder;
     }
 
     public Result<FetchedItem<SftpFilename>, InputStream> processItem( final Result<FetchedItem<SftpFilename>, SftpFilename> data ) {

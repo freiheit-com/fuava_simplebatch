@@ -49,19 +49,19 @@ public class SftpClient implements RemoteClient {
     }
 
 
-    @Override public String getHost() {
+    public String getHost() {
         return host;
     }
 
-    @Override public Integer getPort() {
+    public Integer getPort() {
         return port;
     }
 
-    @Override public String getUsername() {
+    public String getUsername() {
         return username;
     }
 
-    @Override public String getPassword() {
+    public String getPassword() {
         return password;
     }
 

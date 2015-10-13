@@ -51,7 +51,7 @@ public class SftpDownloaderJob {
                 new ProgressLoggingFileWriterAdapter() );
 
         final SftpFileProcessor downloader =
-                new SftpFileProcessor( client, remoteConfiguration.getArchivedFolder() );
+                new SftpFileProcessor( client );
 
         SftpResultFileMover remoteFileMover =
                 new SftpResultFileMover( client, remoteConfiguration.getArchivedFolder() );

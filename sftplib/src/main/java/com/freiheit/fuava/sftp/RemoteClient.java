@@ -25,45 +25,6 @@ import java.util.List;
 public interface RemoteClient {
 
     /**
-     * type of the remote system, i.e. "sftp", "opsenssh" etc
-     *
-     *  @return name of remote system.
-     */
-
-    String getRemoteSystemType();
-
-    /**
-     * Account user name of the remote system
-     *
-     * @return user name for the remote system.
-     */
-
-    String getUsername();
-
-    /**
-     * Returns password for remote system.
-     *
-     * @return password for remote system.
-     */
-    String getPassword();
-
-    /**
-     *
-     * Returns Host IP of remote system.
-     *
-     * @return host ip of remote system.
-     */
-    String getHost();
-
-    /**
-     * Port for access to remote system.
-     *
-     * @return port of remote system.
-     */
-
-    Integer getPort();
-
-    /**
      * Returns input stream from a given file path on the remote system in order to download the file.
      *
      */
