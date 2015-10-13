@@ -239,7 +239,7 @@ All other (older) files are moved on the SFTP server to a predefined directory f
 
 The fetcher extracts the timestamp of each file from the file name and moves all files except the newest one to a predefined directory for skipped files.
 
-The processor is actually a composition of two processors, the first one downloading the file and the second one moving it after downloading to a predefined directory for archived files.
+The processor moves the file after downloading to a predefined directory for archived files.
 
 The adapter writes the file while providing logging about the progress.
 
