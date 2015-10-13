@@ -33,7 +33,9 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
         String getDownloadDirPath();
 
-        String getControlFileEnding();
+        default String getControlFileEnding() {
+            return ".ctl";
+        }
 
     }
 
