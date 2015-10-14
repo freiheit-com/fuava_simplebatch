@@ -246,6 +246,9 @@ The adapter writes the file while providing logging about the progress.
 
 ## Changes
 
+### 0.4.2 (2015-10-14)
+ - More forgiving code in SFTP library: configured paths may or may not end with a slash, processing dir will be created if needed
+
 ### 0.4.1 (2015-10-13)
  - Introduced SFTP library to provide remote system tools that make setting up and executing Downloader Job easier and more structured.
  - Provided customized fetcher, adapter and processor for the Downloader Job as well as several SFTP settings for the purpose of downloading the newest files, defined by a pattern,  in a given directory on an SFTP server while logging the progress.
