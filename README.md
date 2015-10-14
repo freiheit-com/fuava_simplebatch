@@ -246,7 +246,9 @@ The adapter writes the file while providing logging about the progress.
 Example Usage:
 
 ```java
-final SftpClient client = new SftpClient( "sftp.somewhere.org", 22, "my_user", "secret" );
+final SftpClient client = new SftpClient( 
+        "sftp.somewhere.org", 22, "my_user", "secret" 
+    );
 
 final BatchJob<SftpFilename, ControlFilePersistenceOutputInfo> downloaderJob =
     SftpDownloaderJob.makeDownloaderJob(
