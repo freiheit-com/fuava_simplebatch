@@ -258,6 +258,8 @@ Example Usage:
                 new FileType( "AnalyticsSystem", "_RequestDetails_{1}", ".csv", ".ok" ) 
             );
     BatchJobMain.exec( downloaderJob );
+
+    client.disconnect();
 ```
 
 ## Changes
