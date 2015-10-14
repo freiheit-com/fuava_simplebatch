@@ -1,5 +1,15 @@
 package com.freiheit.fuava.sftp;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
 import com.freiheit.fuava.sftp.testclient.InMemoryTestRemoteClient;
 import com.freiheit.fuava.sftp.testclient.TestFolder;
 import com.freiheit.fuava.sftp.util.FileType;
@@ -10,15 +20,6 @@ import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
 import com.google.common.collect.ImmutableMap;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 @Test
 public class PseudoSFTPTest {
@@ -42,25 +43,13 @@ public class PseudoSFTPTest {
 
         final HashMap<String, TestFolder<String>> initialState = new HashMap<String, TestFolder<String>>();
         initialState.put(
-                "/incoming/",
+                "/incoming",
                 new TestFolder<String>(
                         ImmutableMap.<String, String>builder()
                                 .put( "test_pseudo_152000_20101010_120000.csv", "{name:'pseudojson'}" )
                                 .put( "test_pseudo_152000_20101010_120000.ok", "" )
                                 .build()
 
-                )
-        );
-        initialState.put(
-                "/processing/",
-                new TestFolder<String>(
-                        ImmutableMap.<String, String>builder().build()
-                )
-        );
-        initialState.put(
-                "/skipped/",
-                new TestFolder<String>(
-                        ImmutableMap.<String, String>builder().build()
                 )
         );
         
@@ -72,22 +61,22 @@ public class PseudoSFTPTest {
 
             @Override
             public String getSkippedFolder() {
-                return "/skipped/";
+                        return "/skipped";
             }
 
             @Override
             public String getProcessingFolder() {
-                return "/processing/";
+                        return "/processing";
             }
 
             @Override
             public String getIncomingFolder() {
-                return "/incoming/";
+                        return "/incoming";
             }
 
             @Override
             public String getArchivedFolder() {
-                return "/archived/";
+                        return "/archived";
             }
         }, new FileType( "test", "_pseudo_" ) );
 
@@ -101,12 +90,12 @@ public class PseudoSFTPTest {
         Assert.assertEquals( stat.getProcessingCounts().getError(), 0 );
 
         final Map<String, TestFolder<String>> finalState = client.getStateCopy();
-        assertIsNullOrEmpty( finalState, "/incoming/" );
-        assertIsNullOrEmpty( finalState, "/skipped/" );
-        assertIsNullOrEmpty( finalState, FileUtils.getCurrentDateDirPath( "/skipped/" ) );
-        assertIsNullOrEmpty( finalState, "/processed/" );
-        assertIsNullOrEmpty( finalState, "/archived/" );
-        final String archivedDirPath = FileUtils.getCurrentDateDirPath( "/archived/" );
+        assertIsNullOrEmpty( finalState, "/incoming" );
+        assertIsNullOrEmpty( finalState, "/skipped" );
+        assertIsNullOrEmpty( finalState, FileUtils.getCurrentDateDirPath( "/skipped" ) );
+        assertIsNullOrEmpty( finalState, "/processed" );
+        assertIsNullOrEmpty( finalState, "/archived" );
+        final String archivedDirPath = FileUtils.getCurrentDateDirPath( "/archived" );
         final TestFolder<String> testFolder = finalState.get( archivedDirPath );
         Assert.assertNotNull( testFolder, "Date-Dependend Archived directory '" + archivedDirPath + "' should not  be null" );
         final Set<String> archiveContent = testFolder.getItemKeys();

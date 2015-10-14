@@ -11,6 +11,16 @@
 
 package com.freiheit.fuava.sftp;
 
+import java.io.FileNotFoundException;
+import java.text.ParseException;
+import java.util.Collections;
+import java.util.List;
+
+import javax.annotation.CheckForNull;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.freiheit.fuava.sftp.util.FileType;
 import com.freiheit.fuava.sftp.util.FilenameUtil;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
@@ -22,14 +32,6 @@ import com.google.common.collect.Ordering;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.CheckForNull;
-import java.io.FileNotFoundException;
-import java.text.ParseException;
-import java.util.Collections;
-import java.util.List;
 
 /**
  *
@@ -160,6 +162,8 @@ public class SftpOldFilesMovingLatestFileFetcher implements Fetcher<SftpFilename
         try {
             // Get file name of latest file for creating the SftpFilename
             final String dataFilenameOfLatestFile = FilenameUtil.getDataFileOfOkFile( this.fileType, okFile );
+
+            remoteClient.createFolderIfNotExist( processingFolder );
 
             // Get full path and name for latest file
             final String fullPathAndNameOfLatestFile =

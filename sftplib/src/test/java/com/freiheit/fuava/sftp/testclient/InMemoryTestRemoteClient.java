@@ -1,8 +1,16 @@
 package com.freiheit.fuava.sftp.testclient;
 
+import java.io.File;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 import com.freiheit.fuava.sftp.RemoteClient;
 import com.freiheit.fuava.sftp.util.FileType;
 import com.freiheit.fuava.sftp.util.FilenameUtil;
+import com.freiheit.fuava.simplebatch.util.FileUtils;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.FluentIterable;
@@ -11,20 +19,23 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Ordering;
 import com.jcraft.jsch.SftpException;
 
-import java.io.File;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
-
 public final class InMemoryTestRemoteClient<T> implements RemoteClient {
 
-    private final Map<String, TestFolder<T>> folders;
+    private final ConcurrentMap<String, TestFolder<T>> folders;
     private final Function<T, InputStream> inputStreamProvider;
 
     public InMemoryTestRemoteClient( final Map<String, TestFolder<T>> initialState,
             final Function<T, InputStream> inputStreamProvider ) {
-        this.folders = initialState;
+        this.folders = buildFoldersMap( initialState );
         this.inputStreamProvider = inputStreamProvider;
+    }
+
+    private ConcurrentMap<String, TestFolder<T>> buildFoldersMap( final Map<String, TestFolder<T>> initialState ) {
+        final ConcurrentMap<String, TestFolder<T>> b = new ConcurrentHashMap<>();
+        for ( final Map.Entry<String, TestFolder<T>> e : initialState.entrySet() ) {
+            b.put( asFoldersKey( e.getKey() ), e.getValue() );
+        }
+        return b;
     }
 
     public Map<String, TestFolder<T>> getStateCopy() {
@@ -58,10 +69,10 @@ public final class InMemoryTestRemoteClient<T> implements RemoteClient {
             throw new SftpException( 1, "Failed to locate data file for .ok file: " + okFile );
         }
 
-        final String origOkFile = fromFolder + okFile;
-        final String destOkFile = toFolder + okFile;
-        final String origDataFile = fromFolder + dataFilename;
-        final String destDataFile = toFolder + dataFilename;
+        final String origOkFile = FileUtils.ensureTrailingSlash( fromFolder) + okFile;
+        final String destOkFile = FileUtils.ensureTrailingSlash( toFolder ) + okFile;
+        final String origDataFile = FileUtils.ensureTrailingSlash( fromFolder ) + dataFilename;
+        final String destDataFile = FileUtils.ensureTrailingSlash( toFolder ) + dataFilename;
 
         // first move the data file
         moveFileOnRemoteSystem( origDataFile, destDataFile );
@@ -76,7 +87,7 @@ public final class InMemoryTestRemoteClient<T> implements RemoteClient {
 
     @Override
     public List<String> listFolder( final String pathToFiles ) throws Exception {
-        final TestFolder<T> testFolder = this.folders.get( pathToFiles );
+        final TestFolder<T> testFolder = this.folders.get( asFoldersKey( pathToFiles ) );
         final List<String> content = testFolder == null
             ? ImmutableList.<String> of()
             : FluentIterable.from( testFolder.getItemKeys() ).toSortedList( Ordering.natural() );
@@ -98,7 +109,7 @@ public final class InMemoryTestRemoteClient<T> implements RemoteClient {
 
     private TestFolder<T> getFolderOfFile( final String pathToFile ) {
         final String dirPath = getDirName( pathToFile );
-        return this.folders.get( dirPath );
+        return this.folders.get( asFoldersKey( dirPath ) );
     }
 
     private String getDirName( final String pathToFile ) {
@@ -122,8 +133,13 @@ public final class InMemoryTestRemoteClient<T> implements RemoteClient {
     @Override
     public void createFolderIfNotExist( final String folderNameToCreate ) throws Exception {
         final String dirPath = folderNameToCreate;
-        if ( !this.folders.containsKey( dirPath ) ) {
-            this.folders.put( dirPath, new TestFolder<>( ImmutableMap.<String, T>builder().build() ) );
+        final String key = asFoldersKey( dirPath );
+        if ( !this.folders.containsKey( key ) ) {
+            this.folders.put( key, new TestFolder<>( ImmutableMap.<String, T> builder().build() ) );
         }
+    }
+
+    private String asFoldersKey( final String dirPath ) {
+        return FileUtils.ensureTrailingSlash( dirPath );
     }
 }
