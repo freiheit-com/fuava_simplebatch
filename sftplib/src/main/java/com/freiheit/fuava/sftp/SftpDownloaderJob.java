@@ -34,17 +34,6 @@ public class SftpDownloaderJob {
     private SftpDownloaderJob() {
     }
 
-    /**
-     * Creates a downloader job configuration for a given download directory.
-     *
-     * @param downloadingDir
-     *            where the files are saved..
-     * @return configuration for downloader job.
-     */
-    public static CtlDownloaderJob.Configuration createDownloadConfig( final String downloadingDir ) {
-        return new CtlDownloaderJob.ConfigurationImpl().setDownloadDirPath(
-                downloadingDir ).setControlFileEnding( ".ctl" );
-    }
 
     /**
      * creates the batch job.
