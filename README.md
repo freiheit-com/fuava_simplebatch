@@ -246,20 +246,23 @@ The adapter writes the file while providing logging about the progress.
 Example Usage:
 
 ```java
-    final SftpClient client = new SftpClient( "sftp.somewhere.org", 22, "my_user", "secret" );
+final SftpClient client = new SftpClient( "sftp.somewhere.org", 22, "my_user", "secret" );
 
-    final BatchJob<SftpFilename, ControlFilePersistenceOutputInfo> downloaderJob =
-        SftpDownloaderJob.makeDownloaderJob(
-                new CtlDownloaderJob.ConfigurationImpl().setDownloadDirPath( "/opt/downloads" ),
-                client,
-                new SftpServerConfiguration(
-                    "/incoming", "/downloading", "/skipped", "/archived" 
-                ),
-                new FileType( "AnalyticsSystem", "_RequestDetails_{1}", ".csv", ".ok" ) 
-            );
-    BatchJobMain.exec( downloaderJob );
+final BatchJob<SftpFilename, ControlFilePersistenceOutputInfo> downloaderJob =
+    SftpDownloaderJob.makeDownloaderJob(
+            new CtlDownloaderJob.ConfigurationImpl()
+               .setDownloadDirPath( "/opt/downloads" ),
+            client,
+            new SftpServerConfiguration(
+                "/incoming", "/downloading", "/skipped", "/archived" 
+            ),
+            new FileType( 
+                "AnalyticsSystem", "_RequestDetails_{1}", ".csv", ".ok" 
+            ) 
+        );
+BatchJobMain.exec( downloaderJob );
 
-    client.disconnect();
+client.disconnect();
 ```
 
 ## Changes
