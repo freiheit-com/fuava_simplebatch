@@ -269,6 +269,10 @@ client.disconnect();
 
 ## Changes
 
+### 0.4.3 (2015-10-19)
+ - Fixed: Default Implementation of RemoteConfiguration had a non-standard name.
+ - Fixed: Date was automatically added to some paths without users of the library having control over it. Replaced by convenient placeholder-supporting baseclasses.
+
 ### 0.4.2 (2015-10-14)
  - More forgiving code in SFTP library: configured paths may or may not end with a slash, processing dir will be created if needed
 
