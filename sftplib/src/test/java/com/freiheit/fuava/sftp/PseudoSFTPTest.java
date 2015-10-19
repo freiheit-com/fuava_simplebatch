@@ -13,7 +13,6 @@ import org.testng.annotations.Test;
 import com.freiheit.fuava.sftp.testclient.InMemoryTestRemoteClient;
 import com.freiheit.fuava.sftp.testclient.TestFolder;
 import com.freiheit.fuava.sftp.util.FileType;
-import com.freiheit.fuava.sftp.util.RemoteConfiguration;
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob;
 import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo;
@@ -58,7 +57,7 @@ public class PseudoSFTPTest {
         final InMemoryTestRemoteClient<String> client = new InMemoryTestRemoteClient<String>( initialState, ( s ) -> new ByteArrayInputStream( s.getBytes() ) );
         final BatchJob<SftpFilename, ControlFilePersistenceOutputInfo> job =
                 SftpDownloaderJob.makeDownloaderJob( localConfig, client,
-                        new SftpServerConfiguration( "/incoming", "/processing", "/skipped", "/archived"),
+                        new RemoteConfigurationImpl( "/incoming", "/processing", "/skipped", "/archived"),
                         new FileType( "test", "_pseudo_" ) );
 
         final ResultStatistics stat = job.run();

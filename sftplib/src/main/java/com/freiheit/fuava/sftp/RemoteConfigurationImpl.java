@@ -21,7 +21,7 @@ import com.freiheit.fuava.simplebatch.util.FileUtils;
  *
  * @author dmitrijs.barbarins@freiheit.com
  */
-public class SftpServerConfiguration implements RemoteConfiguration {
+public class RemoteConfigurationImpl implements RemoteConfiguration {
 
 
     private final String remoteFilesIncomingFolder;
@@ -39,8 +39,8 @@ public class SftpServerConfiguration implements RemoteConfiguration {
      * @param remoteArchivedFolder location of files have been downloaded successfully from sftp server
      *
      */
-    public SftpServerConfiguration( final String remoteFilesIncomingFolder, final String remoteProcessingFolder, final String remoteSkippedFolder,
-            final String remoteArchivedFolder ) {
+    public RemoteConfigurationImpl(final String remoteFilesIncomingFolder, final String remoteProcessingFolder, final String remoteSkippedFolder,
+                                   final String remoteArchivedFolder) {
 
         this.remoteArchivedFolder = FileUtils.getCurrentDateDirPath( remoteArchivedFolder );
         this.remoteFilesIncomingFolder = FileUtils.ensureTrailingSlash( remoteFilesIncomingFolder );

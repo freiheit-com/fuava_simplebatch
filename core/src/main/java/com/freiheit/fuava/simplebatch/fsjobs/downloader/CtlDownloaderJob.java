@@ -55,7 +55,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         }
 
         public ConfigurationImpl setDownloadDirPath( final String path ) {
-            this.downloadDirPath = FileUtils.ensureTrailingSlash( path );
+            this.downloadDirPath = path;
             return this;
         }
 

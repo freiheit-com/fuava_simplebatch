@@ -65,7 +65,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
         public ConfigurationImpl setArchivedDirPath( final String archivedDirPath ) {
-            this.archivedDirPath = FileUtils.getCurrentDateDirPath( archivedDirPath );
+            this.archivedDirPath = archivedDirPath;
             return this;
         }
 
@@ -75,7 +75,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
         public ConfigurationImpl setFailedDirPath( final String failedDirPath ) {
-            this.failedDirPath = FileUtils.getCurrentDateDirPath( failedDirPath );
+            this.failedDirPath = failedDirPath;
             return this;
         }
 
@@ -104,9 +104,9 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
     public static final class ConfigurationWithPlaceholderImpl implements Configuration {
 
         private String downloadDirPath = CtlDownloaderJob.DEFAULT_CONFIG_DOWNLOAD_DIR_PATH;
-        private String archivedDirPath = "/tmp/archive/";
+        private String archivedDirPath = FileUtils.substitutePlaceholder( "/tmp/archive/%(DATE)" );
         private String processingDirPath = "/tmp/processing/";
-        private String failedDirPath = "/tmp/failed/";
+        private String failedDirPath = FileUtils.substitutePlaceholder( "/tmp/failed/%(DATE)" );
         private String controlFileEnding = CtlDownloaderJob.DEFAULT_CONFIG_CONTROL_FILE_ENDING;
 
         @Override
@@ -125,7 +125,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
         public ConfigurationWithPlaceholderImpl setArchivedDirPath( final String archivedDirPath ) {
-            this.archivedDirPath = FileUtils.substitutePlaceholder(archivedDirPath);
+            this.archivedDirPath = FileUtils.substitutePlaceholder( archivedDirPath );
             return this;
         }
 
@@ -135,7 +135,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
         public ConfigurationWithPlaceholderImpl setFailedDirPath( final String failedDirPath ) {
-            this.failedDirPath = FileUtils.substitutePlaceholder(failedDirPath);
+            this.failedDirPath = FileUtils.substitutePlaceholder( failedDirPath );
             return this;
         }
 
@@ -160,7 +160,6 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
     }
-
 
     public static final class Builder<Data> {
         private static final String LOG_NAME_FILE_PROCESSING_ITEM = "FILE";
@@ -307,8 +306,6 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
 
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processfileAndMove =
                     Processors.compose( innerJobProcessor, fileProcessorAndMover );
-
-
 
             final Processor<FetchedItem<ControlFile>, ResultStatistics, ResultStatistics> fileMovingPersistence =
                     new FileMovingPersistence<ResultStatistics>(
