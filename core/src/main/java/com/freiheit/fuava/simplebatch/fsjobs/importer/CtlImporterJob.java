@@ -105,9 +105,9 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
 
         private String downloadDirPath = CtlDownloaderJob.DEFAULT_CONFIG_DOWNLOAD_DIR_PATH;
 
-        private String archivedDirPath = "/tmp/archive/" + FileUtils.PLACEHOLDER_DATE;
+        private String archivedDirPath = FileUtils.substitutePlaceholder( "/tmp/archive/" + FileUtils.PLACEHOLDER_DATE );
         private String processingDirPath = "/tmp/processing/";
-        private String failedDirPath = "/tmp/failed/" + FileUtils.PLACEHOLDER_DATE;
+        private String failedDirPath = FileUtils.substitutePlaceholder( "/tmp/failed/" + FileUtils.PLACEHOLDER_DATE );
         private String controlFileEnding = CtlDownloaderJob.DEFAULT_CONFIG_CONTROL_FILE_ENDING;
 
         @Override
