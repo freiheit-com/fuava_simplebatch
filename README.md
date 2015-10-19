@@ -175,7 +175,7 @@ final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
         Processors.retryableBatchedFunction(
             new Function<List<Article>, List<Article>>() {
                 @Override
-                public List<Integer> apply(List<Article> data) {
+                public List<Article> apply(List<Article> data) {
                     // Store data in database
                     // If you work with transactions, then you must open and
                     // commit or rollback the transaction here.
