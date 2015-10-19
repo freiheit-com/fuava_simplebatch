@@ -3,6 +3,8 @@ package com.freiheit.fuava.sftp;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -57,7 +59,7 @@ public class PseudoSFTPTest {
         final InMemoryTestRemoteClient<String> client = new InMemoryTestRemoteClient<String>( initialState, ( s ) -> new ByteArrayInputStream( s.getBytes() ) );
         final BatchJob<SftpFilename, ControlFilePersistenceOutputInfo> job =
                 SftpDownloaderJob.makeDownloaderJob( localConfig, client,
-                        new RemoteConfigurationImpl( "/incoming", "/processing", "/skipped", "/archived"),
+                        new RemoteConfigurationWithPlaceholderImpl( "/incoming", "/processing", "/skipped/%(DATE)", "/archived/%(DATE)"),
                         new FileType( "test", "_pseudo_" ) );
 
         final ResultStatistics stat = job.run();
@@ -71,11 +73,10 @@ public class PseudoSFTPTest {
 
         final Map<String, TestFolder<String>> finalState = client.getStateCopy();
         assertIsNullOrEmpty( finalState, "/incoming" );
-        assertIsNullOrEmpty( finalState, "/skipped" );
-        assertIsNullOrEmpty( finalState, FileUtils.getCurrentDateDirPath( "/skipped" ) );
+        assertIsNullOrEmpty( finalState, "/skipped/" + LocalDate.now().format( DateTimeFormatter.BASIC_ISO_DATE )  );
         assertIsNullOrEmpty( finalState, "/processed" );
         assertIsNullOrEmpty( finalState, "/archived" );
-        final String archivedDirPath = FileUtils.getCurrentDateDirPath( "/archived" );
+        final String archivedDirPath = "/archived/" + LocalDate.now().format( DateTimeFormatter.BASIC_ISO_DATE ) + "/";
         final TestFolder<String> testFolder = finalState.get( archivedDirPath );
         Assert.assertNotNull( testFolder, "Date-Dependend Archived directory '" + archivedDirPath + "' should not  be null" );
         final Set<String> archiveContent = testFolder.getItemKeys();

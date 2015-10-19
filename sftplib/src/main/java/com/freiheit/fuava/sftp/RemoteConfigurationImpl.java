@@ -42,10 +42,10 @@ public class RemoteConfigurationImpl implements RemoteConfiguration {
     public RemoteConfigurationImpl(final String remoteFilesIncomingFolder, final String remoteProcessingFolder, final String remoteSkippedFolder,
                                    final String remoteArchivedFolder) {
 
-        this.remoteArchivedFolder = FileUtils.getCurrentDateDirPath( remoteArchivedFolder );
+        this.remoteArchivedFolder = FileUtils.ensureTrailingSlash( remoteArchivedFolder );
         this.remoteFilesIncomingFolder = FileUtils.ensureTrailingSlash( remoteFilesIncomingFolder );
         this.remoteProcessingFolder = FileUtils.ensureTrailingSlash( remoteProcessingFolder );
-        this.remoteSkippedFolder = FileUtils.getCurrentDateDirPath( remoteSkippedFolder );
+        this.remoteSkippedFolder = FileUtils.ensureTrailingSlash( remoteSkippedFolder );
 
     }
 

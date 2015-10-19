@@ -29,11 +29,6 @@ import com.google.common.base.Function;
  */
 public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics> {
 
-    public static final String DEFAULT_CONFIG_ARCHIVE_DIR_PATH = "/tmp/downloading";
-    public static final String DEFAULT_CONFIG_PROCESSING_DIR_PATH = "/tmp/downloading";
-    public static final String DEFAULT_CONFIG_FAILED_DIR_PATH = "/tmp/downloading";
-
-
     public interface Configuration {
         String getControlFileEnding();
 
@@ -49,9 +44,9 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
     public static final class ConfigurationImpl implements Configuration {
 
         private String downloadDirPath = CtlDownloaderJob.DEFAULT_CONFIG_DOWNLOAD_DIR_PATH;
-        private String archivedDirPath = CtlImporterJob.DEFAULT_CONFIG_ARCHIVE_DIR_PATH;
-        private String processingDirPath = CtlImporterJob.DEFAULT_CONFIG_PROCESSING_DIR_PATH;
-        private String failedDirPath = CtlImporterJob.DEFAULT_CONFIG_FAILED_DIR_PATH;
+        private String archivedDirPath = "/tmp/archive";
+        private String processingDirPath = "/tmp/processing/";
+        private String failedDirPath = "/tmp/failed";
         private String controlFileEnding = CtlDownloaderJob.DEFAULT_CONFIG_CONTROL_FILE_ENDING;
 
         @Override
@@ -109,10 +104,10 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
     public static final class ConfigurationWithPlaceholderImpl implements Configuration {
 
         private String downloadDirPath = CtlDownloaderJob.DEFAULT_CONFIG_DOWNLOAD_DIR_PATH;
-        private String archivedDirPath = FileUtils.getCurrentDateDirPath( CtlImporterJob.DEFAULT_CONFIG_ARCHIVE_DIR_PATH );
-        private String processingDirPath = CtlImporterJob.DEFAULT_CONFIG_PROCESSING_DIR_PATH;
-        private String failedDirPath = FileUtils.getCurrentDateDirPath( CtlImporterJob.DEFAULT_CONFIG_FAILED_DIR_PATH );
 
+        private String archivedDirPath = "/tmp/archive/" + FileUtils.PLACEHOLDER_DATE;
+        private String processingDirPath = "/tmp/processing/";
+        private String failedDirPath = "/tmp/failed/" + FileUtils.PLACEHOLDER_DATE;
         private String controlFileEnding = CtlDownloaderJob.DEFAULT_CONFIG_CONTROL_FILE_ENDING;
 
         @Override
