@@ -65,7 +65,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
         public ConfigurationImpl setArchivedDirPath( final String archivedDirPath ) {
-            this.archivedDirPath = archivedDirPath;
+            this.archivedDirPath = FileUtils.getCurrentDateDirPath( archivedDirPath );
             return this;
         }
 
@@ -75,7 +75,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
         public ConfigurationImpl setFailedDirPath( final String failedDirPath ) {
-            this.failedDirPath = failedDirPath;
+            this.failedDirPath = FileUtils.getCurrentDateDirPath( failedDirPath );
             return this;
         }
 
@@ -100,6 +100,67 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
     }
+
+    public static final class ConfigurationWithPlaceholderImpl implements Configuration {
+
+        private String downloadDirPath = CtlDownloaderJob.DEFAULT_CONFIG_DOWNLOAD_DIR_PATH;
+        private String archivedDirPath = "/tmp/archive/";
+        private String processingDirPath = "/tmp/processing/";
+        private String failedDirPath = "/tmp/failed/";
+        private String controlFileEnding = CtlDownloaderJob.DEFAULT_CONFIG_CONTROL_FILE_ENDING;
+
+        @Override
+        public String getDownloadDirPath() {
+            return downloadDirPath;
+        }
+
+        public ConfigurationWithPlaceholderImpl setDownloadDirPath( final String downloadDirPath ) {
+            this.downloadDirPath = FileUtils.substitutePlaceholder( downloadDirPath );
+            return this;
+        }
+
+        @Override
+        public String getArchivedDirPath() {
+            return archivedDirPath;
+        }
+
+        public ConfigurationWithPlaceholderImpl setArchivedDirPath( final String archivedDirPath ) {
+            this.archivedDirPath = FileUtils.substitutePlaceholder(archivedDirPath);
+            return this;
+        }
+
+        @Override
+        public String getFailedDirPath() {
+            return failedDirPath;
+        }
+
+        public ConfigurationWithPlaceholderImpl setFailedDirPath( final String failedDirPath ) {
+            this.failedDirPath = FileUtils.substitutePlaceholder(failedDirPath);
+            return this;
+        }
+
+        @Override
+        public String getProcessingDirPath() {
+            return processingDirPath;
+        }
+
+        public ConfigurationWithPlaceholderImpl setProcessingDirPath( final String processingDirPath ) {
+            this.processingDirPath = FileUtils.substitutePlaceholder( processingDirPath );
+            return this;
+        }
+
+        @Override
+        public String getControlFileEnding() {
+            return controlFileEnding;
+        }
+
+        public ConfigurationWithPlaceholderImpl setControlFileEnding( final String controlFileEnding ) {
+            this.controlFileEnding = controlFileEnding;
+            return this;
+        }
+
+    }
+
 
     public static final class Builder<Data> {
         private static final String LOG_NAME_FILE_PROCESSING_ITEM = "FILE";
@@ -252,8 +313,8 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
             final Processor<FetchedItem<ControlFile>, ResultStatistics, ResultStatistics> fileMovingPersistence =
                     new FileMovingPersistence<ResultStatistics>(
                             new File( configuration.getProcessingDirPath() ),
-                            new File( FileUtils.getCurrentDateDirPath( configuration.getArchivedDirPath() ) ),
-                            new File( FileUtils.getCurrentDateDirPath( configuration.getFailedDirPath() ) ) 
+                            new File( configuration.getArchivedDirPath() ),
+                            new File( configuration.getFailedDirPath() )
                     );
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor =
                     Processors.compose( fileMovingPersistence, processfileAndMove );

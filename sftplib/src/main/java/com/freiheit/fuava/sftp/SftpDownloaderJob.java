@@ -59,13 +59,13 @@ public class SftpDownloaderJob {
                 Processors.controlledFileWriter( config.getDownloadDirPath(), config.getControlFileEnding(),
                         new SftpDownloadingFileWriterAdapter( client ) );
 
-        final SftpResultFileMover remoteFileMover = new SftpResultFileMover( client, FileUtils.getCurrentDateDirPath(remoteConfiguration.getArchivedFolder()) );
+        final SftpResultFileMover remoteFileMover = new SftpResultFileMover( client, remoteConfiguration.getArchivedFolder() );
 
         return new BatchJob.Builder<SftpFilename, ControlFilePersistenceOutputInfo>()
                 .setFetcher(
                         new SftpOldFilesMovingLatestFileFetcher(
                                 client,
-                                FileUtils.getCurrentDateDirPath( remoteConfiguration.getSkippedFolder() ),
+                                remoteConfiguration.getSkippedFolder(),
                                 remoteConfiguration.getProcessingFolder(),
                                 remoteConfiguration.getIncomingFolder(),
                                 fileType ) )

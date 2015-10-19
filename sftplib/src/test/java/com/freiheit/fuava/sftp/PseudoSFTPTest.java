@@ -57,28 +57,9 @@ public class PseudoSFTPTest {
 
         final InMemoryTestRemoteClient<String> client = new InMemoryTestRemoteClient<String>( initialState, ( s ) -> new ByteArrayInputStream( s.getBytes() ) );
         final BatchJob<SftpFilename, ControlFilePersistenceOutputInfo> job =
-                SftpDownloaderJob.makeDownloaderJob( localConfig, client, new RemoteConfiguration() {
-
-            @Override
-            public String getSkippedFolder() {
-                        return "/skipped";
-            }
-
-            @Override
-            public String getProcessingFolder() {
-                        return "/processing";
-            }
-
-            @Override
-            public String getIncomingFolder() {
-                        return "/incoming";
-            }
-
-            @Override
-            public String getArchivedFolder() {
-                        return "/archived";
-            }
-        }, new FileType( "test", "_pseudo_" ) );
+                SftpDownloaderJob.makeDownloaderJob( localConfig, client,
+                        new SftpServerConfiguration( "/incoming", "/processing", "/skipped", "/archived"),
+                        new FileType( "test", "_pseudo_" ) );
 
         final ResultStatistics stat = job.run();
 
