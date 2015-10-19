@@ -94,8 +94,10 @@ Those files will later be processed with an importer for which an implementation
 final CtlDownloaderJob<Id, ?> downloader =
      new CtlDownloaderJob.BatchFileWritingBuilder<Id, String>()
 
-        // download dir, control file ending
-        .setConfiguration( config )
+        // download dir, (you can change control file ending here as well, if needed)
+        .setConfiguration( new CtlDownloaderJob.ConfigurationWithPlaceholderImpl()
+            .setDownloadDirPath("/tmp/foo/downloaded") 
+        )
 
         // Fetch ids of the data to be downloaded, will be used by the 
         // downloader to fetch the data
@@ -147,7 +149,12 @@ It imports a list of Article instances from a json file.
 final CtlImporterJob<Article> job = new CtlImporterJob.Builder<Article>()
 
     // provide settings: input directory, archive directory, etc.
-    .setConfiguration( config )
+    .setConfiguration( new CtlImporterJob.ConfigurationWithPlaceholderImpl()
+        .setDownloadDirPath("/tmp/foo/downloaded") 
+        .setArchivedDirPath("/tmp/foo/archive/%(DATE)/") 
+        .setFailedDirPath("/tmp/foo/failed/%(DATE)/")
+        .setProcessingDirPath("/tmp/foo/processing/")
+    )
 
     // Read the content of a file and return it as an iterable.
     .setFileInputStreamReader((InputStream is) -> 
@@ -255,8 +262,8 @@ final BatchJob<SftpFilename, ControlFilePersistenceOutputInfo> downloaderJob =
             new CtlDownloaderJob.ConfigurationImpl()
                .setDownloadDirPath( "/opt/downloads" ),
             client,
-            new SftpServerConfiguration(
-                "/incoming", "/downloading", "/skipped", "/archived" 
+            new RemoteConfigurationWithPlaceholderImpl(
+                "/incoming", "/downloading", "/skipped/%(DATE)", "/archived/%(DATE)" 
             ),
             new FileType( 
                 "AnalyticsSystem", "_RequestDetails_{1}", ".csv", ".ok" 
