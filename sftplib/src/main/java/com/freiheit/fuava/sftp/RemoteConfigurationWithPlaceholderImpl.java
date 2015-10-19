@@ -14,13 +14,14 @@
 package com.freiheit.fuava.sftp;
 
 import com.freiheit.fuava.sftp.util.RemoteConfiguration;
+import com.freiheit.fuava.simplebatch.util.FileUtils;
 
 /**
  * The SFTP-Server Configuration.
  *
  * @author dmitrijs.barbarins@freiheit.com
  */
-public class SftpServerConfiguration implements RemoteConfiguration {
+public class RemoteConfigurationWithPlaceholderImpl implements RemoteConfiguration {
 
 
     private final String remoteFilesIncomingFolder;
@@ -29,7 +30,8 @@ public class SftpServerConfiguration implements RemoteConfiguration {
     private final String remoteArchivedFolder;
 
     /**
-     * server configuration for sftp.
+     * Server configuration for sftp.
+     * NOTE: adds current date to the archived and skipped folders.
      *
      * @param remoteFilesIncomingFolder location of files located on sftp server
      * @param remoteProcessingFolder location of files being processed on sftp server
@@ -37,13 +39,13 @@ public class SftpServerConfiguration implements RemoteConfiguration {
      * @param remoteArchivedFolder location of files have been downloaded successfully from sftp server
      *
      */
-    public SftpServerConfiguration( final String remoteFilesIncomingFolder, final String remoteProcessingFolder, final String remoteSkippedFolder,
-            final String remoteArchivedFolder ) {
+    public RemoteConfigurationWithPlaceholderImpl(final String remoteFilesIncomingFolder, final String remoteProcessingFolder, final String remoteSkippedFolder,
+                                                  final String remoteArchivedFolder) {
 
-        this.remoteArchivedFolder = remoteArchivedFolder;
-        this.remoteFilesIncomingFolder = remoteFilesIncomingFolder;
-        this.remoteProcessingFolder = remoteProcessingFolder;
-        this.remoteSkippedFolder = remoteSkippedFolder;
+        this.remoteArchivedFolder = FileUtils.substitutePlaceholder( remoteArchivedFolder );
+        this.remoteFilesIncomingFolder = FileUtils.substitutePlaceholder( remoteFilesIncomingFolder );
+        this.remoteProcessingFolder = FileUtils.substitutePlaceholder( remoteProcessingFolder );
+        this.remoteSkippedFolder = FileUtils.substitutePlaceholder( remoteSkippedFolder );
 
     }
 

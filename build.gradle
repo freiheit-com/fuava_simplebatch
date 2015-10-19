@@ -1,7 +1,13 @@
 group='com.freiheit.fuava.simplebatch'
+allprojects {
+    apply plugin: 'idea'
+}
+
+idea.project.languageLevel = '1.8'
+
 subprojects {
 
-    version='0.4.2'
+    version='0.4.3-SNAPSHOT'
 
     repositories {
         mavenLocal()
@@ -43,3 +49,4 @@ subprojects {
         useTestNG()
     }   
 }
+

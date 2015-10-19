@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Writer;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,4 +95,26 @@ public class CtlDownloaderTest {
         final ImmutableList<String> resultsList = resultsBuilder.build();
         Assert.assertEquals( resultsList, data.values() );
     }
+
+    @Test
+    public void testPlaceholderConfiguration() {
+        final CtlDownloaderJob.ConfigurationWithPlaceholderImpl config =
+                new CtlDownloaderJob.ConfigurationWithPlaceholderImpl().setDownloadDirPath( "/test/%(DATE)/DE" );
+
+        final String currentDate = LocalDate.now().format( DateTimeFormatter.BASIC_ISO_DATE );
+
+        Assert.assertEquals( config.getDownloadDirPath(), "/test/" + currentDate + "/DE/" );
+    }
+
+
+    @Test
+    public void testSeveralPlaceholderConfiguration() {
+        final CtlDownloaderJob.ConfigurationWithPlaceholderImpl config =
+                new CtlDownloaderJob.ConfigurationWithPlaceholderImpl().setDownloadDirPath( "/test/%(DATE)/DE/%(DATE)" );
+
+        final String currentDate = LocalDate.now().format( DateTimeFormatter.BASIC_ISO_DATE );
+
+        Assert.assertEquals( config.getDownloadDirPath(), "/test/" + currentDate + "/DE/" + currentDate + "/" );
+    }
+
 }

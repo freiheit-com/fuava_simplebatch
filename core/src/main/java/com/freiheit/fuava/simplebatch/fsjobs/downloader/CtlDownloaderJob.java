@@ -13,6 +13,7 @@ import com.freiheit.fuava.simplebatch.processor.FileOutputStreamAdapter;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
+import com.freiheit.fuava.simplebatch.util.FileUtils;
 import com.google.common.base.Preconditions;
 
 /**
@@ -42,6 +43,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
     public static final String DEFAULT_CONFIG_DOWNLOAD_DIR_PATH = "/tmp/downloading";
     public static final String DEFAULT_CONFIG_CONTROL_FILE_ENDING = ".ctl";
 
+
     public static final class ConfigurationImpl implements Configuration {
 
         private String downloadDirPath = DEFAULT_CONFIG_DOWNLOAD_DIR_PATH;
@@ -63,6 +65,33 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         }
 
         public ConfigurationImpl setControlFileEnding( final String ending ) {
+            this.controlFileEnding = ending;
+            return this;
+        }
+
+    }
+
+    public static final class ConfigurationWithPlaceholderImpl implements Configuration {
+
+        private String downloadDirPath = DEFAULT_CONFIG_DOWNLOAD_DIR_PATH;
+        private String controlFileEnding = DEFAULT_CONFIG_CONTROL_FILE_ENDING;
+
+        @Override
+        public String getDownloadDirPath() {
+            return downloadDirPath;
+        }
+
+        public ConfigurationWithPlaceholderImpl setDownloadDirPath( final String path ) {
+            this.downloadDirPath = FileUtils.substitutePlaceholder( path );
+            return this;
+        }
+
+        @Override
+        public String getControlFileEnding() {
+            return controlFileEnding;
+        }
+
+        public ConfigurationWithPlaceholderImpl setControlFileEnding( final String ending ) {
             this.controlFileEnding = ending;
             return this;
         }

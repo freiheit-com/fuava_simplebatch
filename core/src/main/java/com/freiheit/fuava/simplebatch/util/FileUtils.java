@@ -15,6 +15,8 @@ import com.google.common.base.Strings;
 
 public class FileUtils {
 
+    public static final String PLACEHOLDER_DATE = "%(DATE)";
+
     public static void deleteDirectoryRecursively( final File dir ) throws IOException {
         Files.walkFileTree( Paths.get( dir.toURI() ), new SimpleFileVisitor<Path>() {
             @Override
@@ -38,11 +40,17 @@ public class FileUtils {
             : path + File.separator;
     }
 
-    public static String getCurrentDateDirPath( final String path  ) {
-        final String dateDirString = LocalDate.now().format( DateTimeFormatter.BASIC_ISO_DATE );
-        if ( Strings.isNullOrEmpty( path ) ) {
-            return dateDirString;
-        }
-        return ensureTrailingSlash( path ) + dateDirString + File.separator;
+    /**
+     * Replaces placeholder in path.
+     *
+     * Currently available placeholder:
+     * %(DATE) - is replaced with current date in BASIC_ISO_DATE format, f.e. YYYYMMDD
+     *
+     * @param path
+     * @return
+     */
+    public static String substitutePlaceholder( final String path ) {
+        return ensureTrailingSlash( path.replace( PLACEHOLDER_DATE, LocalDate.now().format( DateTimeFormatter.BASIC_ISO_DATE ) ) );
     }
+
 }
