@@ -276,6 +276,9 @@ client.disconnect();
 
 ## Changes
 
+### 0.4.4 (2015-10-21)
+ - Add: new Sftp file moving fetcher baseclass which allows to implement fetchers that download the most current file (and move the rest) for multiple file types. 
+
 ### 0.4.3 (2015-10-19)
  - Fixed: Default Implementation of RemoteConfiguration had a non-standard name.
  - Fixed: Date was automatically added to some paths without users of the library having control over it. Replaced by convenient placeholder-supporting baseclasses.
