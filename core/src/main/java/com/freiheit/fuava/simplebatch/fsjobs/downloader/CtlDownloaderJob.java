@@ -29,6 +29,8 @@ import com.google.common.base.Preconditions;
  *            the downloaded content, should be easily writeable.
  */
 public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
+    public static final String LOG_NAME_BATCH = "ITEMS DOWNLOADED";
+    public static final String LOG_NAME_ITEM = "ITEM";
 
     public interface Configuration {
 
@@ -288,8 +290,6 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
     }
 
     public static abstract class AbstractBuilder<Id, Data, ProcessingResult> {
-        private static final String LOG_NAME_BATCH = "ITEMS DOWNLOADED";
-        private static final String LOG_NAME_ITEM = "ITEM";
         private final BatchJob.Builder<Id, ProcessingResult> builder = BatchJob.builder();
 
         private Processor<FetchedItem<Id>, Id, Data> downloader;

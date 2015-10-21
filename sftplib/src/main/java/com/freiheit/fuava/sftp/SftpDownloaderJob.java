@@ -69,8 +69,8 @@ public class SftpDownloaderJob {
                                 remoteConfiguration.getProcessingFolder(),
                                 remoteConfiguration.getIncomingFolder(),
                                 fileType ) )
-                .addListener( new BatchStatisticsLoggingListener<>( "BATCH" ) )
-                .addListener( new ItemProgressLoggingListener<>( "ITEM" ) )
+                .addListener( new BatchStatisticsLoggingListener<>( CtlDownloaderJob.LOG_NAME_BATCH ) )
+                .addListener( new ItemProgressLoggingListener<>( CtlDownloaderJob.LOG_NAME_ITEM ) )
                 .setProcessor( Processors.compose( remoteFileMover, downloader ) )
                 .setProcessingBatchSize( 1 /*No advantage in processing multiple files at once*/ )
                 .build();
