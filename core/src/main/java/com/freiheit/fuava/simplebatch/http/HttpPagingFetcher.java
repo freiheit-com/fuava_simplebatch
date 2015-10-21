@@ -6,21 +6,12 @@ import java.util.Iterator;
 import org.apache.http.client.HttpClient;
 
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
-import com.freiheit.fuava.simplebatch.fetch.Fetcher;
-import com.freiheit.fuava.simplebatch.fetch.LazyPageFetchingIterable;
-import com.freiheit.fuava.simplebatch.fetch.PageFetcher;
 import com.freiheit.fuava.simplebatch.fetch.PageFetcher.PagingInput;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
-public class HttpPagingFetcher<T> implements Fetcher<T> {
-
-    private final HttpFetcher fetcher;
-    private final PagingRequestSettings<Iterable<T>> settings;
-    private final Function<? super InputStream, Iterable<T>> converter;
-    private final int initialFrom;
-    private final int pageSize;
+public class HttpPagingFetcher<T> extends ConvertingHttpPagingFetcher<T, T> {
 
     public HttpPagingFetcher(
             final HttpFetcher fetcher,
@@ -28,11 +19,7 @@ public class HttpPagingFetcher<T> implements Fetcher<T> {
             final Function<? super InputStream, Iterable<T>> converter,
             final int initialFrom,
             final int pageSize ) {
-        this.fetcher = fetcher;
-        this.converter = converter;
-        this.settings = settings;
-        this.initialFrom = initialFrom;
-        this.pageSize = pageSize;
+        super( fetcher, settings, converter, new SimpleResultTransformerImpl<>(), initialFrom, pageSize );
     }
 
     public HttpPagingFetcher(
@@ -41,11 +28,11 @@ public class HttpPagingFetcher<T> implements Fetcher<T> {
             final Function<InputStream, Iterable<T>> converter,
             final int initialFrom,
             final int pageSize ) {
-        this( new HttpFetcherImpl( client ), settings, converter, initialFrom, pageSize );
+        super( client, settings, converter, new SimpleResultTransformerImpl<>(), initialFrom, pageSize );
     }
 
-    private static final class ResultTransformer<T> implements
-            Function<Result<PageFetcher.PagingInput, Iterable<T>>, Iterator<Result<FetchedItem<T>, T>>> {
+    
+    private static final class SimpleResultTransformerImpl<T> implements ResultTransformer<T, T> {
         // ResultTransformer will be called while iterating over the
         // concatenated iterable. This will happen within one thread - so we do not
         // need to handle concurrency here. Furtheremore, we can simply use this function
@@ -67,22 +54,4 @@ public class HttpPagingFetcher<T> implements Fetcher<T> {
 
     }
 
-    @Override
-    public Iterable<Result<FetchedItem<T>, T>> fetchAll() {
-        return new Iterable<Result<FetchedItem<T>, T>>() {
-
-            @Override
-            public Iterator<Result<FetchedItem<T>, T>> iterator() {
-                final Iterator<Result<PagingInput, Iterable<T>>> iterator = new LazyPageFetchingIterable<Iterable<T>>(
-                        new HttpPageFetcher<Iterable<T>>( fetcher, settings, converter ),
-                        initialFrom,
-                        pageSize,
-                        settings
-                        );
-                return Iterators.concat( Iterators.transform( iterator, new ResultTransformer<T>() ) );
-            }
-
-        };
-
-    }
 }
