@@ -59,7 +59,7 @@ public class PseudoSFTPTest {
         final InMemoryTestRemoteClient<String> client =
                 new InMemoryTestRemoteClient<String>( initialState, ( s ) -> new ByteArrayInputStream( s.getBytes() ) );
         final BatchJob<SftpFilename, ControlFilePersistenceOutputInfo> job =
-                SftpDownloaderJob.makeDownloaderJob( localConfig, client,
+                SftpDownloaderJob.makeOldFilesMovingLatestFileDownloaderJob( localConfig, client,
                         new RemoteConfigurationWithPlaceholderImpl( "/incoming", "/processing", "/skipped/"
                                 + FileUtils.PLACEHOLDER_DATE, "/archived/" + FileUtils.PLACEHOLDER_DATE ),
                         new FileType( "test", "_pseudo_" ) );
