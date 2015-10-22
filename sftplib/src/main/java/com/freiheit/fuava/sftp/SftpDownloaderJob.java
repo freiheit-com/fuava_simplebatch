@@ -15,13 +15,13 @@ import com.freiheit.fuava.sftp.util.FileType;
 import com.freiheit.fuava.sftp.util.RemoteConfiguration;
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
+import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob;
 import com.freiheit.fuava.simplebatch.logging.BatchStatisticsLoggingListener;
 import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
 import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.Processors;
-import com.freiheit.fuava.simplebatch.util.FileUtils;
 
 /**
  * Standard Sftp Downloader Job for the purpose of downloading and processing
@@ -48,12 +48,68 @@ public class SftpDownloaderJob {
      * @param fileType
      *            type of file that one wants to download.
      * @return Batch Job that can be executed.
+     * 
+     * @deprecated Use {@link #makeOldFilesMovingLatestFileDownloaderJob(com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob.Configuration, RemoteClient, RemoteConfiguration, FileType)}  instead
      */
+    @Deprecated
     public static BatchJob<SftpFilename, ControlFilePersistenceOutputInfo> makeDownloaderJob(
             final CtlDownloaderJob.Configuration config,
             final RemoteClient client,
             final RemoteConfiguration remoteConfiguration,
             final FileType fileType ) {
+        return makeOldFilesMovingLatestFileDownloaderJob(config, client, remoteConfiguration, fileType);
+    }
+
+    /**
+     * creates a batch job that fetches the latest file for a given pattern, 
+     * moving older files to a skipped directory.
+     *
+     * @param config
+     *            configuration of downloader job.
+     * @param client
+     *            remote client operations <b>The caller is responsible to
+     *            release resources after the Job executes, if applicable.<b>
+     * @param remoteConfiguration
+     *            remote client storage configuration.
+     * @param fileType
+     *            type of file that one wants to download.
+     * @return Batch Job that can be executed.
+     */
+    public static BatchJob<SftpFilename, ControlFilePersistenceOutputInfo> makeOldFilesMovingLatestFileDownloaderJob(
+            final CtlDownloaderJob.Configuration config,
+            final RemoteClient client,
+            final RemoteConfiguration remoteConfiguration,
+            final FileType fileType ) {
+        return makeDownloaderJob(
+                config, client, remoteConfiguration,
+                new SftpOldFilesMovingLatestFileFetcher(
+                    client,
+                    remoteConfiguration.getSkippedFolder(),
+                    remoteConfiguration.getProcessingFolder(),
+                    remoteConfiguration.getIncomingFolder(),
+                    fileType 
+                ) );
+    }
+
+    /**
+     * creates the batch job.
+     *
+     * @param config
+     *            configuration of downloader job.
+     * @param client
+     *            remote client operations <b>The caller is responsible to
+     *            release resources after the Job executes, if applicable.<b>
+     * @param remoteConfiguration
+     *            remote client storage configuration.
+     * @param fileFetcher
+     *            Provides the names of the Files that should be fetched
+     * @return Batch Job that can be executed.
+     */
+    public static BatchJob<SftpFilename, ControlFilePersistenceOutputInfo> makeDownloaderJob(
+            final CtlDownloaderJob.Configuration config,
+            final RemoteClient client,
+            final RemoteConfiguration remoteConfiguration,
+            final Fetcher<SftpFilename> fileFetcher ) {
 
         final Processor<FetchedItem<SftpFilename>, SftpFilename, ControlFilePersistenceOutputInfo> downloader =
                 Processors.controlledFileWriter( config.getDownloadDirPath(), config.getControlFileEnding(),
@@ -62,13 +118,7 @@ public class SftpDownloaderJob {
         final SftpResultFileMover remoteFileMover = new SftpResultFileMover( client, remoteConfiguration.getArchivedFolder() );
 
         return new BatchJob.Builder<SftpFilename, ControlFilePersistenceOutputInfo>()
-                .setFetcher(
-                        new SftpOldFilesMovingLatestFileFetcher(
-                                client,
-                                remoteConfiguration.getSkippedFolder(),
-                                remoteConfiguration.getProcessingFolder(),
-                                remoteConfiguration.getIncomingFolder(),
-                                fileType ) )
+                .setFetcher(fileFetcher )
                 .addListener( new BatchStatisticsLoggingListener<>( CtlDownloaderJob.LOG_NAME_BATCH ) )
                 .addListener( new ItemProgressLoggingListener<>( CtlDownloaderJob.LOG_NAME_ITEM ) )
                 .setProcessor( Processors.compose( remoteFileMover, downloader ) )
@@ -76,5 +126,4 @@ public class SftpDownloaderJob {
                 .build();
 
     }
-
 }
