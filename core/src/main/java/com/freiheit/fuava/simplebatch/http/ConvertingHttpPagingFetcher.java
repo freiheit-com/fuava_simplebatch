@@ -81,6 +81,9 @@ public class ConvertingHttpPagingFetcher<Raw, T> implements Fetcher<T> {
                     }
                     return Result.<FetchedItem<T>, T>builder()
                             .withInput( FetchedItem.of( input.getOutput(), counter++ ) )
+                            .withOutput( input.getOutput() )
+                            .withWarningMessages( input.getWarningMessages() )
+                            .withFailureMessages( input.getFailureMessages() )
                             .success();
                 }
             } );
