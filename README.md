@@ -276,7 +276,10 @@ client.disconnect();
 
 ## Changes
 
-### 0.4.4 (2015-10-21)
+### 0.4.6
+ - Fixed: ResultStateKeepingTransformerImpl lost the original output value
+
+### 0.4.5 (2015-10-21)
  - Add: new Baseclass for very powerfull http paging fetchers that allow for parse errors in each fetched item 
 
 ### 0.4.4 (2015-10-21)
