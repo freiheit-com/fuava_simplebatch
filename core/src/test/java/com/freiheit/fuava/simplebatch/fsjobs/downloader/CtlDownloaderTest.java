@@ -22,13 +22,19 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -65,11 +71,16 @@ public class CtlDownloaderTest {
             expected.delete();
         }
         Assert.assertFalse( expected.exists(), "File was not deleted " );
+        final File expectedLog = new File( TEST_DIR_DOWNLOADS, targetFileName + "_1.log" );
+        if ( expectedLog.exists() ) {
+            expectedLog.delete();
+        }
+        Assert.assertFalse( expectedLog.exists(), "Log file was not deleted " );
 
         final Map<Integer, String> data = new LinkedHashMap<Integer, String>();
         data.put( 1, "eins" );
         data.put( 2, "zwei" );
-        data.put( 3, "drie" );
+        data.put( 3, "drei" );
         data.put( 4, "vier" );
         data.put( 5, "fünf" );
         data.put( 6, "sechs" );
@@ -101,6 +112,7 @@ public class CtlDownloaderTest {
         Assert.assertFalse( results.isAllFailed() );
 
         Assert.assertTrue( expected.exists(), "batch file was not created" );
+        Assert.assertTrue( expectedLog.exists(), "log file was not created" );
 
         final ImmutableList.Builder<String> resultsBuilder = ImmutableList.builder();
         try ( BufferedReader reader = new BufferedReader( new FileReader( expected ) ) ) {
@@ -108,6 +120,34 @@ public class CtlDownloaderTest {
                 resultsBuilder.add( reader.readLine() );
             }
         }
+
+        // test the log contents of THE LOG file
+        List<String> logLines = Files.readAllLines(Paths.get(expectedLog.toURI()));
+
+        Assert.assertEquals(logLines.size(), 6);
+
+        JSONObject downloadEnd = (JSONObject) JSONValue.parse(logLines.get(0));
+        Assert.assertEquals(downloadEnd.get("context"), "write");
+        Assert.assertEquals(downloadEnd.get("input"), "1");
+        Assert.assertEquals(downloadEnd.get("event"), "end");
+        Assert.assertEquals(downloadEnd.get("success"), true);
+        Assert.assertNotNull(downloadEnd.get("time"));
+
+        JSONObject write3 = (JSONObject) JSONValue.parse(logLines.get(2));
+        Assert.assertEquals(write3.get("context"), "write");
+        Assert.assertEquals(write3.get("input"), "3");
+        Assert.assertEquals(write3.get("event"), "end");
+        Assert.assertEquals(write3.get("success"), true);
+        Assert.assertNotNull(write3.get("time"));
+
+        JSONObject write6 = (JSONObject) JSONValue.parse(logLines.get(5));
+        Assert.assertEquals(write6.get("context"), "write");
+        Assert.assertEquals(write6.get("input"), "6");
+        Assert.assertEquals(write6.get("event"), "end");
+        Assert.assertEquals(write6.get("success"), true);
+        Assert.assertNotNull(write6.get("time"));
+
+
         final ImmutableList<String> resultsList = resultsBuilder.build();
         Assert.assertEquals( resultsList, data.values() );
     }

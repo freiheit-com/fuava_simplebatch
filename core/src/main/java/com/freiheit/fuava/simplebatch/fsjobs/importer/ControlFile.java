@@ -26,21 +26,37 @@ import com.google.common.base.MoreObjects;
 public class ControlFile {
 
     private final File controlledFile;
+    private final File logFile;
     private final File file;
+    private final boolean downloadFailed;
 
     public ControlFile( final String sourceDir, final String pathToControlledFile, final File file ) {
-        this.controlledFile = new File( sourceDir, pathToControlledFile );
-        this.file = file;
+    	this(sourceDir, pathToControlledFile, file, false);        
+    }        
+    
+    public ControlFile( final String sourceDir, final String pathToControlledFile, final File file, boolean downloadFailed) {
+    	this.controlledFile = downloadFailed ? null : new File( sourceDir, pathToControlledFile );
+    	this.logFile = new File( sourceDir, pathToControlledFile + ".log");
+    	this.file = file;
+    	this.downloadFailed = downloadFailed;    			
     }
-
+    
     public File getControlledFile() {
         return controlledFile;
     }
 
     public String getControlledFileName() {
-        return controlledFile.getName();
+        return controlledFile == null ? null : controlledFile.getName();
     }
 
+    public String getLogFileName() {
+        return logFile.getName();
+    }
+
+    public File getLogFile() {
+        return logFile;
+    }    
+    
     public String getFileName() {
         return file.getName();
     }
@@ -48,12 +64,17 @@ public class ControlFile {
     public File getFile() {
         return file;
     }
+    
+    public boolean hasDownloadFailed() {
+    	return downloadFailed;
+    }
 
     @Override
     public String toString() {
         return MoreObjects.toStringHelper( this )
                 .add( "file", controlledFile )
                 .add( "ctl", file )
+                .add( "log", logFile)
                 .toString();
     }
 }

@@ -16,11 +16,13 @@
  */
 package com.freiheit.fuava.simplebatch.fsjobs.downloader;
 
+import java.nio.file.Paths;
 import java.util.List;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
+import com.freiheit.fuava.simplebatch.logging.BatchJsonLogger;
 import com.freiheit.fuava.simplebatch.logging.BatchStatisticsLoggingListener;
 import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
 import com.freiheit.fuava.simplebatch.processor.BatchProcessorResult;
@@ -29,6 +31,7 @@ import com.freiheit.fuava.simplebatch.processor.FileOutputStreamAdapter;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
+import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
 import com.google.common.base.Preconditions;
 
@@ -55,7 +58,6 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         default String getControlFileEnding() {
             return ".ctl";
         }
-
     }
 
     public static final String DEFAULT_CONFIG_DOWNLOAD_DIR_PATH = "/tmp/downloading";
@@ -143,7 +145,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             final Configuration configuration = getConfiguration();
             Preconditions.checkNotNull( configuration, "Configuration missing" );
             Preconditions.checkNotNull( persistenceAdapter, "File Writer Adapter missing" );
-
+            
             return build( Processors.controlledFileWriter(
                     configuration.getDownloadDirPath(),
                     configuration.getControlFileEnding(),
@@ -386,7 +388,8 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             Preconditions.checkNotNull( fetcher, "Fetcher missing." );
 
             builder.addListener( new BatchStatisticsLoggingListener<Id, ProcessingResult>( LOG_NAME_BATCH ) );
-            builder.addListener( new ItemProgressLoggingListener<Id, ProcessingResult>( LOG_NAME_ITEM ) );
+            builder.addListener( new ItemProgressLoggingListener<Id, ProcessingResult>( LOG_NAME_ITEM ) );            
+            
             final Processor<FetchedItem<Id>, Id, ProcessingResult> p = Processors.compose( fileWriter, downloader );
             return new CtlDownloaderJob<Id, ProcessingResult>(
                     builder.getDescription(),

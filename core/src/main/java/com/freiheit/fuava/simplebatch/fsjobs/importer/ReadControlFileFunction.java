@@ -43,11 +43,20 @@ public class ReadControlFileFunction implements Function<File, ControlFile> {
         try {
             final Reader in = new InputStreamReader( new FileInputStream( file ), Charsets.UTF_8 );
             try ( BufferedReader br = new BufferedReader( in ) ) {
-                final String nameOfDownloadedMiscDocument = br.readLine();
-                if ( Strings.isNullOrEmpty( nameOfDownloadedMiscDocument ) ) {
+                final String firstLine = br.readLine();
+                if ( Strings.isNullOrEmpty( firstLine ) ) {
                     throw new IllegalArgumentException( "The Control-File " + file + " has no content" );
                 }
-                return new ControlFile( this.baseDir, nameOfDownloadedMiscDocument, file );
+            	else if (firstLine.startsWith("!VERSION=1")) {
+            		String controlFileName = file.getName();
+            		String prefixOfCompanionFiles = controlFileName.substring(0, controlFileName.length()-4);
+            		return new ControlFile( this.baseDir, prefixOfCompanionFiles, file, true);
+
+            	}
+            	else {
+            		final String nameOfDownloadedMiscDocument = firstLine;
+            		return new ControlFile( this.baseDir, nameOfDownloadedMiscDocument, file );
+            	}
             }
         } catch ( final IOException e ) {
             throw new RuntimeException( e );

@@ -17,8 +17,14 @@
 package com.freiheit.fuava.simplebatch.processor;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.client.HttpClient;
@@ -26,7 +32,9 @@ import org.apache.http.client.HttpClient;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fsjobs.importer.ControlFile;
 import com.freiheit.fuava.simplebatch.http.HttpDownloaderSettings;
+import com.freiheit.fuava.simplebatch.logging.BatchJsonLogger;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
+import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.freiheit.fuava.simplebatch.util.IOStreamUtils;
 import com.google.common.base.Function;
@@ -108,23 +116,37 @@ public class Processors {
     /**
      * Like {@link #fileWriter(String, FileWriterAdapter)}, but additionally
      * writes a control-file that can be used for waiting until this file has
-     * been completely written.
-     *
-     * @param dirName
-     * @param controlFileEnding
-     * @param adapter
-     * @return
+     * been completely written as well as a log file with extra information
      */
-    public static <Input, Output> Processor<Input, Output, ControlFilePersistenceOutputInfo> controlledFileWriter(
+    public static <T, Output> Processor<FetchedItem<T>, Output, ControlFilePersistenceOutputInfo> controlledFileWriter(
             final String dirName,
             final String controlFileEnding,
-            final FileOutputStreamAdapter<Input, Output> adapter
+            final FileOutputStreamAdapter<FetchedItem<T>, Output> adapter
             ) {
         return Processors.compose(
-                new ControlFilePersistence<Input>( new ControlFilePersistenceConfigImpl( dirName, controlFileEnding ) ),
-                new FilePersistence<Input, Output>( dirName, adapter )
-                );
+        		Processors.compose(new ControlFilePersistence<FetchedItem<T>>( new ControlFilePersistenceConfigImpl( dirName, controlFileEnding ) ),
+        				new Processor<FetchedItem<T>, FilePersistenceOutputInfo, FilePersistenceOutputInfo>() {
 
+							@Override
+							public Iterable<Result<FetchedItem<T>, FilePersistenceOutputInfo>> process(
+									Iterable<Result<FetchedItem<T>, FilePersistenceOutputInfo>> iterable) {
+								for(Result<FetchedItem<T>, FilePersistenceOutputInfo> res : iterable) {
+									Path logFile;
+									if (res.isFailed()) {
+										logFile = Paths.get(dirName, res.getInput().getValue().toString() + ".log");
+									}
+									else {
+										logFile = Paths.get(res.getOutput().getDataFile() + ".log");
+									}
+									BatchJsonLogger l = new BatchJsonLogger(logFile);
+									l.logWriteEnd(res.getInput().getValue().toString(), res.isSuccess());
+								}
+								return iterable;
+							}
+
+						}),
+                new FilePersistence<FetchedItem<T>, Output>( dirName, adapter )
+                );
     }
 
     /**
@@ -134,7 +156,7 @@ public class Processors {
      * details about the file and the item number within that file (for csv this
      * will probably correspond to the rownum, depending on your implementation
      * of the adapter)
-     * 
+     *
      * @return
      */
     public static <Input, Output> Processor<Input, Output, BatchProcessorResult<FilePersistenceOutputInfo>> batchFileWriter(
@@ -154,17 +176,68 @@ public class Processors {
      *
      * This is very similar to
      * {@link #batchFileWriter(String, FileWriterAdapter)}, but for each
-     * persisted file there will be a control file as well.
-     *
-     * @return
+     * persisted file there will be a control file and a log file as well.
      */
-    public static <Input, Output> Processor<Input, Output, BatchProcessorResult<ControlFilePersistenceOutputInfo>> controlledBatchFileWriter(
+    public static <Input, Output> 
+    Processor<FetchedItem<Input>, 
+    					  Output, 
+    					  BatchProcessorResult<ControlFilePersistenceOutputInfo>> 
+    controlledBatchFileWriter(
             final String dirName,
             final String controlFileEnding,
-            final FileOutputStreamAdapter<List<Input>, List<Output>> adapter
-            ) {
-        return new BatchProcessor<Input, Output, ControlFilePersistenceOutputInfo>( controlledFileWriter( dirName,
-                controlFileEnding, adapter ) );
+            final FileOutputStreamAdapter<List<FetchedItem<Input>>, List<Output>> adapter
+    		) {
+    	return Processors.compose(
+    			new BatchProcessor<FetchedItem<Input>, Output, ControlFilePersistenceOutputInfo>(
+    					Processors.compose(
+    							Processors.compose(
+    									new ControlFilePersistence<List<FetchedItem<Input>>>( 
+    											new ControlFilePersistenceConfigImpl( dirName, controlFileEnding ) 
+    									),
+    									new Processor<List<FetchedItem<Input>>, FilePersistenceOutputInfo, FilePersistenceOutputInfo>() {
+    										@Override
+    										public Iterable<Result<List<FetchedItem<Input>>, FilePersistenceOutputInfo>> process(
+    												Iterable<Result<List<FetchedItem<Input>>, FilePersistenceOutputInfo>> iterable) {
+
+    											for(Result<List<FetchedItem<Input>>, FilePersistenceOutputInfo> res : iterable) {
+    												BatchJsonLogger l = new BatchJsonLogger(Paths.get(res.getOutput().getDataFile().toString() + ".log"));
+    												for(FetchedItem<Input> item : res.getInput()) {
+    													l.logWriteEnd(item.getValue().toString(), true);
+    												}
+    											}
+    											return iterable;
+    										}
+    									}
+    									),
+    							new FilePersistence<List<FetchedItem<Input>>, List<Output>>( dirName, adapter )
+    							)
+    					),
+    			new Processor<FetchedItem<Input>, Output, Output>() {
+    				@Override
+    				public Iterable<Result<FetchedItem<Input>, Output>> process(Iterable<Result<FetchedItem<Input>, Output>> iterable) {
+    					List<String> failedInputs = new ArrayList<String>();
+    					for(Result<FetchedItem<Input>, Output> res : iterable) {
+    						if (res.isFailed()) {
+    							failedInputs.add(res.getInput().getValue().toString());
+    						}
+    					}
+    					if (!failedInputs.isEmpty()) {
+    						String failedPrefix = BatchJsonLogger.failedDownloadsName();
+    						BatchJsonLogger l = new BatchJsonLogger(Paths.get(dirName, failedPrefix + ".log"));
+    						for(String failedInput : failedInputs) {
+    							l.logWriteEnd(failedInput, false);
+    						}
+    						try {
+    							final String failCtlContent = "!VERSION=1\nstatus: DOWNLOAD_FAILED";
+    							Files.write(Paths.get(dirName, failedPrefix + ".ctl"), failCtlContent.getBytes(), StandardOpenOption.CREATE);
+    						} catch (IOException e) {
+
+    						}
+    					}
+    					return iterable;
+    				}
+    			}
+    			);
     }
 
     /**

@@ -52,11 +52,19 @@ class ControlledFileMovingProcessor<Input> extends AbstractSingleItemProcessor<I
             //Move ctl file before processing. Do never work in the directory where all the data is written to!
             fileMover.moveFile( ctl.getFile(), processingDir );
 
-            //move file that is controlled by the control file
-            final File controlledFile = ctl.getControlledFile();
-            final File processingFile = fileMover.moveFile( controlledFile, processingDir );
+            //move corresponding log file
+            final File logFile = ctl.getLogFile();
+            fileMover.moveFile( logFile, processingDir );
 
-            return Result.success( input, processingFile );
+            //move file that is controlled by the control file
+            if (ctl.getControlledFileName() == null) {
+            	return Result.failed(input, "No source file");
+            }
+            else {
+            	final File controlledFile = ctl.getControlledFile();
+                final File processingFile = fileMover.moveFile( controlledFile, processingDir );
+                return Result.success( input, processingFile );
+            }
         } catch ( final Throwable e ) {
             return Result.failed( input, e );
         }
