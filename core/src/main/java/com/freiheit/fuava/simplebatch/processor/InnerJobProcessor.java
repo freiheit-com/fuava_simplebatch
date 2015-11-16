@@ -1,21 +1,32 @@
 package com.freiheit.fuava.simplebatch.processor;
 
+import java.util.List;
+
 import com.freiheit.fuava.simplebatch.BatchJob;
+import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetchers;
+import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.google.common.base.Function;
 
 final class InnerJobProcessor<Input, Data> extends AbstractSingleItemProcessor<Input, Iterable<Data>, ResultStatistics> {
     private final Function<Input, String> jobDescriptionFunc;
-    private final BatchJob.Builder<Data, Data> builder;
+    private final int processingBatchSize;
+    private final Processor<FetchedItem<Data>, Data, Data> contentProcessor;
+    private final List<Function<? super Input, ProcessingResultListener<Data, Data>>> contentProcessingListeners;
 
     public InnerJobProcessor(
             final Function<Input, String> jobDescriptionFunc,
-            final BatchJob.Builder<Data, Data> builder ) {
-        this.builder = builder;
+            final int processingBatchSize,
+            final Processor<FetchedItem<Data>, Data, Data> contentProcessor,
+            final List<Function<? super Input, ProcessingResultListener<Data, Data>>> contentProcessingListeners ) {
         this.jobDescriptionFunc = jobDescriptionFunc;
+        this.processingBatchSize = processingBatchSize;
+        this.contentProcessor = contentProcessor;
+        this.contentProcessingListeners = contentProcessingListeners;
     }
+
 
     @Override
     public Result<Input, ResultStatistics> processItem( final Result<Input, Iterable<Data>> previous ) {
@@ -26,6 +37,16 @@ final class InnerJobProcessor<Input, Data> extends AbstractSingleItemProcessor<I
         final Input i = previous.getInput();
         final Iterable<Data> output = previous.getOutput();
         final String desc = jobDescriptionFunc.apply( i );
+        final BatchJob.Builder<Data, Data> builder =
+                BatchJob.<Data, Data> builder().setProcessingBatchSize( processingBatchSize ).setProcessor( contentProcessor );
+
+        for ( final Function<? super Input, ProcessingResultListener<Data, Data>> listenerFactory : contentProcessingListeners ) {
+            final ProcessingResultListener<Data, Data> listener = listenerFactory.apply( i );
+            if ( listener != null ) {
+                builder.addListener( listener );
+            }
+        }
+
         final BatchJob<Data, Data> job = builder.setFetcher( Fetchers.iterable( output ) ).setDescription( desc ).build();
         final ResultStatistics statistics = job.run();
 

@@ -7,9 +7,10 @@ import java.util.List;
 
 import org.apache.http.client.HttpClient;
 
-import com.freiheit.fuava.simplebatch.BatchJob;
+import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fsjobs.importer.ControlFile;
 import com.freiheit.fuava.simplebatch.http.HttpDownloaderSettings;
+import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.google.common.base.Function;
 
@@ -161,11 +162,13 @@ public class Processors {
      * used for multiple instances of the (inner) BatchJob.
      */
     public static <Input, Data> Processor<Input, Iterable<Data>, ResultStatistics> runBatchJobProcessor(
-            final Function<Input, String> jobDescriptionFunc,
-            final BatchJob.Builder<Data, Data> builder
-            ) {
-        return new InnerJobProcessor<Input, Data>( jobDescriptionFunc, builder );
+            final Function<Input, String> jobDescriptionFunc, final int processingBatchSize,
+            final Processor<FetchedItem<Data>, Data, Data> contentProcessor,
+            final List<Function<? super Input, ProcessingResultListener<Data, Data>>> contentProcessingListeners ) {
+        return new InnerJobProcessor<Input, Data>( jobDescriptionFunc, processingBatchSize, contentProcessor,
+                contentProcessingListeners );
     }
+
 
     /**
      * A Processor that uses an apache HttpClient to download the required data,
@@ -197,4 +200,5 @@ public class Processors {
     public static <Input> Processor<Input, File, File> fileMover( final String targetDir ) {
         return new FileMovingProcessor<Input>( targetDir );
     }
+
 }
