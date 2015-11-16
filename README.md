@@ -276,8 +276,9 @@ client.disconnect();
 
 ## Changes
 
-### 0.4.6
+### 0.4.6 (2015-11-16)
  - Fixed: ResultStateKeepingTransformerImpl lost the original output value
+ - Add: ContentListener can be created per file in Importer Jobs
 
 ### 0.4.5 (2015-10-21)
  - Add: new Baseclass for very powerfull http paging fetchers that allow for parse errors in each fetched item 
