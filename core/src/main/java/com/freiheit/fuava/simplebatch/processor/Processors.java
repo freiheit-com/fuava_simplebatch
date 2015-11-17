@@ -12,6 +12,7 @@ import com.freiheit.fuava.simplebatch.fsjobs.importer.ControlFile;
 import com.freiheit.fuava.simplebatch.http.HttpDownloaderSettings;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
+import com.freiheit.fuava.simplebatch.util.IOStreamUtils;
 import com.google.common.base.Function;
 
 public class Processors {
@@ -180,6 +181,16 @@ public class Processors {
             final Function<InputStream, Output> converter
             ) {
         return new HttpDownloader<I, Input, Output>( client, settings, converter );
+    }
+
+    /**
+     * A Processor that uses an apache HttpClient to download the required data,
+     * based on the input data that was provided by the fetcher.
+     */
+    public static <I, Input, Output> Processor<I, Input, String> httpDownloader(
+            final HttpClient client,
+            final HttpDownloaderSettings<Input> settings ) {
+        return new HttpDownloader<I, Input, String>( client, settings, input -> IOStreamUtils.consumeAsString( input ) );
     }
 
     /**
