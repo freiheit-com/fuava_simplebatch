@@ -116,7 +116,7 @@ public class Fetchers {
      */
     public static <T> Fetcher<T> folderFetcher( final String dirName, final String fileEnding, final Function<File, T> fileFunction,
             final Ordering<File> fileOrdering ) {
-        return supplied( new DirectoryFileFetcher<T>( dirName, fileEnding, fileFunction, fileOrdering ) );
+        return new DirectoryFileFetcher<T>( dirName, fileEnding, fileFunction, fileOrdering );
     }
 
     /**
@@ -124,7 +124,7 @@ public class Fetchers {
      * specified fileEnding.
      */
     public static Fetcher<File> folderFetcher( final String dirName, final String fileEnding, final Ordering<File> fileOrdering ) {
-        return supplied( new DirectoryFileFetcher<File>( dirName, fileEnding, Functions.<File> identity(), fileOrdering ) );
+        return new DirectoryFileFetcher<File>( dirName, fileEnding, Functions.<File> identity(), fileOrdering );
     }
 
 }

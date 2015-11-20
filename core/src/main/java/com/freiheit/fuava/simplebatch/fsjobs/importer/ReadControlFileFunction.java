@@ -20,6 +20,7 @@ import java.io.Reader;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Strings;
 
 /**
  * @author tim.lessner@freiheit.com
@@ -38,6 +39,9 @@ public class ReadControlFileFunction implements Function<File, ControlFile> {
             final Reader in = new InputStreamReader( new FileInputStream( file ), Charsets.UTF_8 );
             try ( BufferedReader br = new BufferedReader( in ) ) {
                 final String nameOfDownloadedMiscDocument = br.readLine();
+                if ( Strings.isNullOrEmpty( nameOfDownloadedMiscDocument ) ) {
+                    throw new IllegalArgumentException( "The Control-File " + file + " has no content" );
+                }
                 return new ControlFile( this.baseDir, nameOfDownloadedMiscDocument, file );
             }
         } catch ( final IOException e ) {

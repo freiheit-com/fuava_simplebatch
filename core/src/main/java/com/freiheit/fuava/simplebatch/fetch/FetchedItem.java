@@ -3,6 +3,7 @@ package com.freiheit.fuava.simplebatch.fetch;
 import com.freiheit.fuava.simplebatch.util.StringUtils;
 
 public class FetchedItem<T> {
+    public static final int FIRST_ROW = 0;
     private final int num;
     private final T value;
 

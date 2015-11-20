@@ -9,7 +9,7 @@ public final class FailsafeIterator<T> implements Iterator<Result<FetchedItem<T>
     private final Iterator<T> iterator;
     private Result<FetchedItem<T>, T> forceNextElement;
     private Boolean forceHasNext;
-    private int num = 0;
+    private int num = FetchedItem.FIRST_ROW;
 
     public FailsafeIterator( final Iterator<T> iterator ) {
         this.iterator = iterator;

@@ -13,9 +13,9 @@ package com.freiheit.fuava.simplebatch.fetch;
 
 import java.io.File;
 
+import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
@@ -23,7 +23,7 @@ import com.google.common.collect.Ordering;
 /**
  * @author tim.lessner@freiheit.com
  */
-class DirectoryFileFetcher<T> implements Supplier<Iterable<T>> {
+class DirectoryFileFetcher<T> implements Fetcher<T> {
 
     public static final Ordering<File> ORDERING_FILE_BY_PATH = Ordering.natural().onResultOf( File::getPath );
     private final String filter;
@@ -44,7 +44,7 @@ class DirectoryFileFetcher<T> implements Supplier<Iterable<T>> {
     }
 
     @Override
-    public Iterable<T> get() {
+    public Iterable<Result<FetchedItem<T>, T>> fetchAll() {
         final File dir = new File( uri );
         final File[] files = dir.listFiles( ( dir1, name ) -> {
             return name != null && name.endsWith( filter );
@@ -54,6 +54,20 @@ class DirectoryFileFetcher<T> implements Supplier<Iterable<T>> {
             return ImmutableList.of();
         }
         final Iterable<File> sorted = FluentIterable.of( files ).toSortedList( fileOrdering );
-        return FluentIterable.from( sorted ).transform( func ).toList();
+
+        final ImmutableList.Builder<Result<FetchedItem<T>, T>> b = ImmutableList.builder();
+        int i = FetchedItem.FIRST_ROW;
+        for ( final File f : sorted ) {
+            final int rownum = i++;
+            try {
+                final T r = func.apply( f );
+                final FetchedItem<T> fetchedItem = FetchedItem.<T> of( r, rownum );
+                b.add( Result.success( fetchedItem, r ) );
+            } catch ( final Throwable t ) {
+                final FetchedItem<T> fetchedItem = FetchedItem.<T> of( null, rownum );
+                b.add( Result.failed( fetchedItem, "Failed to read from " + f, t ) );
+            }
+        }
+        return b.build();
     }
 }
