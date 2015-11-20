@@ -276,6 +276,9 @@ client.disconnect();
 
 ## Changes
 
+### 0.4.7 (2015-11-20)
+ - Fixed: Empty Control Files are now treated as failed results of fetching and do not abort the entire process any more
+
 ### 0.4.6 (2015-11-16)
  - Fixed: ResultStateKeepingTransformerImpl lost the original output value
  - Add: ContentListener can be created per file in Importer Jobs
