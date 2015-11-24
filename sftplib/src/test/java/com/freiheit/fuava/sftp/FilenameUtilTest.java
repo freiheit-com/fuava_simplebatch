@@ -1,13 +1,3 @@
-/*
- * (c) Copyright 2015 freiheit.com technologies GmbH
- *
- * Created on 17.08.2015 by florian.diebold@freiheit.com
- *
- * This file contains unpublished, proprietary trade secret information of
- * freiheit.com technologies GmbH. Use, transcription, duplication and
- * modification are strictly prohibited without prior written consent of
- * freiheit.com technologies GmbH.
- */
 package com.freiheit.fuava.sftp;
 
 import com.freiheit.fuava.sftp.util.FilenameUtil;
