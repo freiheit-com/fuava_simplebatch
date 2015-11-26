@@ -109,7 +109,7 @@ class RetryingProcessor<Input, Output, ProcessorResult> implements Processor<Inp
             : this._func.apply( outputs );
 
         if ( persistenceResults.size() != outputs.size() || persistenceResults.size() != successes.size() ) {
-            throw new IllegalStateException( "persistence results of unexpected size" );
+            throw new IllegalStateException( "persistence results of unexpected size produced by " + this._func );
         }
         final ImmutableList.Builder<Result<Input, ProcessorResult>> b = ImmutableList.builder();
 
