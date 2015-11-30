@@ -43,7 +43,6 @@ final class InnerJobProcessor<Input, Data> extends AbstractSingleItemProcessor<I
         this.contentProcessingListeners = contentProcessingListeners;
     }
 
-
     @Override
     public Result<Input, ResultStatistics> processItem( final Result<Input, Iterable<Data>> previous ) {
         if ( previous.isFailed() ) {

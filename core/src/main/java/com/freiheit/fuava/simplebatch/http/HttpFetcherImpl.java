@@ -43,8 +43,7 @@ public class HttpFetcherImpl implements HttpFetcher {
     public final <T> T fetch(
             final Function<? super InputStream, T> reader,
             final String uri,
-            final Map<String, String> headers
-            ) throws FetchFailedException {
+            final Map<String, String> headers ) throws FetchFailedException {
         try {
             final HttpGet get = new HttpGet( uri );
             for ( final Map.Entry<String, String> e : headers.entrySet() ) {

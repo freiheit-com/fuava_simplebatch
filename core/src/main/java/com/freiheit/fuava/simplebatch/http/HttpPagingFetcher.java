@@ -47,7 +47,6 @@ public class HttpPagingFetcher<T> extends ConvertingHttpPagingFetcher<T, T> {
         super( client, settings, converter, new SimpleResultTransformerImpl<>(), initialFrom, pageSize );
     }
 
-    
     private static final class SimpleResultTransformerImpl<T> implements ResultTransformer<T, T> {
         // ResultTransformer will be called while iterating over the
         // concatenated iterable. This will happen within one thread - so we do not
@@ -62,7 +61,8 @@ public class HttpPagingFetcher<T> extends ConvertingHttpPagingFetcher<T, T> {
                         "Transform called with null Input", null ) );
             }
             if ( input.isFailed() ) {
-                return Iterators.singletonIterator( Result.<FetchedItem<T>, T> builder( input, FetchedItem.of( null, counter++ ) ).failed() );
+                return Iterators.singletonIterator(
+                        Result.<FetchedItem<T>, T> builder( input, FetchedItem.of( null, counter++ ) ).failed() );
             }
             return Iterators.transform( input.getOutput().iterator(),
                     ( final T t ) -> Result.success( FetchedItem.of( t, counter++ ), t ) );

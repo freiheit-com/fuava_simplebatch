@@ -30,23 +30,28 @@ public class ControlFile {
     private final File file;
     private final boolean downloadFailed;
 
-    public ControlFile( final String sourceDir, final String pathToControlledFile, final File file ) {
-    	this(sourceDir, pathToControlledFile, file, false);        
-    }        
-    
-    public ControlFile( final String sourceDir, final String pathToControlledFile, final File file, boolean downloadFailed) {
-    	this.controlledFile = downloadFailed ? null : new File( sourceDir, pathToControlledFile );
-    	this.logFile = new File( sourceDir, pathToControlledFile + ".log");
-    	this.file = file;
-    	this.downloadFailed = downloadFailed;    			
+    public ControlFile( final String sourceDir, final String pathToControlledFile, final String pathToLogFile, final File file ) {
+        this( sourceDir, pathToControlledFile, pathToLogFile, file, false );
     }
-    
+
+    public ControlFile( final String sourceDir, final String pathToControlledFile, final String pathToLogFile, final File file,
+            boolean downloadFailed ) {
+        this.controlledFile = downloadFailed
+            ? null
+            : new File( sourceDir, pathToControlledFile );
+        this.logFile = new File( sourceDir, pathToLogFile );
+        this.file = file;
+        this.downloadFailed = downloadFailed;
+    }
+
     public File getControlledFile() {
         return controlledFile;
     }
 
     public String getControlledFileName() {
-        return controlledFile == null ? null : controlledFile.getName();
+        return controlledFile == null
+            ? null
+            : controlledFile.getName();
     }
 
     public String getLogFileName() {
@@ -55,8 +60,8 @@ public class ControlFile {
 
     public File getLogFile() {
         return logFile;
-    }    
-    
+    }
+
     public String getFileName() {
         return file.getName();
     }
@@ -64,17 +69,14 @@ public class ControlFile {
     public File getFile() {
         return file;
     }
-    
+
     public boolean hasDownloadFailed() {
-    	return downloadFailed;
+        return downloadFailed;
     }
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper( this )
-                .add( "file", controlledFile )
-                .add( "ctl", file )
-                .add( "log", logFile)
-                .toString();
+        return MoreObjects.toStringHelper( this ).add( "file", controlledFile ).add( "ctl", file ).add( "log", logFile ).toString();
     }
+
 }

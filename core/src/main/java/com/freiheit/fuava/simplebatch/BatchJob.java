@@ -157,8 +157,7 @@ public class BatchJob<Input, Output> {
         final DelegatingProcessingResultListener<Input, Output> listeners =
                 new DelegatingProcessingResultListener<Input, Output>(
                         ImmutableList.<ProcessingResultListener<Input, Output>> builder().add( resultBuilder ).addAll(
-                                this.listeners ).build()
-                );
+                                this.listeners ).build() );
 
         listeners.onBeforeRun( this.description );
 

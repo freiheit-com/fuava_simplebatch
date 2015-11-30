@@ -23,11 +23,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +36,7 @@ import org.json.simple.JSONValue;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.freiheit.fuava.simplebatch.BatchTestDirectory;
 import com.freiheit.fuava.simplebatch.MapBasedBatchDownloader;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetchers;
@@ -54,24 +53,23 @@ import com.google.common.collect.ImmutableList;
 @Test
 public class CtlDownloaderTest {
 
-    public static final String TEST_DIR_BASE = "/tmp/fuava-simplebatch-test/";
-    public static final String TEST_DIR_DOWNLOADS = TEST_DIR_BASE + "/downloads/";
+    private static BatchTestDirectory tmp = new BatchTestDirectory( "CtlDownloaderTest" );
 
     public static <Input, Output> CtlDownloaderJob.BatchFileWritingBuilder<Input, Output> newTestDownloaderBuilder() {
-        return new CtlDownloaderJob.BatchFileWritingBuilder<Input, Output>()
-                .setConfiguration( new ConfigurationImpl().setDownloadDirPath( TEST_DIR_DOWNLOADS ) );
+        return new CtlDownloaderJob.BatchFileWritingBuilder<Input, Output>().setConfiguration(
+                new ConfigurationImpl().setDownloadDirPath( tmp.getDownloadsDir() ) );
     }
 
     @Test
     public void testBatchPersistence() throws FileNotFoundException, IOException {
 
         final String targetFileName = "batch";
-        final File expected = new File( TEST_DIR_DOWNLOADS, targetFileName + "_1" );
+        final File expected = new File( tmp.getDownloadsDir(), targetFileName + "_1" );
         if ( expected.exists() ) {
             expected.delete();
         }
         Assert.assertFalse( expected.exists(), "File was not deleted " );
-        final File expectedLog = new File( TEST_DIR_DOWNLOADS, targetFileName + "_1.log" );
+        final File expectedLog = new File( tmp.getDownloadsDir(), targetFileName + "_1.log" );
         if ( expectedLog.exists() ) {
             expectedLog.delete();
         }
@@ -85,27 +83,26 @@ public class CtlDownloaderTest {
         data.put( 5, "fünf" );
         data.put( 6, "sechs" );
         final CtlDownloaderJob.BatchFileWritingBuilder<Integer, String> builder = newTestDownloaderBuilder();
-        final CtlDownloaderJob<Integer, BatchProcessorResult<ControlFilePersistenceOutputInfo>> downloader = builder
-                .setDownloaderBatchSize( 100 )
+        final CtlDownloaderJob<Integer, BatchProcessorResult<ControlFilePersistenceOutputInfo>> downloader =
+                builder.setDownloaderBatchSize( 100 )
                 // Fetch ids of the data to be downloaded, will be used by the downloader to fetch the data
-                .setIdsFetcher( Fetchers.iterable( data.keySet() ) )
-                .setDownloader( Processors.retryableBatchedFunction( new MapBasedBatchDownloader<Integer, String>( data ) ) )
-                .setBatchFileWriterAdapter( new FileWriterAdapter<List<FetchedItem<Integer>>, List<String>>() {
-                    private final String prefix = targetFileName + "_";
-                    private final AtomicLong counter = new AtomicLong();
+                .setIdsFetcher( Fetchers.iterable( data.keySet() ) ).setDownloader( Processors.retryableBatchedFunction(
+                        new MapBasedBatchDownloader<Integer, String>( data ) ) ).setBatchFileWriterAdapter(
+                                new FileWriterAdapter<List<FetchedItem<Integer>>, List<String>>() {
+                                    private final String prefix = targetFileName + "_";
+                                    private final AtomicLong counter = new AtomicLong();
 
-                    @Override
-                    public void write( final Writer writer, final List<String> data ) throws IOException {
-                        final String string = Joiner.on( '\n' ).join( data );
-                        writer.write( string );
-                    }
+                                    @Override
+                                    public void write( final Writer writer, final List<String> data ) throws IOException {
+                                        final String string = Joiner.on( '\n' ).join( data );
+                                        writer.write( string );
+                                    }
 
-                    @Override
-                    public String getFileName( final Result<List<FetchedItem<Integer>>, List<String>> result ) {
-                        return prefix + counter.incrementAndGet();
-                    }
-                } )
-                .build();
+                                    @Override
+                                    public String getFileName( final Result<List<FetchedItem<Integer>>, List<String>> result ) {
+                                        return prefix + counter.incrementAndGet();
+                                    }
+                                } ).build();
 
         final ResultStatistics results = downloader.run();
         Assert.assertTrue( results.isAllSuccess() );
@@ -122,34 +119,35 @@ public class CtlDownloaderTest {
         }
 
         // test the log contents of THE LOG file
-        List<String> logLines = Files.readAllLines(Paths.get(expectedLog.toURI()));
+        List<String> logLines = Files.readAllLines( Paths.get( expectedLog.toURI() ) );
 
-        Assert.assertEquals(logLines.size(), 6);
+        Assert.assertEquals( logLines.size(), 6 );
 
-        JSONObject downloadEnd = (JSONObject) JSONValue.parse(logLines.get(0));
-        Assert.assertEquals(downloadEnd.get("context"), "write");
-        Assert.assertEquals(downloadEnd.get("input"), "1");
-        Assert.assertEquals(downloadEnd.get("event"), "end");
-        Assert.assertEquals(downloadEnd.get("success"), true);
-        Assert.assertNotNull(downloadEnd.get("time"));
+        JSONObject downloadEnd = (JSONObject) JSONValue.parse( logLines.get( 0 ) );
+        Assert.assertEquals( downloadEnd.get( "context" ), "write" );
+        Assert.assertEquals( downloadEnd.get( "input" ), "1" );
+        Assert.assertEquals( downloadEnd.get( "event" ), "end" );
+        Assert.assertEquals( downloadEnd.get( "success" ), true );
+        Assert.assertNotNull( downloadEnd.get( "time" ) );
 
-        JSONObject write3 = (JSONObject) JSONValue.parse(logLines.get(2));
-        Assert.assertEquals(write3.get("context"), "write");
-        Assert.assertEquals(write3.get("input"), "3");
-        Assert.assertEquals(write3.get("event"), "end");
-        Assert.assertEquals(write3.get("success"), true);
-        Assert.assertNotNull(write3.get("time"));
+        JSONObject write3 = (JSONObject) JSONValue.parse( logLines.get( 2 ) );
+        Assert.assertEquals( write3.get( "context" ), "write" );
+        Assert.assertEquals( write3.get( "input" ), "3" );
+        Assert.assertEquals( write3.get( "event" ), "end" );
+        Assert.assertEquals( write3.get( "success" ), true );
+        Assert.assertNotNull( write3.get( "time" ) );
 
-        JSONObject write6 = (JSONObject) JSONValue.parse(logLines.get(5));
-        Assert.assertEquals(write6.get("context"), "write");
-        Assert.assertEquals(write6.get("input"), "6");
-        Assert.assertEquals(write6.get("event"), "end");
-        Assert.assertEquals(write6.get("success"), true);
-        Assert.assertNotNull(write6.get("time"));
-
+        JSONObject write6 = (JSONObject) JSONValue.parse( logLines.get( 5 ) );
+        Assert.assertEquals( write6.get( "context" ), "write" );
+        Assert.assertEquals( write6.get( "input" ), "6" );
+        Assert.assertEquals( write6.get( "event" ), "end" );
+        Assert.assertEquals( write6.get( "success" ), true );
+        Assert.assertNotNull( write6.get( "time" ) );
 
         final ImmutableList<String> resultsList = resultsBuilder.build();
         Assert.assertEquals( resultsList, data.values() );
+
+        tmp.cleanup();
     }
 
     @Test
@@ -161,7 +159,6 @@ public class CtlDownloaderTest {
 
         Assert.assertEquals( config.getDownloadDirPath(), "/test/" + currentDate + "/DE/" );
     }
-
 
     @Test
     public void testSeveralPlaceholderConfiguration() {

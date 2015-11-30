@@ -68,9 +68,9 @@ public class FileMovingPersistence<D> extends AbstractSingleItemProcessor<Fetche
             }
         }
         fileMover.moveFile( new File( dir, input.getFileName() ), targetDir );
-        fileMover.moveFile( new File( dir, input.getLogFileName() ), targetDir );        
-        if (input.getControlledFileName() != null) {
-        	fileMover.moveFile( new File( dir, input.getControlledFileName() ), targetDir );
+        fileMover.moveFile( new File( dir, input.getLogFileName() ), targetDir );
+        if ( input.getControlledFileName() != null ) {
+            fileMover.moveFile( new File( dir, input.getControlledFileName() ), targetDir );
         }
     }
 

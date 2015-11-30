@@ -30,12 +30,8 @@ import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 public class BatchJobMain {
 
     private static void printCounts( final PrintStream out, final String type, final Counts counts ) {
-        out.append( type )
-                .append( ":\terrors = " )
-                .append( Long.toString( counts.getError() ) )
-                .append( ", success = " )
-                .append( Long.toString( counts.getSuccess() ) )
-                .append( '\n' );
+        out.append( type ).append( ":\terrors = " ).append( Long.toString( counts.getError() ) ).append( ", success = " ).append(
+                Long.toString( counts.getSuccess() ) ).append( '\n' );
     }
 
     public static <Input, Output> void exec( final BatchJob<Input, Output> batchJob ) {

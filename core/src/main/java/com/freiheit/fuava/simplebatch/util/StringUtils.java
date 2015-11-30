@@ -16,7 +16,6 @@
  */
 package com.freiheit.fuava.simplebatch.util;
 
-
 /**
  * Utility functions for string handling within the fuava simplebatch project.
  * 

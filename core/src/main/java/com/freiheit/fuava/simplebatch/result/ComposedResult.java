@@ -42,15 +42,14 @@ public final class ComposedResult<A, B> {
      */
     public Result<A, B> compose( final Iterable<? extends Result<?, B>> results ) {
         if ( results == null || Iterables.isEmpty( results ) ) {
-            return builder.withFailureMessage( "No intermediate results found. Intermediate input was " + intermediateValue ).failed();
+            return builder.withFailureMessage(
+                    "No intermediate results found. Intermediate input was " + intermediateValue ).failed();
         }
         final Result<?, B> firstSuccess = Iterables.find( results, Result::isSuccess );
         for ( final Result<?, B> r : results ) {
             // add everything that was accumulated in the composed results
-            builder
-                    .withFailureMessages( r.getFailureMessages() )
-                    .withWarningMessages( r.getWarningMessages() )
-                    .withThrowables( r.getThrowables() );
+            builder.withFailureMessages( r.getFailureMessages() ).withWarningMessages( r.getWarningMessages() ).withThrowables(
+                    r.getThrowables() );
         }
         if ( firstSuccess == null ) {
             return builder.failed();

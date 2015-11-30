@@ -66,12 +66,10 @@ public class TestComposition {
     final ImmutableMap<String, FileContentPair> testFileContentPairs = ImmutableMap.of(
             f1String, new FileContentPair( exF1, f1String ),
             f2String, new FileContentPair( exF2, f2String ),
-            f3String, new FileContentPair( exF3, f3String )
-            );
+            f3String, new FileContentPair( exF3, f3String ) );
 
     final ImmutableList<Result<File, File>> nonExistingFiles = ImmutableList.of(
-            asResult( new File( "/tmp/a/a" ) )
-            );
+            asResult( new File( "/tmp/a/a" ) ) );
 
     @BeforeClass
     public void makeTestData() throws IOException {
@@ -89,12 +87,9 @@ public class TestComposition {
     @Test
     public void testComposition() {
         final Processor<File, File, String> compose = makeComposedProcessorFileStringProcessor();
-        final List<Result<File, File>> testFiles = testFileContentPairs
-                .values()
-                .stream()
-                .map( fileContentPair -> fileContentPair.file )
-                .map( file -> Result.success( file, file ) )
-                .collect( Collectors.toList() );
+        final List<Result<File, File>> testFiles =
+                testFileContentPairs.values().stream().map( fileContentPair -> fileContentPair.file ).map(
+                        file -> Result.success( file, file ) ).collect( Collectors.toList() );
         final Iterable<Result<File, String>> processed = compose.process( testFiles );
 
         for ( final Result r : processed ) {
@@ -123,8 +118,7 @@ public class TestComposition {
 
         return Processors.compose(
                 readFilesToStringTestProcessor,
-                prepareControlledFileProcessor
-                );
+                prepareControlledFileProcessor );
     }
 
     private Processor<File, File, String> makeReadFilesToStringTestProcessor() {

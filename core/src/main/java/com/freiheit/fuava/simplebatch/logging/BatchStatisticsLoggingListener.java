@@ -37,7 +37,6 @@ public class BatchStatisticsLoggingListener<Input, Output> implements Processing
         log = LoggerFactory.getLogger( logFileName );
     }
 
-
     @Override
     public void onBeforeRun( final String description ) {
         _description = description;

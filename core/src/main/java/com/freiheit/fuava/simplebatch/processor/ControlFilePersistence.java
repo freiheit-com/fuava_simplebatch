@@ -17,15 +17,10 @@
 package com.freiheit.fuava.simplebatch.processor;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 
 /**
  * @param <Input>
@@ -33,18 +28,19 @@ import com.google.common.base.Preconditions;
  */
 class ControlFilePersistence<Input> extends
         AbstractSingleItemProcessor<Input, FilePersistenceOutputInfo, ControlFilePersistenceOutputInfo> {
-    private static final Logger LOG = LoggerFactory.getLogger( ControlFilePersistence.class );
 
     public interface Configuration {
         String getDownloadDirPath();
 
         String getControlFileEnding();
+
+        String getLogFileEnding();
     }
 
-    private final File basedir;
+    private final Configuration config;
 
     public ControlFilePersistence( final Configuration config ) {
-        basedir = new File( Preconditions.checkNotNull( config.getDownloadDirPath() ) );
+        this.config = config;
     }
 
     @Override
@@ -56,36 +52,17 @@ class ControlFilePersistence<Input> extends
         try {
             final File f = r.getOutput().getDataFile();
 
-            final File ctl = new File( basedir, f.getName() + ".ctl"/*
-                                                                     * nextControlFilename
-                                                                     * ()
-                                                                     */);
-            LOG.info( "Writing ctl file " + ctl + " (exists: " + ctl.exists() + ") " + trimOut( r.getOutput() ) );
-            final OutputStreamWriter fos2 = new OutputStreamWriter( new FileOutputStream( ctl ), Charsets.UTF_8 );
-            try {
-                fos2.write( f.getName() );
-            } finally {
-                fos2.flush();
-                fos2.close();
-            }
+            Path ctlFile = Paths.get( f.toString() + config.getControlFileEnding() );
+            ControlFileWriter.write( ctlFile, "DOWNLOAD_SUCCESSFUL", f.getName(), f.getName() + config.getLogFileEnding() );
+
+            File ctl = ctlFile.toFile();
             if ( !ctl.exists() ) {
                 return Result.failed( input, "Control file does not exist after write: " + ctl );
             }
-            LOG.info( "Wrote ctl file " );
             return Result.success( input, new ControlFilePersistenceOutputInfo( ctl ) );
 
         } catch ( final Throwable t ) {
             return Result.failed( input, t );
         }
     }
-
-    private String trimOut( final FilePersistenceOutputInfo output ) {
-        final String os = output == null
-            ? "null"
-            : output.toString();
-        return output == null
-            ? "null"
-            : os.substring( 0, Math.min( 20, os.length() ) );
-    }
-
 }

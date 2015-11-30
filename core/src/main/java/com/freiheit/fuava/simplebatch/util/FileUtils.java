@@ -59,8 +59,8 @@ public class FileUtils {
     /**
      * Replaces placeholder in path.
      *
-     * Currently available placeholder:
-     * %(DATE) - is replaced with current date in BASIC_ISO_DATE format, f.e. YYYYMMDD
+     * Currently available placeholder: %(DATE) - is replaced with current date
+     * in BASIC_ISO_DATE format, f.e. YYYYMMDD
      *
      * @param path
      * @return

@@ -45,7 +45,8 @@ public class ItemProgressLoggingListener<Input, Output> implements ProcessingRes
     @Override
     public void onFetchResult( final Result<FetchedItem<Input>, Input> result ) {
         if ( result.isFailed() ) {
-            log.info( ResultItemStat.formatted( Event.FETCH, result.getFailureMessages(), result.getThrowables(), result.getInput() ) );
+            log.info( ResultItemStat.formatted( Event.FETCH, result.getFailureMessages(), result.getThrowables(),
+                    result.getInput() ) );
         }
     }
 

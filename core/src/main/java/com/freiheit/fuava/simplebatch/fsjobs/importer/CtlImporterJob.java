@@ -18,7 +18,6 @@ package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
 import java.io.File;
 import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,14 +26,12 @@ import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.fetch.Fetchers;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob;
-import com.freiheit.fuava.simplebatch.logging.BatchJsonLogger;
 import com.freiheit.fuava.simplebatch.logging.BatchStatisticsLoggingListener;
 import com.freiheit.fuava.simplebatch.logging.ImportFileJsonLoggingListener;
 import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
-import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
 import com.google.common.base.Function;
@@ -304,17 +301,17 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                     LOG_NAME_FILE_PROCESSING_BATCH ) );
             fileProcessingListeners.add( new ItemProgressLoggingListener<ControlFile, ResultStatistics>(
                     LOG_NAME_FILE_PROCESSING_ITEM ) );
-            fileProcessingListeners.add(new ImportFileJsonLoggingListener(
-            		Builder.this.configuration.getDownloadDirPath(),
-            		Builder.this.configuration.getArchivedDirPath(),            		
-            		Builder.this.configuration.getFailedDirPath()));
+            fileProcessingListeners.add( new ImportFileJsonLoggingListener(
+                    Builder.this.configuration.getDownloadDirPath(),
+                    Builder.this.configuration.getArchivedDirPath(),
+                    Builder.this.configuration.getFailedDirPath() ) );
 
             contentProcessingListenerFactories.add(
                     Functions.constant( new BatchStatisticsLoggingListener<Data, Data>( LOG_NAME_CONTENT_PROCESSING_BATCH ) ) );
             contentProcessingListenerFactories.add(
                     Functions.constant( new ItemProgressLoggingListener<Data, Data>( LOG_NAME_CONTENT_PROCESSING_ITEM ) ) );
             contentProcessingListenerFactories.add(
-            		new ImportContentJsonLoggingListenerFactory<Data>(Builder.this.configuration.getProcessingDirPath()));					
+                    new ImportContentJsonLoggingListenerFactory<Data>( Builder.this.configuration.getProcessingDirPath() ) );
 
             final Processor<FetchedItem<ControlFile>, ControlFile, File> controlledFileMover =
                     Processors.controlledFileMover( configuration.getProcessingDirPath() );
@@ -330,8 +327,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                                     final ControlFile ctl = item.getValue();
                                     return ctl.getControlledFileName();
                                 }
-                            }, processingBatchSize, contentProcessor, contentProcessingListenerFactories
-                            );
+                            }, processingBatchSize, contentProcessor, contentProcessingListenerFactories );
 
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processfileAndMove =
                     Processors.compose( innerJobProcessor, fileProcessorAndMover );
@@ -340,8 +336,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                     new FileMovingPersistence<ResultStatistics>(
                             new File( configuration.getProcessingDirPath() ),
                             new File( configuration.getArchivedDirPath() ),
-                            new File( configuration.getFailedDirPath() )
-                    );
+                            new File( configuration.getFailedDirPath() ) );
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor =
                     Processors.compose( fileMovingPersistence, processfileAndMove );
 

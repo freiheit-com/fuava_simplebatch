@@ -20,11 +20,15 @@ final class ControlFilePersistenceConfigImpl implements
         ControlFilePersistence.Configuration {
     private final String dirName;
     private final String controlFileEnding;
+    private final String logFileEnding;
 
-    ControlFilePersistenceConfigImpl( final String dirName,
-            final String controlFileEnding ) {
+    ControlFilePersistenceConfigImpl(
+            final String dirName,
+            final String controlFileEnding,
+            final String logFileEnding ) {
         this.dirName = dirName;
         this.controlFileEnding = controlFileEnding;
+        this.logFileEnding = logFileEnding;
     }
 
     @Override
@@ -36,4 +40,10 @@ final class ControlFilePersistenceConfigImpl implements
     public String getControlFileEnding() {
         return controlFileEnding;
     }
+
+    @Override
+    public String getLogFileEnding() {
+        return logFileEnding;
+    }
+
 }
