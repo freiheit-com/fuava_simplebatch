@@ -66,7 +66,8 @@ public class HttpPagingFetcherTest {
 
                         },
                         0,
-                        fetchedList.size() + 1 );
+                        fetchedList.size() + 1
+                        );
 
         final Iterable<Result<FetchedItem<String>, String>> all = fetcher.fetchAll();
         final ImmutableList<String> result =
@@ -102,7 +103,8 @@ public class HttpPagingFetcherTest {
 
                         },
                         0,
-                        fetchedList.size() );
+                        fetchedList.size()
+                        );
 
         final Iterable<Result<FetchedItem<String>, String>> all = fetcher.fetchAll();
         final ImmutableList<String> result =
@@ -138,7 +140,8 @@ public class HttpPagingFetcherTest {
 
                         },
                         0,
-                        fetchedList.size() - 1 );
+                        fetchedList.size() - 1
+                        );
 
         final Iterable<Result<FetchedItem<String>, String>> all = fetcher.fetchAll();
         final ImmutableList<String> result =

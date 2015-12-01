@@ -39,10 +39,9 @@ public class ConvertingHttpPagingFetcher<Raw, T> implements Fetcher<T> {
     private final int pageSize;
     private final ResultTransformer<Raw, T> resultTransformer;
 
-    public interface ResultTransformer<Raw, T>
-            extends Function<Result<PageFetcher.PagingInput, Iterable<Raw>>, Iterator<Result<FetchedItem<T>, T>>> {
-    }
+    public interface ResultTransformer<Raw, T> extends Function<Result<PageFetcher.PagingInput, Iterable<Raw>>, Iterator<Result<FetchedItem<T>, T>>>  {}
 
+        
     public ConvertingHttpPagingFetcher(
             final HttpFetcher fetcher,
             final PagingRequestSettings<Iterable<Raw>> settings,
@@ -82,22 +81,26 @@ public class ConvertingHttpPagingFetcher<Raw, T> implements Fetcher<T> {
                         "Transform called with null Input", null ) );
             }
             if ( input.isFailed() ) {
-                return Iterators.singletonIterator(
-                        Result.<FetchedItem<T>, T> builder( input, FetchedItem.of( null, counter++ ) ).failed() );
+                return Iterators.singletonIterator( Result.<FetchedItem<T>, T> builder( input, FetchedItem.of( null, counter++ ) ).failed() );
             }
             final Iterator<Result<I, T>> fetchedItems = input.getOutput().iterator();
             return Iterators.transform( fetchedItems, new Function<Result<I, T>, Result<FetchedItem<T>, T>>() {
                 @Override
                 public Result<FetchedItem<T>, T> apply( final Result<I, T> input ) {
-                    if ( input.isFailed() ) {
-                        return Result.<FetchedItem<T>, T> builder().withInput(
-                                FetchedItem.of( null, counter++ ) ).withFailureMessages(
-                                        input.getFailureMessages() ).withThrowables( input.getThrowables() ).failed();
-
+                    if (input.isFailed()) {
+                        return Result.<FetchedItem<T>, T>builder()
+                                .withInput( FetchedItem.of( null, counter++ ) )
+                                .withFailureMessages( input.getFailureMessages() )
+                                .withThrowables( input.getThrowables() )
+                                .failed();
+                        
                     }
-                    return Result.<FetchedItem<T>, T> builder().withInput(
-                            FetchedItem.of( input.getOutput(), counter++ ) ).withOutput( input.getOutput() ).withWarningMessages(
-                                    input.getWarningMessages() ).withFailureMessages( input.getFailureMessages() ).success();
+                    return Result.<FetchedItem<T>, T>builder()
+                            .withInput( FetchedItem.of( input.getOutput(), counter++ ) )
+                            .withOutput( input.getOutput() )
+                            .withWarningMessages( input.getWarningMessages() )
+                            .withFailureMessages( input.getFailureMessages() )
+                            .success();
                 }
             } );
         }
@@ -114,7 +117,8 @@ public class ConvertingHttpPagingFetcher<Raw, T> implements Fetcher<T> {
                         new HttpPageFetcher<Iterable<Raw>>( fetcher, settings, converter ),
                         initialFrom,
                         pageSize,
-                        settings );
+                        settings
+                        );
                 return Iterators.concat( Iterators.transform( iterator, resultTransformer ) );
             }
 

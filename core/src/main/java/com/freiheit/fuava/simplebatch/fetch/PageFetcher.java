@@ -30,5 +30,6 @@ public interface PageFetcher<T> {
     }
 
     public Result<PagingInput, T> fetch(
-            int from, int pageSize );
+            int from, int pageSize
+            );
 }

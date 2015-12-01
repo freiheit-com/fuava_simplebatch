@@ -27,5 +27,6 @@ public interface HttpFetcher {
     public <T> T fetch(
             final Function<? super InputStream, T> reader,
             final String uri,
-            final Map<String, String> headers ) throws FetchFailedException;
+            final Map<String, String> headers
+            ) throws FetchFailedException;
 }

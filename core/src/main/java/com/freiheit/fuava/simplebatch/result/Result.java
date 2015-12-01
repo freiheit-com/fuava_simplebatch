@@ -152,8 +152,11 @@ public class Result<Input, Output> {
     }
 
     public static final <I, O> Builder<I, O> builder( final Result<?, ?> orig, final I input ) {
-        return new Builder<I, O>().withInput( input ).withThrowables( orig.getThrowables() ).withWarningMessages(
-                orig.getWarningMessages() ).withFailureMessages( orig.getFailureMessages() );
+        return new Builder<I, O>()
+                .withInput( input )
+                .withThrowables( orig.getThrowables() )
+                .withWarningMessages( orig.getWarningMessages() )
+                .withFailureMessages( orig.getFailureMessages() );
     }
 
     public Input getInput() {

@@ -58,7 +58,8 @@ public class Fetchers {
             final HttpClient client,
             final String uri,
             final Map<String, String> headers,
-            final Function<InputStream, Iterable<Item>> converter ) {
+            final Function<InputStream, Iterable<Item>> converter
+            ) {
         return httpFetcher( new HttpFetcherImpl( client ), uri, headers, converter );
     }
 
@@ -66,7 +67,8 @@ public class Fetchers {
             final HttpFetcher httpFetcher,
             final String uri,
             final Map<String, String> headers,
-            final Function<InputStream, Iterable<Item>> converter ) {
+            final Function<InputStream, Iterable<Item>> converter
+            ) {
         return new SuppliedIterableFetcher<Item>( new Supplier<Iterable<Item>>() {
 
             @Override
@@ -86,7 +88,8 @@ public class Fetchers {
             final PagingRequestSettings<Iterable<Item>> settings,
             final Function<? super InputStream, Iterable<Item>> converter,
             final int initialFrom,
-            final int pageSize ) {
+            final int pageSize
+            ) {
         return httpPagingFetcher( new HttpFetcherImpl( client ), settings, converter, initialFrom, pageSize );
 
     }
@@ -101,7 +104,8 @@ public class Fetchers {
             final PagingRequestSettings<Iterable<Item>> settings,
             final Function<? super InputStream, Iterable<Item>> converter,
             final int initialFrom,
-            final int pageSize ) {
+            final int pageSize
+            ) {
         return new HttpPagingFetcher<Item>( fetcher, settings, converter, initialFrom, pageSize );
 
     }
@@ -110,8 +114,7 @@ public class Fetchers {
      * Iterates over all files in the given directory that end with the
      * specified fileEnding and converts them with the given function.
      */
-    public static <T> Fetcher<T> folderFetcher( final String dirName, final String fileEnding,
-            final Function<File, T> fileFunction ) {
+    public static <T> Fetcher<T> folderFetcher( final String dirName, final String fileEnding, final Function<File, T> fileFunction ) {
         return folderFetcher( dirName, fileEnding, fileFunction, DirectoryFileFetcher.ORDERING_FILE_BY_PATH );
     }
 
