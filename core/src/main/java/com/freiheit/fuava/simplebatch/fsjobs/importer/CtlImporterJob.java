@@ -27,6 +27,7 @@ import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.fetch.Fetchers;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob;
 import com.freiheit.fuava.simplebatch.logging.BatchStatisticsLoggingListener;
+import com.freiheit.fuava.simplebatch.logging.ImportFileJsonLoggingListener;
 import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.Processors;
@@ -189,7 +190,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
 
         private final List<ProcessingResultListener<ControlFile, ResultStatistics>> fileProcessingListeners = new ArrayList<>();
 
-        private final List<Function<? super FetchedItem<ControlFile>, ProcessingResultListener<Data, Data>>> contentProcessingListeners =
+        private final List<Function<? super FetchedItem<ControlFile>, ProcessingResultListener<Data, Data>>> contentProcessingListenerFactories =
                 new ArrayList<>();
         private Processor<FetchedItem<Data>, Data, Data> contentProcessor;
         private String description;
@@ -285,13 +286,13 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
         public Builder<Data> addContentProcessingListener( final ProcessingResultListener<Data, Data> listener ) {
-            contentProcessingListeners.add( Functions.<ProcessingResultListener<Data, Data>> constant( listener ) );
+            contentProcessingListenerFactories.add( Functions.<ProcessingResultListener<Data, Data>> constant( listener ) );
             return this;
         }
 
-        public Builder<Data> addContentProcessingListener(
-                final Function<FetchedItem<ControlFile>, ProcessingResultListener<Data, Data>> listener ) {
-            contentProcessingListeners.add( listener );
+        public Builder<Data> addContentProcessingListenerFactory(
+                final Function<FetchedItem<ControlFile>, ProcessingResultListener<Data, Data>> listenerFactory ) {
+            contentProcessingListenerFactories.add( listenerFactory );
             return this;
         }
 
@@ -300,12 +301,17 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                     LOG_NAME_FILE_PROCESSING_BATCH ) );
             fileProcessingListeners.add( new ItemProgressLoggingListener<ControlFile, ResultStatistics>(
                     LOG_NAME_FILE_PROCESSING_ITEM ) );
+            fileProcessingListeners.add( new ImportFileJsonLoggingListener(
+                    Builder.this.configuration.getDownloadDirPath(),
+                    Builder.this.configuration.getArchivedDirPath(),
+                    Builder.this.configuration.getFailedDirPath() ) );
 
-            contentProcessingListeners.add(
+            contentProcessingListenerFactories.add(
                     Functions.constant( new BatchStatisticsLoggingListener<Data, Data>( LOG_NAME_CONTENT_PROCESSING_BATCH ) ) );
-            contentProcessingListeners.add(
+            contentProcessingListenerFactories.add(
                     Functions.constant( new ItemProgressLoggingListener<Data, Data>( LOG_NAME_CONTENT_PROCESSING_ITEM ) ) );
-
+            contentProcessingListenerFactories.add(
+                    new ImportContentJsonLoggingListenerFactory<Data>( Builder.this.configuration.getProcessingDirPath() ) );
 
             final Processor<FetchedItem<ControlFile>, ControlFile, File> controlledFileMover =
                     Processors.controlledFileMover( configuration.getProcessingDirPath() );
@@ -321,8 +327,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                                     final ControlFile ctl = item.getValue();
                                     return ctl.getControlledFileName();
                                 }
-                            }, processingBatchSize, contentProcessor, contentProcessingListeners
-                            );
+                            }, processingBatchSize, contentProcessor, contentProcessingListenerFactories );
 
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processfileAndMove =
                     Processors.compose( innerJobProcessor, fileProcessorAndMover );
@@ -331,8 +336,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                     new FileMovingPersistence<ResultStatistics>(
                             new File( configuration.getProcessingDirPath() ),
                             new File( configuration.getArchivedDirPath() ),
-                            new File( configuration.getFailedDirPath() )
-                    );
+                            new File( configuration.getFailedDirPath() ) );
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor =
                     Processors.compose( fileMovingPersistence, processfileAndMove );
 

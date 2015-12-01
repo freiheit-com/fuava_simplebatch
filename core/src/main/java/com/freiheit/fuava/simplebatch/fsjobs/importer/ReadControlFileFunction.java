@@ -22,6 +22,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Properties;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -38,16 +39,31 @@ public class ReadControlFileFunction implements Function<File, ControlFile> {
         this.baseDir = baseDir;
     }
 
+    private ControlFile parseNewFormat( File file, BufferedReader br ) throws IOException {
+        Properties prop = new Properties();
+        prop.load( br );
+        String controlledFileName = prop.getProperty( "file" );
+        String logFileName = prop.getProperty( "log" );
+        String status = prop.getProperty( "status" );
+        boolean downloadFailed = status == "DOWNLOAD_FAILED";
+        return new ControlFile( this.baseDir, controlledFileName, logFileName, file, downloadFailed );
+    }
+
     @Override
     public ControlFile apply( final File file ) {
         try {
             final Reader in = new InputStreamReader( new FileInputStream( file ), Charsets.UTF_8 );
             try ( BufferedReader br = new BufferedReader( in ) ) {
-                final String nameOfDownloadedMiscDocument = br.readLine();
-                if ( Strings.isNullOrEmpty( nameOfDownloadedMiscDocument ) ) {
+                final String firstLine = br.readLine();
+                if ( Strings.isNullOrEmpty( firstLine ) ) {
                     throw new IllegalArgumentException( "The Control-File " + file + " has no content" );
+                } else if ( firstLine.startsWith( "#!VERSION=1" ) ) {
+                    return parseNewFormat( file, br );
+                } else {
+                    final String controlledFileName = firstLine;
+                    final String logFileName = controlledFileName + ".log";
+                    return new ControlFile( this.baseDir, controlledFileName, logFileName, file );
                 }
-                return new ControlFile( this.baseDir, nameOfDownloadedMiscDocument, file );
             }
         } catch ( final IOException e ) {
             throw new RuntimeException( e );

@@ -117,7 +117,10 @@ public class SftpDownloaderJob {
             final Fetcher<SftpFilename> fileFetcher ) {
 
         final Processor<FetchedItem<SftpFilename>, SftpFilename, ControlFilePersistenceOutputInfo> downloader =
-                Processors.controlledFileWriter( config.getDownloadDirPath(), config.getControlFileEnding(),
+                Processors.controlledFileWriter( 
+                		config.getDownloadDirPath(), 
+                		config.getControlFileEnding(),
+                		config.getLogFileEnding(),
                         new SftpDownloadingFileWriterAdapter( client ) );
 
         final SftpResultFileMover remoteFileMover = new SftpResultFileMover( client, remoteConfiguration.getArchivedFolder() );

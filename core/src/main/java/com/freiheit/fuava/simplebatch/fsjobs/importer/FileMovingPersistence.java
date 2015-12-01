@@ -58,7 +58,6 @@ public class FileMovingPersistence<D> extends AbstractSingleItemProcessor<Fetche
         } catch ( final Throwable e ) {
             return Result.<FetchedItem<ControlFile>, D> builder( r ).failed( e );
         }
-
     }
 
     private void moveBoth( final ControlFile input, final File targetDir ) throws FailedToMoveFileException {
@@ -69,7 +68,10 @@ public class FileMovingPersistence<D> extends AbstractSingleItemProcessor<Fetche
             }
         }
         fileMover.moveFile( new File( dir, input.getFileName() ), targetDir );
-        fileMover.moveFile( new File( dir, input.getControlledFileName() ), targetDir );
+        fileMover.moveFile( new File( dir, input.getLogFileName() ), targetDir );
+        if ( input.getControlledFileName() != null ) {
+            fileMover.moveFile( new File( dir, input.getControlledFileName() ), targetDir );
+        }
     }
 
 }

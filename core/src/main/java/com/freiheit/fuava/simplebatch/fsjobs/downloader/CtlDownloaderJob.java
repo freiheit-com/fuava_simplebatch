@@ -56,16 +56,20 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             return ".ctl";
         }
 
+        default String getLogFileEnding() {
+            return ".log";
+        }
     }
 
     public static final String DEFAULT_CONFIG_DOWNLOAD_DIR_PATH = "/tmp/downloading";
     public static final String DEFAULT_CONFIG_CONTROL_FILE_ENDING = ".ctl";
-
+    public static final String DEFAULT_CONFIG_LOG_FILE_ENDING = ".log";
 
     public static final class ConfigurationImpl implements Configuration {
 
         private String downloadDirPath = DEFAULT_CONFIG_DOWNLOAD_DIR_PATH;
         private String controlFileEnding = DEFAULT_CONFIG_CONTROL_FILE_ENDING;
+        private String logFileEnding = DEFAULT_CONFIG_LOG_FILE_ENDING;
 
         @Override
         public String getDownloadDirPath() {
@@ -84,6 +88,16 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
         public ConfigurationImpl setControlFileEnding( final String ending ) {
             this.controlFileEnding = ending;
+            return this;
+        }
+
+        @Override
+        public String getLogFileEnding() {
+            return logFileEnding;
+        }
+
+        public ConfigurationImpl setLogFileEnding( final String ending ) {
+            this.logFileEnding = ending;
             return this;
         }
 
@@ -132,8 +146,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         private FileOutputStreamAdapter<FetchedItem<Id>, Data> persistenceAdapter;
 
         public Builder<Id, Data> setFileWriterAdapter(
-                final FileOutputStreamAdapter<FetchedItem<Id>, Data> persistenceAdapter
-                ) {
+                final FileOutputStreamAdapter<FetchedItem<Id>, Data> persistenceAdapter ) {
 
             this.persistenceAdapter = persistenceAdapter;
             return this;
@@ -147,8 +160,8 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             return build( Processors.controlledFileWriter(
                     configuration.getDownloadDirPath(),
                     configuration.getControlFileEnding(),
-                    persistenceAdapter
-                    ) );
+                    configuration.getLogFileEnding(),
+                    persistenceAdapter ) );
         }
 
         @Override
@@ -227,8 +240,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         private FileOutputStreamAdapter<List<FetchedItem<Id>>, List<Data>> persistenceAdapter;
 
         public BatchFileWritingBuilder<Id, Data> setBatchFileWriterAdapter(
-                final FileOutputStreamAdapter<List<FetchedItem<Id>>, List<Data>> persistenceAdapter
-                ) {
+                final FileOutputStreamAdapter<List<FetchedItem<Id>>, List<Data>> persistenceAdapter ) {
             this.persistenceAdapter = persistenceAdapter;
             return this;
         }
@@ -300,8 +312,8 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             return build( Processors.controlledBatchFileWriter(
                     configuration.getDownloadDirPath(),
                     configuration.getControlFileEnding(),
-                    persistenceAdapter
-                    ) );
+                    configuration.getLogFileEnding(),
+                    persistenceAdapter ) );
         }
     }
 
@@ -387,6 +399,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
             builder.addListener( new BatchStatisticsLoggingListener<Id, ProcessingResult>( LOG_NAME_BATCH ) );
             builder.addListener( new ItemProgressLoggingListener<Id, ProcessingResult>( LOG_NAME_ITEM ) );
+
             final Processor<FetchedItem<Id>, Id, ProcessingResult> p = Processors.compose( fileWriter, downloader );
             return new CtlDownloaderJob<Id, ProcessingResult>(
                     builder.getDescription(),

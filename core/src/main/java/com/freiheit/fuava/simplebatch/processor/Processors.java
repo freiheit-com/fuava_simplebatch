@@ -22,16 +22,21 @@ import java.io.Writer;
 import java.util.List;
 
 import org.apache.http.client.HttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fsjobs.importer.ControlFile;
 import com.freiheit.fuava.simplebatch.http.HttpDownloaderSettings;
+import com.freiheit.fuava.simplebatch.logging.JsonLogger;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.freiheit.fuava.simplebatch.util.IOStreamUtils;
 import com.google.common.base.Function;
 
 public class Processors {
+
+    public static final Logger LOG = LoggerFactory.getLogger( JsonLogger.class );
 
     /**
      * Compose two processors. Note that the input of g will be a set of the
@@ -58,8 +63,7 @@ public class Processors {
      *
      */
     public static <JobInput, PersistenceInput, PersistenceOutput> Processor<JobInput, PersistenceInput, PersistenceOutput> retryableBatchedFunction(
-            final Function<List<PersistenceInput>, List<PersistenceOutput>> function
-            ) {
+            final Function<List<PersistenceInput>, List<PersistenceOutput>> function ) {
         return new RetryingProcessor<JobInput, PersistenceInput, PersistenceOutput>( function );
     }
 
@@ -82,8 +86,7 @@ public class Processors {
      * @see #retryableBatchedFunction(Function)
      */
     public static <JobInput, PersistenceInput, PersistenceOutput> Processor<JobInput, PersistenceInput, PersistenceOutput> singleItemFunction(
-            final Function<PersistenceInput, PersistenceOutput> function
-            ) {
+            final Function<PersistenceInput, PersistenceOutput> function ) {
         return new SingleItemProcessor<JobInput, PersistenceInput, PersistenceOutput>( function );
     }
 
@@ -100,31 +103,25 @@ public class Processors {
      *         file in the given directory.
      */
     public static <Input, Output> Processor<Input, Output, FilePersistenceOutputInfo> fileWriter(
-            final String dirName, final FileOutputStreamAdapter<Input, Output> adapter
-            ) {
+            final String dirName, final FileOutputStreamAdapter<Input, Output> adapter ) {
         return new FilePersistence<Input, Output>( dirName, adapter );
     }
 
     /**
      * Like {@link #fileWriter(String, FileWriterAdapter)}, but additionally
      * writes a control-file that can be used for waiting until this file has
-     * been completely written.
-     *
-     * @param dirName
-     * @param controlFileEnding
-     * @param adapter
-     * @return
+     * been completely written as well as a log file with extra information
      */
-    public static <Input, Output> Processor<Input, Output, ControlFilePersistenceOutputInfo> controlledFileWriter(
+    public static <T, Output> Processor<FetchedItem<T>, Output, ControlFilePersistenceOutputInfo> controlledFileWriter(
             final String dirName,
             final String controlFileEnding,
-            final FileOutputStreamAdapter<Input, Output> adapter
-            ) {
+            final String logFileEnding,
+            final FileOutputStreamAdapter<FetchedItem<T>, Output> adapter ) {
         return Processors.compose(
-                new ControlFilePersistence<Input>( new ControlFilePersistenceConfigImpl( dirName, controlFileEnding ) ),
-                new FilePersistence<Input, Output>( dirName, adapter )
-                );
-
+                Processors.compose( new ControlFilePersistence<FetchedItem<T>>(
+                        new ControlFilePersistenceConfigImpl( dirName, controlFileEnding, logFileEnding ) ),
+                        new JsonLoggingProcessor<T>( dirName, controlFileEnding, logFileEnding ) ),
+                new FilePersistence<FetchedItem<T>, Output>( dirName, adapter ) );
     }
 
     /**
@@ -134,12 +131,11 @@ public class Processors {
      * details about the file and the item number within that file (for csv this
      * will probably correspond to the rownum, depending on your implementation
      * of the adapter)
-     * 
+     *
      * @return
      */
     public static <Input, Output> Processor<Input, Output, BatchProcessorResult<FilePersistenceOutputInfo>> batchFileWriter(
-            final String dirName, final FileWriterAdapter<List<Input>, List<Output>> adapter
-            ) {
+            final String dirName, final FileWriterAdapter<List<Input>, List<Output>> adapter ) {
         return new BatchProcessor<Input, Output, FilePersistenceOutputInfo>( fileWriter( dirName, adapter ) );
     }
 
@@ -154,17 +150,25 @@ public class Processors {
      *
      * This is very similar to
      * {@link #batchFileWriter(String, FileWriterAdapter)}, but for each
-     * persisted file there will be a control file as well.
-     *
-     * @return
+     * persisted file there will be a control file and a log file as well.
      */
-    public static <Input, Output> Processor<Input, Output, BatchProcessorResult<ControlFilePersistenceOutputInfo>> controlledBatchFileWriter(
+    public static <Input, Output> Processor<FetchedItem<Input>, Output, BatchProcessorResult<ControlFilePersistenceOutputInfo>> controlledBatchFileWriter(
             final String dirName,
             final String controlFileEnding,
-            final FileOutputStreamAdapter<List<Input>, List<Output>> adapter
-            ) {
-        return new BatchProcessor<Input, Output, ControlFilePersistenceOutputInfo>( controlledFileWriter( dirName,
-                controlFileEnding, adapter ) );
+            final String logFileEnding,
+            final FileOutputStreamAdapter<List<FetchedItem<Input>>, List<Output>> adapter ) {
+        return Processors.compose(
+                new BatchProcessor<FetchedItem<Input>, Output, ControlFilePersistenceOutputInfo>(
+                        Processors.compose(
+                                Processors.compose(
+                                        new ControlFilePersistence<List<FetchedItem<Input>>>(
+                                                new ControlFilePersistenceConfigImpl(
+                                                        dirName,
+                                                        controlFileEnding,
+                                                        logFileEnding ) ),
+                                        new JsonLoggingBatchedSuccessProcessor<Input>( logFileEnding ) ),
+                                new FilePersistence<List<FetchedItem<Input>>, List<Output>>( dirName, adapter ) ) ),
+                new JsonLoggingBatchedFailureProcessor<Input, Output>( dirName, controlFileEnding, logFileEnding ) );
     }
 
     /**
@@ -186,7 +190,6 @@ public class Processors {
                 contentProcessingListeners );
     }
 
-
     /**
      * A Processor that uses an apache HttpClient to download the required data,
      * based on the input data that was provided by the fetcher.
@@ -194,8 +197,7 @@ public class Processors {
     public static <I, Input, Output> Processor<I, Input, Output> httpDownloader(
             final HttpClient client,
             final HttpDownloaderSettings<Input> settings,
-            final Function<InputStream, Output> converter
-            ) {
+            final Function<InputStream, Output> converter ) {
         return new HttpDownloader<I, Input, Output>( client, settings, converter );
     }
 
