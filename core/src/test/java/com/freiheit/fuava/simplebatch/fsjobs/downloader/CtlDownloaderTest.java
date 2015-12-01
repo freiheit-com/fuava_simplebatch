@@ -31,8 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -41,6 +39,7 @@ import com.freiheit.fuava.simplebatch.MapBasedBatchDownloader;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetchers;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob.ConfigurationImpl;
+import com.freiheit.fuava.simplebatch.logging.JsonLogEntry;
 import com.freiheit.fuava.simplebatch.processor.BatchProcessorResult;
 import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo;
 import com.freiheit.fuava.simplebatch.processor.FileWriterAdapter;
@@ -123,26 +122,26 @@ public class CtlDownloaderTest {
 
         Assert.assertEquals( logLines.size(), 6 );
 
-        JSONObject downloadEnd = (JSONObject) JSONValue.parse( logLines.get( 0 ) );
-        Assert.assertEquals( downloadEnd.get( "context" ), "write" );
-        Assert.assertEquals( downloadEnd.get( "input" ), "1" );
-        Assert.assertEquals( downloadEnd.get( "event" ), "end" );
-        Assert.assertEquals( downloadEnd.get( "success" ), true );
-        Assert.assertNotNull( downloadEnd.get( "time" ) );
+        JsonLogEntry downloadEnd = JsonLogEntry.fromJson( logLines.get( 0 ) );
+        Assert.assertEquals( downloadEnd.getContext(), "write" );
+        Assert.assertEquals( downloadEnd.getInput(), "1" );
+        Assert.assertEquals( downloadEnd.getEvent(), "end" );
+        Assert.assertEquals( downloadEnd.isSuccess(), true );
+        Assert.assertNotNull( downloadEnd.getTime() );
 
-        JSONObject write3 = (JSONObject) JSONValue.parse( logLines.get( 2 ) );
-        Assert.assertEquals( write3.get( "context" ), "write" );
-        Assert.assertEquals( write3.get( "input" ), "3" );
-        Assert.assertEquals( write3.get( "event" ), "end" );
-        Assert.assertEquals( write3.get( "success" ), true );
-        Assert.assertNotNull( write3.get( "time" ) );
+        JsonLogEntry write3 = JsonLogEntry.fromJson( logLines.get( 2 ) );
+        Assert.assertEquals( write3.getContext(), "write" );
+        Assert.assertEquals( write3.getInput(), "3" );
+        Assert.assertEquals( write3.getEvent(), "end" );
+        Assert.assertEquals( write3.isSuccess(), true );
+        Assert.assertNotNull( write3.getTime() );
 
-        JSONObject write6 = (JSONObject) JSONValue.parse( logLines.get( 5 ) );
-        Assert.assertEquals( write6.get( "context" ), "write" );
-        Assert.assertEquals( write6.get( "input" ), "6" );
-        Assert.assertEquals( write6.get( "event" ), "end" );
-        Assert.assertEquals( write6.get( "success" ), true );
-        Assert.assertNotNull( write6.get( "time" ) );
+        JsonLogEntry write6 = JsonLogEntry.fromJson( logLines.get( 5 ) );
+        Assert.assertEquals( write6.getContext(), "write" );
+        Assert.assertEquals( write6.getInput(), "6" );
+        Assert.assertEquals( write6.getEvent(), "end" );
+        Assert.assertEquals( write6.isSuccess(), true );
+        Assert.assertNotNull( write6.getTime() );
 
         final ImmutableList<String> resultsList = resultsBuilder.build();
         Assert.assertEquals( resultsList, data.values() );

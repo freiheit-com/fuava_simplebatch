@@ -1,4 +1,5 @@
 apply plugin: 'java'
+apply plugin: 'jacoco'
 
 jar {
     baseName 'fuava-simplebatch-core'
@@ -11,8 +12,8 @@ dependencies {
     compile 'org.apache.httpcomponents:httpclient:4.5'
     compile 'org.apache.httpcomponents:httpcore:4.4.1'
     compile 'org.slf4j:slf4j-api:1.7.12'
-    compile 'com.googlecode.json-simple:json-simple:1.1'
+    compile 'com.google.code.gson:gson:2.5'
 
-    testCompile 'ch.qos.logback:logback-classic:1.1.3' 
+    testCompile 'ch.qos.logback:logback-classic:1.1.3'
 }
 

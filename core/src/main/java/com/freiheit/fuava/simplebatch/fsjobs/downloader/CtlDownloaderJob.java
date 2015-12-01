@@ -63,14 +63,13 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
     public static final String DEFAULT_CONFIG_DOWNLOAD_DIR_PATH = "/tmp/downloading";
     public static final String DEFAULT_CONFIG_CONTROL_FILE_ENDING = ".ctl";
+    public static final String DEFAULT_CONFIG_LOG_FILE_ENDING = ".log";
 
     public static final class ConfigurationImpl implements Configuration {
 
         private String downloadDirPath = DEFAULT_CONFIG_DOWNLOAD_DIR_PATH;
         private String controlFileEnding = DEFAULT_CONFIG_CONTROL_FILE_ENDING;
         private String logFileEnding = DEFAULT_CONFIG_LOG_FILE_ENDING;
-        public static final String DEFAULT_CONFIG_CONTROL_FILE_ENDING = ".ctl";
-        public static final String DEFAULT_CONFIG_LOG_FILE_ENDING = ".log";
 
         @Override
         public String getDownloadDirPath() {

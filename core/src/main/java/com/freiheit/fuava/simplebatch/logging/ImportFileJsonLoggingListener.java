@@ -23,7 +23,7 @@ public class ImportFileJsonLoggingListener implements ProcessingResultListener<C
     @Override
     public void onFetchResult( Result<FetchedItem<ControlFile>, ControlFile> result ) {
         final String logFileName = result.getInput().getValue().getLogFileName();
-        BatchJsonLogger l = new BatchJsonLogger( Paths.get( downloadDir, logFileName ) );
+        JsonLogger l = new JsonLogger( Paths.get( downloadDir, logFileName ) );
         l.logImportStart();
     }
 
@@ -33,8 +33,7 @@ public class ImportFileJsonLoggingListener implements ProcessingResultListener<C
         final String dir = result.isSuccess()
             ? archivedDir
             : failedDir;
-        BatchJsonLogger l = new BatchJsonLogger( Paths.get( dir, logFileName ) );
+        JsonLogger l = new JsonLogger( Paths.get( dir, logFileName ) );
         l.logImportEnd( result.isSuccess() );
-        ;
     }
 }

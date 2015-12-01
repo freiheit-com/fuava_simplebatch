@@ -2,6 +2,7 @@ package com.freiheit.fuava.simplebatch;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +39,14 @@ public class BatchTestDirectory {
         return testDirFails;
     }
 
-    public BatchTestDirectory( String dirName ) {
-        testDirBase = "/tmp/" + dirName + "/" + System.currentTimeMillis();
+    public BatchTestDirectory( String prefix ) {
+        String base = null;
+        try {
+            base = Files.createTempDirectory( prefix ).toString();
+        } catch ( Exception e ) {
+            LOG.error( "Couldn't create temp directory " + prefix );
+        }
+        testDirBase = base;
         testDirDownloads = testDirBase + "/downloads/";
         testDirProcessing = testDirBase + "/processing/";
         testDirArchive = testDirBase + "/archive/";

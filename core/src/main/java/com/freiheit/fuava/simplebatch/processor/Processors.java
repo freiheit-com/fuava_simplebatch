@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fsjobs.importer.ControlFile;
 import com.freiheit.fuava.simplebatch.http.HttpDownloaderSettings;
-import com.freiheit.fuava.simplebatch.logging.BatchJsonLogger;
+import com.freiheit.fuava.simplebatch.logging.JsonLogger;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.freiheit.fuava.simplebatch.util.IOStreamUtils;
@@ -36,7 +36,7 @@ import com.google.common.base.Function;
 
 public class Processors {
 
-    public static final Logger LOG = LoggerFactory.getLogger( BatchJsonLogger.class );
+    public static final Logger LOG = LoggerFactory.getLogger( JsonLogger.class );
 
     /**
      * Compose two processors. Note that the input of g will be a set of the
@@ -120,7 +120,7 @@ public class Processors {
         return Processors.compose(
                 Processors.compose( new ControlFilePersistence<FetchedItem<T>>(
                         new ControlFilePersistenceConfigImpl( dirName, controlFileEnding, logFileEnding ) ),
-                        new BatchJsonLoggingProcessor<T>( dirName, controlFileEnding, logFileEnding ) ),
+                        new JsonLoggingProcessor<T>( dirName, controlFileEnding, logFileEnding ) ),
                 new FilePersistence<FetchedItem<T>, Output>( dirName, adapter ) );
     }
 
@@ -166,9 +166,9 @@ public class Processors {
                                                         dirName,
                                                         controlFileEnding,
                                                         logFileEnding ) ),
-                                        new BatchJsonLoggingSuccessListProcessor<Input>( logFileEnding ) ),
+                                        new JsonLoggingBatchedSuccessProcessor<Input>( logFileEnding ) ),
                                 new FilePersistence<List<FetchedItem<Input>>, List<Output>>( dirName, adapter ) ) ),
-                new BatchJsonLoggingFailureProcessor<Input, Output>( dirName, controlFileEnding, logFileEnding ) );
+                new JsonLoggingBatchedFailureProcessor<Input, Output>( dirName, controlFileEnding, logFileEnding ) );
     }
 
     /**

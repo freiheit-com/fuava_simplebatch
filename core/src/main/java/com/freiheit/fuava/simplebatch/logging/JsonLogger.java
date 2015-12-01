@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,8 +19,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author Benjamin Teuber (benjamin.teuber@freiheit.com)
  */
-public class BatchJsonLogger {
-    private static final Logger LOG = LoggerFactory.getLogger( BatchJsonLogger.class );
+public class JsonLogger {
+    private static final Logger LOG = LoggerFactory.getLogger( JsonLogger.class );
     private Path logFile;
 
     private static final AtomicLong counter = new AtomicLong();
@@ -35,15 +34,15 @@ public class BatchJsonLogger {
         return prefix + "_" + count + "_" + "failed_downloads";
     }
 
-    public BatchJsonLogger( Path logFile ) {
+    public JsonLogger( Path logFile ) {
         this.logFile = logFile;
     }
 
-    public synchronized void log( JSONObject o ) {
+    public synchronized void log( JsonLogEntry entry ) {
         try {
-            String line = o.toJSONString() + "\n";
+            String line = entry.toJson() + "\n";
             Files.write( logFile,
-                    line.getBytes(),
+                    line.getBytes( "UTF-8" ),
                     StandardOpenOption.APPEND,
                     StandardOpenOption.CREATE );
 
@@ -52,31 +51,20 @@ public class BatchJsonLogger {
         }
     }
 
-    @SuppressWarnings( "unchecked" )
-    public JSONObject entry( String context, String event, Object... args ) {
-        JSONObject o = new JSONObject();
-        o.put( "time", System.currentTimeMillis() );
-        o.put( "context", context );
-        o.put( "event", event );
-        for ( int i = 0; i + 1 < args.length; i += 2 ) {
-            o.put( args[i], args[i + 1] );
-        }
-        return o;
-    }
-
     public void logWriteEnd( String input, boolean isSuccess ) {
-        log( entry( "write", "end", "success", isSuccess, "input", input ) );
+        log( new JsonLogEntry( "write", "end", isSuccess, null, input ) );
+
     }
 
     public void logImportStart() {
-        log( entry( "import", "start" ) );
+        log( new JsonLogEntry( "import", "start", null, null, null ) );
     }
 
     public void logImportEnd( boolean isSuccess ) {
-        log( entry( "import", "end", "success", isSuccess ) );
+        log( new JsonLogEntry( "import", "end", isSuccess, null, null ) );
     }
 
     public void logImportItem( boolean isSuccess, int number ) {
-        log( entry( "import", "item", "success", isSuccess, "number", number ) );
+        log( new JsonLogEntry( "import", "item", isSuccess, number, null ) );
     }
 }

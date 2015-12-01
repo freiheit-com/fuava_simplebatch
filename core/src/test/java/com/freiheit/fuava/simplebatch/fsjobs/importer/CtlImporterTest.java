@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -40,6 +38,7 @@ import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetchers;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob.ConfigurationImpl;
+import com.freiheit.fuava.simplebatch.logging.JsonLogEntry;
 import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.processor.StringFileWriterAdapter;
 import com.freiheit.fuava.simplebatch.result.Result;
@@ -126,29 +125,30 @@ public class CtlImporterTest {
 
         Assert.assertEquals( logLines.size(), 4 );
 
-        JSONObject downloadEnd = (JSONObject) JSONValue.parse( logLines.get( 0 ) );
-        Assert.assertEquals( downloadEnd.get( "context" ), "write" );
-        Assert.assertEquals( downloadEnd.get( "input" ), "1" );
-        Assert.assertEquals( downloadEnd.get( "event" ), "end" );
-        Assert.assertEquals( downloadEnd.get( "success" ), true );
-        Assert.assertNotNull( downloadEnd.get( "time" ) );
+        JsonLogEntry downloadEnd = JsonLogEntry.fromJson( logLines.get( 0 ) );
+        Assert.assertEquals( downloadEnd.getContext(), "write" );
+        Assert.assertEquals( downloadEnd.getInput(), "1" );
+        Assert.assertEquals( downloadEnd.getEvent(), "end" );
+        Assert.assertEquals( downloadEnd.isSuccess(), true );
+        Assert.assertNotNull( downloadEnd.getTime() );
 
-        JSONObject importStart = (JSONObject) JSONValue.parse( logLines.get( 1 ) );
-        Assert.assertEquals( importStart.get( "context" ), "import" );
-        Assert.assertEquals( importStart.get( "event" ), "start" );
-        Assert.assertNotNull( importStart.get( "time" ) );
+        JsonLogEntry importStart = JsonLogEntry.fromJson( logLines.get( 1 ) );
+        Assert.assertEquals( importStart.getContext(), "import" );
+        Assert.assertEquals( importStart.getEvent(), "start" );
+        Assert.assertNotNull( importStart.getTime() );
 
-        JSONObject importItem = (JSONObject) JSONValue.parse( logLines.get( 2 ) );
-        Assert.assertEquals( importItem.get( "context" ), "import" );
-        Assert.assertEquals( importItem.get( "event" ), "item" );
-        Assert.assertEquals( importItem.get( "number" ), 0L );
-        Assert.assertNotNull( importItem.get( "time" ) );
+        JsonLogEntry importItem = JsonLogEntry.fromJson( logLines.get( 2 ) );
+        Assert.assertEquals( importItem.getContext(), "import" );
+        Assert.assertEquals( importItem.getEvent(), "item" );
+        Assert.assertEquals( importItem.getNumber(), 0 );
+        Assert.assertEquals( importItem.isSuccess(), true );
+        Assert.assertNotNull( importItem.getTime() );
 
-        JSONObject importEnd = (JSONObject) JSONValue.parse( logLines.get( 3 ) );
-        Assert.assertEquals( importEnd.get( "context" ), "import" );
-        Assert.assertEquals( importEnd.get( "event" ), "end" );
-        Assert.assertEquals( importEnd.get( "success" ), true );
-        Assert.assertNotNull( importEnd.get( "time" ) );
+        JsonLogEntry importEnd = JsonLogEntry.fromJson( logLines.get( 3 ) );
+        Assert.assertEquals( importEnd.getContext(), "import" );
+        Assert.assertEquals( importEnd.getEvent(), "end" );
+        Assert.assertEquals( importEnd.isSuccess(), true );
+        Assert.assertNotNull( importEnd.getTime() );
 
         tmp.cleanup();
     }

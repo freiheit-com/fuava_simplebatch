@@ -4,17 +4,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
-import com.freiheit.fuava.simplebatch.logging.BatchJsonLogger;
+import com.freiheit.fuava.simplebatch.logging.JsonLogger;
 import com.freiheit.fuava.simplebatch.result.Result;
 
-public class BatchJsonLoggingProcessor<Input>
+public class JsonLoggingProcessor<Input>
         implements Processor<FetchedItem<Input>, FilePersistenceOutputInfo, FilePersistenceOutputInfo> {
 
     private String dirName;
     private String controlFileEnding;
     private String logFileEnding;
 
-    public BatchJsonLoggingProcessor( String dirName, String controlFileEnding, String logFileEnding ) {
+    public JsonLoggingProcessor( String dirName, String controlFileEnding, String logFileEnding ) {
         this.dirName = dirName;
         this.controlFileEnding = controlFileEnding;
         this.logFileEnding = logFileEnding;
@@ -27,13 +27,17 @@ public class BatchJsonLoggingProcessor<Input>
             Path logFile;
             String failedPrefix = "";
             if ( res.isFailed() ) {
-                failedPrefix = BatchJsonLogger.nextFailedDownloadsName();
+                failedPrefix = JsonLogger.nextFailedDownloadsName();
                 logFile = Paths.get( dirName, failedPrefix + logFileEnding );
             } else {
                 logFile = Paths.get( res.getOutput().getDataFile() + logFileEnding );
             }
-            BatchJsonLogger l = new BatchJsonLogger( logFile );
-            l.logWriteEnd( res.getInput().getValue().toString(), res.isSuccess() );
+            JsonLogger l = new JsonLogger( logFile );
+            Input input = res.getInput().getValue();
+            String inputStr = input == null
+                ? "null"
+                : input.toString();
+            l.logWriteEnd( inputStr, res.isSuccess() );
             if ( res.isFailed() ) {
                 ControlFileWriter.write(
                         Paths.get( dirName, failedPrefix + controlFileEnding ),

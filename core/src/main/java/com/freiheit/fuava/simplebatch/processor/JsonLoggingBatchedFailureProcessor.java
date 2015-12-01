@@ -5,16 +5,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
-import com.freiheit.fuava.simplebatch.logging.BatchJsonLogger;
+import com.freiheit.fuava.simplebatch.logging.JsonLogger;
 import com.freiheit.fuava.simplebatch.result.Result;
 
-public class BatchJsonLoggingFailureProcessor<Input, Output> implements Processor<FetchedItem<Input>, Output, Output> {
+public class JsonLoggingBatchedFailureProcessor<Input, Output> implements Processor<FetchedItem<Input>, Output, Output> {
 
     private String dirName;
     private String controlFileEnding;
     private String logFileEnding;
 
-    public BatchJsonLoggingFailureProcessor( String dirName, String controlFileEnding, String logFileEnding ) {
+    public JsonLoggingBatchedFailureProcessor( String dirName, String controlFileEnding, String logFileEnding ) {
         this.dirName = dirName;
         this.controlFileEnding = controlFileEnding;
         this.logFileEnding = logFileEnding;
@@ -25,12 +25,14 @@ public class BatchJsonLoggingFailureProcessor<Input, Output> implements Processo
         List<String> failedInputs = new ArrayList<String>();
         for ( Result<FetchedItem<Input>, Output> res : iterable ) {
             if ( res.isFailed() ) {
-                failedInputs.add( res.getInput().getValue().toString() );
+                Input input = res.getInput().getValue();
+                String inputStr = input == null ? "null" : input.toString();
+                failedInputs.add( inputStr );
             }
         }
         if ( !failedInputs.isEmpty() ) {
-            String failedPrefix = BatchJsonLogger.nextFailedDownloadsName();
-            BatchJsonLogger l = new BatchJsonLogger( Paths.get( dirName, failedPrefix + logFileEnding ) );
+            String failedPrefix = JsonLogger.nextFailedDownloadsName();
+            JsonLogger l = new JsonLogger( Paths.get( dirName, failedPrefix + logFileEnding ) );
             for ( String failedInput : failedInputs ) {
                 l.logWriteEnd( failedInput, false );
             }
