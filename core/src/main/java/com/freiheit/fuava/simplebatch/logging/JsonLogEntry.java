@@ -1,19 +1,15 @@
 package com.freiheit.fuava.simplebatch.logging;
 
-import com.google.gson.Gson;
-
 public class JsonLogEntry {
-
-    private static final Gson gson = new Gson();
     
-    private String context;
-    private String event;
-    private Boolean success;
-    private String input;
-    private Integer number;
-    private long time;
+    private final String context;
+    private final String event;
+    private final Boolean success;
+    private final String input;
+    private final Integer number;
+    private final long time;
 
-    public JsonLogEntry( String context, String event, Boolean success, Integer number, String input ) {
+    public JsonLogEntry( final String context, final String event, final Boolean success, final Integer number, final String input ) {
         this.context = context;
         this.event = event;
         this.success = success;
@@ -46,11 +42,4 @@ public class JsonLogEntry {
         return time;
     }    
     
-    public String toJson() {
-        return gson.toJson( this );
-    }        
-    
-    public static JsonLogEntry fromJson(String json) {
-        return gson.fromJson( json, JsonLogEntry.class );
-    }
 }

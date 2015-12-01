@@ -14,6 +14,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.Gson;
+
 /**
  * This class sets up per-file json logging for the importer, downloader etc
  *
@@ -21,7 +23,8 @@ import org.slf4j.LoggerFactory;
  */
 public class JsonLogger {
     private static final Logger LOG = LoggerFactory.getLogger( JsonLogger.class );
-    private Path logFile;
+    private final Path logFile;
+    private final Gson gson = new Gson();
 
     private static final AtomicLong counter = new AtomicLong();
 
@@ -34,24 +37,24 @@ public class JsonLogger {
         return prefix + "_" + count + "_" + "failed_downloads";
     }
 
-    public JsonLogger( Path logFile ) {
+    public JsonLogger( final Path logFile ) {
         this.logFile = logFile;
     }
 
-    public synchronized void log( JsonLogEntry entry ) {
+    public synchronized void log( final JsonLogEntry entry ) {
         try {
-            String line = entry.toJson() + "\n";
+            final String line = gson.toJson( entry ) + "\n";
             Files.write( logFile,
                     line.getBytes( "UTF-8" ),
                     StandardOpenOption.APPEND,
                     StandardOpenOption.CREATE );
 
-        } catch ( IOException e ) {
+        } catch ( final IOException e ) {
             LOG.error( e.toString() );
         }
     }
 
-    public void logWriteEnd( String input, boolean isSuccess ) {
+    public void logWriteEnd( final String input, final boolean isSuccess ) {
         log( new JsonLogEntry( "write", "end", isSuccess, null, input ) );
 
     }
@@ -60,11 +63,11 @@ public class JsonLogger {
         log( new JsonLogEntry( "import", "start", null, null, null ) );
     }
 
-    public void logImportEnd( boolean isSuccess ) {
+    public void logImportEnd( final boolean isSuccess ) {
         log( new JsonLogEntry( "import", "end", isSuccess, null, null ) );
     }
 
-    public void logImportItem( boolean isSuccess, int number ) {
+    public void logImportItem( final boolean isSuccess, final int number ) {
         log( new JsonLogEntry( "import", "item", isSuccess, number, null ) );
     }
 }

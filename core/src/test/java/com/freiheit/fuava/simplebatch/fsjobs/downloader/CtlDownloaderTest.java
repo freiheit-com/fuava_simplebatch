@@ -48,12 +48,13 @@ import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
 
 @Test
 public class CtlDownloaderTest {
 
     private static BatchTestDirectory tmp = new BatchTestDirectory( "CtlDownloaderTest" );
-
+    private static Gson GSON = new Gson();
     public static <Input, Output> CtlDownloaderJob.BatchFileWritingBuilder<Input, Output> newTestDownloaderBuilder() {
         return new CtlDownloaderJob.BatchFileWritingBuilder<Input, Output>().setConfiguration(
                 new ConfigurationImpl().setDownloadDirPath( tmp.getDownloadsDir() ) );
@@ -118,25 +119,25 @@ public class CtlDownloaderTest {
         }
 
         // test the log contents of THE LOG file
-        List<String> logLines = Files.readAllLines( Paths.get( expectedLog.toURI() ) );
+        final List<String> logLines = Files.readAllLines( Paths.get( expectedLog.toURI() ) );
 
         Assert.assertEquals( logLines.size(), 6 );
 
-        JsonLogEntry downloadEnd = JsonLogEntry.fromJson( logLines.get( 0 ) );
+        final JsonLogEntry downloadEnd = parse( logLines.get( 0 ) );
         Assert.assertEquals( downloadEnd.getContext(), "write" );
         Assert.assertEquals( downloadEnd.getInput(), "1" );
         Assert.assertEquals( downloadEnd.getEvent(), "end" );
         Assert.assertEquals( downloadEnd.isSuccess(), true );
         Assert.assertNotNull( downloadEnd.getTime() );
 
-        JsonLogEntry write3 = JsonLogEntry.fromJson( logLines.get( 2 ) );
+        final JsonLogEntry write3 = parse( logLines.get( 2 ) );
         Assert.assertEquals( write3.getContext(), "write" );
         Assert.assertEquals( write3.getInput(), "3" );
         Assert.assertEquals( write3.getEvent(), "end" );
         Assert.assertEquals( write3.isSuccess(), true );
         Assert.assertNotNull( write3.getTime() );
 
-        JsonLogEntry write6 = JsonLogEntry.fromJson( logLines.get( 5 ) );
+        final JsonLogEntry write6 = parse( logLines.get( 5 ) );
         Assert.assertEquals( write6.getContext(), "write" );
         Assert.assertEquals( write6.getInput(), "6" );
         Assert.assertEquals( write6.getEvent(), "end" );
@@ -147,6 +148,10 @@ public class CtlDownloaderTest {
         Assert.assertEquals( resultsList, data.values() );
 
         tmp.cleanup();
+    }
+
+    private JsonLogEntry parse( final String logLine ) {
+        return GSON.fromJson( logLine, JsonLogEntry.class );
     }
 
     @Test

@@ -48,6 +48,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
 
 @Test
 public class CtlImporterTest {
@@ -58,10 +59,12 @@ public class CtlImporterTest {
             3, "drei",
             4, "vier" );
 
+    private final Gson GSON = new Gson();
+
     @Test
     public void testDownloadAndImport() throws FileNotFoundException, IOException {
 
-        BatchTestDirectory tmp = new BatchTestDirectory( "CtlImporterTest" );
+        final BatchTestDirectory tmp = new BatchTestDirectory( "CtlImporterTest" );
 
         final AtomicLong counter = new AtomicLong();
         final ResultStatistics downloadResults = new CtlDownloaderJob.Builder<Integer, String>().setConfiguration(
@@ -114,42 +117,46 @@ public class CtlImporterTest {
         Assert.assertTrue( importedLines.size() == 4 );
 
         // test the contents of one file
-        Path file3 = Paths.get( tmp.getArchiveDir(), "3.tmp" );
-        List<String> contentLines = Files.readAllLines( file3 );
+        final Path file3 = Paths.get( tmp.getArchiveDir(), "3.tmp" );
+        final List<String> contentLines = Files.readAllLines( file3 );
         Assert.assertEquals( contentLines.size(), 1 );
         Assert.assertEquals( contentLines.get( 0 ), "drei" );
 
         // test the log contents of one file
-        Path log1 = Paths.get( tmp.getArchiveDir(), "1.tmp.log" );
-        List<String> logLines = Files.readAllLines( log1 );
+        final Path log1 = Paths.get( tmp.getArchiveDir(), "1.tmp.log" );
+        final List<String> logLines = Files.readAllLines( log1 );
 
         Assert.assertEquals( logLines.size(), 4 );
 
-        JsonLogEntry downloadEnd = JsonLogEntry.fromJson( logLines.get( 0 ) );
+        final JsonLogEntry downloadEnd = parse( logLines.get( 0 ) );
         Assert.assertEquals( downloadEnd.getContext(), "write" );
         Assert.assertEquals( downloadEnd.getInput(), "1" );
         Assert.assertEquals( downloadEnd.getEvent(), "end" );
         Assert.assertEquals( downloadEnd.isSuccess(), true );
         Assert.assertNotNull( downloadEnd.getTime() );
 
-        JsonLogEntry importStart = JsonLogEntry.fromJson( logLines.get( 1 ) );
+        final JsonLogEntry importStart = parse( logLines.get( 1 ) );
         Assert.assertEquals( importStart.getContext(), "import" );
         Assert.assertEquals( importStart.getEvent(), "start" );
         Assert.assertNotNull( importStart.getTime() );
 
-        JsonLogEntry importItem = JsonLogEntry.fromJson( logLines.get( 2 ) );
+        final JsonLogEntry importItem = parse( logLines.get( 2 ) );
         Assert.assertEquals( importItem.getContext(), "import" );
         Assert.assertEquals( importItem.getEvent(), "item" );
         Assert.assertEquals( importItem.getNumber(), 0 );
         Assert.assertEquals( importItem.isSuccess(), true );
         Assert.assertNotNull( importItem.getTime() );
 
-        JsonLogEntry importEnd = JsonLogEntry.fromJson( logLines.get( 3 ) );
+        final JsonLogEntry importEnd = parse( logLines.get( 3 ) );
         Assert.assertEquals( importEnd.getContext(), "import" );
         Assert.assertEquals( importEnd.getEvent(), "end" );
         Assert.assertEquals( importEnd.isSuccess(), true );
         Assert.assertNotNull( importEnd.getTime() );
 
         tmp.cleanup();
+    }
+
+    private JsonLogEntry parse( final String logLine ) {
+        return GSON.fromJson( logLine, JsonLogEntry.class );
     }
 }
