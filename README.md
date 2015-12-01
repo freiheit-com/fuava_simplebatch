@@ -276,8 +276,9 @@ client.disconnect();
 
 ## Changes
 
-### 0.4.8 
+### 0.5.0 (2015-12-01) 
  - Fixed: Copyright Headers appropriate for Apache License
+ - Change: CtlImporter and CtlDownloader now create a file ".log" with structured processing state information
 
 ### 0.4.7 (2015-11-20)
  - Fixed: Empty Control Files are now treated as failed results of fetching and do not abort the entire process any more
