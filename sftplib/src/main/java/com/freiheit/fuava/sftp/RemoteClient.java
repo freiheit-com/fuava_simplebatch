@@ -16,10 +16,12 @@
  */
 package com.freiheit.fuava.sftp;
 
-import com.freiheit.fuava.sftp.util.FileType;
-
 import java.io.InputStream;
 import java.util.List;
+
+import javax.annotation.Nonnull;
+
+import com.freiheit.fuava.sftp.util.FileType;
 
 /**
  * Interface for the remote client operations.
@@ -32,6 +34,7 @@ public interface RemoteClient {
      * Returns input stream from a given file path on the remote system in order to download the file. The caller must ensure that the stream is closed.
      *
      */
+    @Nonnull
     InputStream downloadRemoteFile( String pathToFile ) throws Exception;
 
     /**
@@ -53,6 +56,7 @@ public interface RemoteClient {
      * List of objects in a given directory on the remote system.
      *
      */
+    @Nonnull
     List<String> listFolder( String pathToFiles ) throws Exception;
 
     /**
@@ -64,6 +68,7 @@ public interface RemoteClient {
      * @param destinationFolder folder on then remote system where the data shall be moved to.
      * @return String of new location.
      */
+    @Nonnull
     String moveFileAndControlFileFromOneDirectoryToAnother( String pathToControlFile,
             FileType fileType,
             String sourceFolder,

@@ -118,9 +118,13 @@ public final class InMemoryTestRemoteClient<T> implements RemoteClient {
         final T item = tf == null
             ? null
             : tf.getItem( fileName );
-        return item == null
+        final InputStream r = item == null
             ? null
             : inputStreamProvider.apply( item );
+        if ( r == null ) {
+            throw new IllegalArgumentException( "Unknown File " + pathToFile );
+        }
+        return r;
     }
 
     private TestFolder<T> getFolderOfFile( final String pathToFile ) {
