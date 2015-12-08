@@ -400,7 +400,6 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             builder.addListener( new BatchStatisticsLoggingListener<Id, ProcessingResult>( LOG_NAME_BATCH ) );
             builder.addListener( new ItemProgressLoggingListener<Id, ProcessingResult>( LOG_NAME_ITEM ) );
 
-            final Processor<FetchedItem<Id>, Id, ProcessingResult> p = Processors.compose( fileWriter, downloader );
             return new CtlDownloaderJob<Id, ProcessingResult>(
                     builder.getDescription(),
                     builder.getProcessingBatchSize(),
@@ -408,7 +407,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
                     this.configuration == null
                         ? new ConfigurationImpl()
                         : this.configuration,
-                    p,
+                    downloader.then( fileWriter ),
                     builder.getListeners() );
         }
 

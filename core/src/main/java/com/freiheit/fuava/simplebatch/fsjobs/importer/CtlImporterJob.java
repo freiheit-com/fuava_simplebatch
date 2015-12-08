@@ -194,7 +194,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                 new ArrayList<>();
         private Processor<FetchedItem<Data>, Data, Data> contentProcessor;
         private String description;
-        private Processor<FetchedItem<ControlFile>, File, Iterable<Data>> fileProcessor;
+        private Processor<FetchedItem<ControlFile>, File, Iterable<Data>> fileReader;
 
         public Builder() {
         }
@@ -243,7 +243,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
          */
         public Builder<Data> setFileInputStreamReader( final Function<InputStream, Iterable<Data>> documentReader ) {
             final Function<File, Iterable<Data>> fileProcessorFunction = new FileToInputStreamFunction<>( documentReader );
-            fileProcessor = Processors.singleItemFunction( fileProcessorFunction );
+            fileReader = Processors.singleItemFunction( fileProcessorFunction );
             return this;
         }
 
@@ -264,7 +264,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
          * </p>
          */
         public Builder<Data> setFileProcessor( final Processor<FetchedItem<ControlFile>, File, Iterable<Data>> processor ) {
-            this.fileProcessor = processor;
+            this.fileReader = processor;
             return this;
         }
 
@@ -313,32 +313,19 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
             contentProcessingListenerFactories.add(
                     new ImportContentJsonLoggingListenerFactory<Data>( Builder.this.configuration.getProcessingDirPath() ) );
 
-            final Processor<FetchedItem<ControlFile>, ControlFile, File> controlledFileMover =
-                    Processors.controlledFileMover( configuration.getProcessingDirPath() );
-            final Processor<FetchedItem<ControlFile>, ControlFile, Iterable<Data>> fileProcessorAndMover =
-                    Processors.compose( fileProcessor, controlledFileMover );
-
-            final Processor<FetchedItem<ControlFile>, Iterable<Data>, ResultStatistics> innerJobProcessor =
-                    Processors.runBatchJobProcessor(
-                            new Function<FetchedItem<ControlFile>, String>() {
-
-                                @Override
-                                public String apply( final FetchedItem<ControlFile> item ) {
-                                    final ControlFile ctl = item.getValue();
-                                    return ctl.getControlledFileName();
-                                }
-                            }, processingBatchSize, contentProcessor, contentProcessingListenerFactories );
-
-            final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processfileAndMove =
-                    Processors.compose( innerJobProcessor, fileProcessorAndMover );
-
-            final Processor<FetchedItem<ControlFile>, ResultStatistics, ResultStatistics> fileMovingPersistence =
-                    new FileMovingPersistence<ResultStatistics>(
+            final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor =
+                    Processors.<FetchedItem<ControlFile>> controlledFileMover( configuration.getProcessingDirPath() )
+                    .then( fileReader )
+                    .then( Processors.runBatchJobProcessor(
+                            item -> item.getValue().getControlledFileName(), 
+                            processingBatchSize, 
+                            contentProcessor, 
+                            contentProcessingListenerFactories 
+                        ))
+                    .then( new FileMovingPersistence<ResultStatistics>(
                             new File( configuration.getProcessingDirPath() ),
                             new File( configuration.getArchivedDirPath() ),
-                            new File( configuration.getFailedDirPath() ) );
-            final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor =
-                    Processors.compose( fileMovingPersistence, processfileAndMove );
+                            new File( configuration.getFailedDirPath() ) ) );
 
             return new CtlImporterJob<Data>(
                     description,

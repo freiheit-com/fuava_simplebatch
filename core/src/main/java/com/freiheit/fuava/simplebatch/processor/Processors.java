@@ -118,11 +118,14 @@ public class Processors {
             final String controlFileEnding,
             final String logFileEnding,
             final FileOutputStreamAdapter<FetchedItem<T>, Output> adapter ) {
-        return Processors.compose(
-                Processors.compose( new ControlFilePersistence<FetchedItem<T>>(
-                        new ControlFilePersistenceConfigImpl( dirName, controlFileEnding, logFileEnding ) ),
-                        new JsonLoggingProcessor<T>( dirName, controlFileEnding, logFileEnding ) ),
-                new FilePersistence<FetchedItem<T>, Output>( dirName, adapter ) );
+        return
+            // Write File
+            new FilePersistence<FetchedItem<T>, Output>( dirName, adapter )
+            // Write Log
+            .then(new JsonLoggingProcessor<T>( dirName, controlFileEnding, logFileEnding ) )
+            // Move File, Log File and Control File 
+            .then(new ControlFilePersistence<FetchedItem<T>>(
+                new ControlFilePersistenceConfigImpl( dirName, controlFileEnding, logFileEnding ) ));
     }
 
     /**
@@ -137,7 +140,7 @@ public class Processors {
      */
     public static <Input, Output> Processor<Input, Output, BatchProcessorResult<FilePersistenceOutputInfo>> batchFileWriter(
             final String dirName, final FileWriterAdapter<List<Input>, List<Output>> adapter ) {
-        return new BatchProcessor<Input, Output, FilePersistenceOutputInfo>( fileWriter( dirName, adapter ) );
+        return new BatchedSuccessesProcessor<Input, Output, FilePersistenceOutputInfo>( fileWriter( dirName, adapter ) );
     }
 
     /**
@@ -158,18 +161,18 @@ public class Processors {
             final String controlFileEnding,
             final String logFileEnding,
             final FileOutputStreamAdapter<List<FetchedItem<Input>>, List<Output>> adapter ) {
-        return Processors.compose(
-                new BatchProcessor<FetchedItem<Input>, Output, ControlFilePersistenceOutputInfo>(
-                        Processors.compose(
-                                Processors.compose(
-                                        new ControlFilePersistence<List<FetchedItem<Input>>>(
-                                                new ControlFilePersistenceConfigImpl(
-                                                        dirName,
-                                                        controlFileEnding,
-                                                        logFileEnding ) ),
-                                        new JsonLoggingBatchedSuccessProcessor<Input>( logFileEnding ) ),
-                                new FilePersistence<List<FetchedItem<Input>>, List<Output>>( dirName, adapter ) ) ),
-                new JsonLoggingBatchedFailureProcessor<Input, Output>( dirName, controlFileEnding, logFileEnding ) );
+        return 
+            new JsonLoggingBatchedFailureProcessor<Input, Output>( dirName, controlFileEnding, logFileEnding ) 
+            .then(new BatchedSuccessesProcessor<FetchedItem<Input>, Output, ControlFilePersistenceOutputInfo>(
+                    // "Main" processing pipeline, where not a list of results is processed, but a result with a list of successfull items
+                    // write the batch file with the successfull items
+                    new FilePersistence<List<FetchedItem<Input>>, List<Output>>( dirName, adapter )
+                    // add the log entries for the batched items
+                    .then( new JsonLoggingBatchedSuccessProcessor<Input>( logFileEnding ) )
+                    // move the batch file and the control file
+                    .then( new ControlFilePersistence<List<FetchedItem<Input>>>( new ControlFilePersistenceConfigImpl( dirName, controlFileEnding, logFileEnding ) ))
+                )
+            );
     }
 
     /**

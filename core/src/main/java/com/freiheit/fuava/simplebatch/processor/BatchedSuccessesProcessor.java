@@ -22,10 +22,10 @@ import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 
-final class BatchProcessor<Input, Output, P> implements Processor<Input, Output, BatchProcessorResult<P>> {
+final class BatchedSuccessesProcessor<Input, Output, P> implements Processor<Input, Output, BatchProcessorResult<P>> {
     private final Processor<List<Input>, List<Output>, P> delegee;
 
-    public BatchProcessor( final Processor<List<Input>, List<Output>, P> delegee ) {
+    public BatchedSuccessesProcessor( final Processor<List<Input>, List<Output>, P> delegee ) {
         this.delegee = delegee;
     }
 

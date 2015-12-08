@@ -24,6 +24,7 @@ import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob;
 import com.freiheit.fuava.simplebatch.logging.BatchStatisticsLoggingListener;
 import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
+import com.freiheit.fuava.simplebatch.processor.ChainedProcessor;
 import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.Processors;
@@ -115,21 +116,22 @@ public class SftpDownloaderJob {
             final RemoteClient client,
             final RemoteConfiguration remoteConfiguration,
             final Fetcher<SftpFilename> fileFetcher ) {
-
-        final Processor<FetchedItem<SftpFilename>, SftpFilename, ControlFilePersistenceOutputInfo> downloader =
-                Processors.controlledFileWriter( 
-                		config.getDownloadDirPath(), 
-                		config.getControlFileEnding(),
-                		config.getLogFileEnding(),
-                        new SftpDownloadingFileWriterAdapter( client ) );
-
-        final SftpResultFileMover remoteFileMover = new SftpResultFileMover( client, remoteConfiguration.getArchivedFolder() );
-
+        
         return new BatchJob.Builder<SftpFilename, ControlFilePersistenceOutputInfo>()
                 .setFetcher(fileFetcher )
                 .addListener( new BatchStatisticsLoggingListener<>( CtlDownloaderJob.LOG_NAME_BATCH ) )
                 .addListener( new ItemProgressLoggingListener<>( CtlDownloaderJob.LOG_NAME_ITEM ) )
-                .setProcessor( Processors.compose( remoteFileMover, downloader ) )
+                .setProcessor(
+                        // downloader
+                        Processors.controlledFileWriter( 
+                            config.getDownloadDirPath(), 
+                            config.getControlFileEnding(),
+                            config.getLogFileEnding(),
+                            new SftpDownloadingFileWriterAdapter( client ) 
+                        )
+                        // move downloaded files on remote system
+                        .then( new SftpResultFileMover( client, remoteConfiguration.getArchivedFolder() ) ) 
+                    )
                 .setProcessingBatchSize( 1 /*No advantage in processing multiple files at once*/ )
                 .build();
 

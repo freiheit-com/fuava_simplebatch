@@ -118,13 +118,7 @@ public class TestComposition {
     }
 
     private Processor<File, File, String> makeComposedProcessorFileStringProcessor() {
-        final Processor<File, File, File> prepareControlledFileProcessor = Processors.fileMover( "/tmp" );
-        final Processor<File, File, String> readFilesToStringTestProcessor = makeReadFilesToStringTestProcessor();
-
-        return Processors.compose(
-                readFilesToStringTestProcessor,
-                prepareControlledFileProcessor
-                );
+        return Processors.<File> fileMover( "/tmp" ).then( makeReadFilesToStringTestProcessor() );
     }
 
     private Processor<File, File, String> makeReadFilesToStringTestProcessor() {
