@@ -38,6 +38,7 @@ public class Processors {
 
     public static final Logger LOG = LoggerFactory.getLogger( JsonLogger.class );
 
+
     /**
      * Compose two processors. Note that the input of g will be a set of the
      * successful and failed output values from f. Also note that f must not

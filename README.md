@@ -276,6 +276,9 @@ client.disconnect();
 
 ## Changes
 
+### 0.5.1 (2015-12-08)
+ - Add: Chaining of processors via "then"
+
 ### 0.5.0 (2015-12-01) 
  - Fixed: Copyright Headers appropriate for Apache License
  - Change: CtlImporter and CtlDownloader now create a file ".log" with structured processing state information

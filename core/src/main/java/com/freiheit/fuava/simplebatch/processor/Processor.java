@@ -39,4 +39,8 @@ public interface Processor<Input, Data, Persisted> {
      * 
      */
     Iterable<Result<Input, Persisted>> process( Iterable<Result<Input, Data>> iterable );
+
+    default <D> ChainedProcessor<Input, Data, D> then( final Processor<Input, Persisted, D> g ) {
+        return new ChainedProcessor<Input, Data, D>( this, g );
+    }
 }
