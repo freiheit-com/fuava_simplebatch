@@ -37,7 +37,7 @@ class ControlledFileMovingProcessor<Input> extends AbstractSingleItemProcessor<I
     @Override
     public Result<Input, File> processItem( final Result<Input, ControlFile> data ) {
         if ( data.isFailed() ) {
-            // Creation of the control file faile, there is nothing we can do
+            // Creation of the control file failed, there is nothing we can do
             return Result.<Input, File> builder( data ).failed();
         }
         final Input input = data.getInput();
@@ -54,7 +54,9 @@ class ControlledFileMovingProcessor<Input> extends AbstractSingleItemProcessor<I
 
             //move corresponding log file
             final File logFile = ctl.getLogFile();
-            fileMover.moveFile( logFile, processingDir );
+            if ( logFile.exists() ) {
+                fileMover.moveFile( logFile, processingDir );
+            }
 
             //move file that is controlled by the control file
             if ( ctl.getControlledFileName() == null ) {
