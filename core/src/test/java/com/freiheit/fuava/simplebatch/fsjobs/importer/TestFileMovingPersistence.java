@@ -17,82 +17,90 @@ public class TestFileMovingPersistence {
     public void testMoveBoth() throws Exception {
         BatchTestDirectory testDir = new BatchTestDirectory( "file-moving" );
 
-        String sourceDir = testDir.getDownloadsDir();
-        String targetDir = testDir.getArchiveDir();
+        try {
 
-        Files.createDirectory( Paths.get( sourceDir ) );
-        Files.createDirectory( Paths.get( targetDir ) );
+            String sourceDir = testDir.getDownloadsDir();
+            String targetDir = testDir.getArchiveDir();
 
-        String fileA = "/a.txt";
-        String logA = fileA + ".log";
-        String ctlA = fileA + ".ctl";
+            Files.createDirectory( Paths.get( sourceDir ) );
+            Files.createDirectory( Paths.get( targetDir ) );
 
-        Path sourceFileA = Paths.get( sourceDir, fileA );
-        Path sourceLogA = Paths.get( sourceDir, logA );
-        Path sourceCtlA = Paths.get( sourceDir, ctlA );
+            String fileA = "/a.txt";
+            String logA = fileA + ".log";
+            String ctlA = fileA + ".ctl";
 
-        Path targetFileA = Paths.get( targetDir, fileA );
-        Path targetLogA = Paths.get( targetDir, logA );
-        Path targetCtlA = Paths.get( targetDir, ctlA );
+            Path sourceFileA = Paths.get( sourceDir, fileA );
+            Path sourceLogA = Paths.get( sourceDir, logA );
+            Path sourceCtlA = Paths.get( sourceDir, ctlA );
 
-        Files.write( sourceFileA, "Hallo".getBytes() );
-        Files.write( sourceLogA, "logData".getBytes() );
-        Files.write( sourceCtlA, "a".getBytes() );
+            Path targetFileA = Paths.get( targetDir, fileA );
+            Path targetLogA = Paths.get( targetDir, logA );
+            Path targetCtlA = Paths.get( targetDir, ctlA );
 
-        FileMovingPersistence<Object> fileMovingPersistence = new FileMovingPersistence<>( sourceDir, targetDir, "" );
-        ControlFile ctlFile = new ControlFile( sourceDir, "a.txt", "a.txt.log", new File( sourceDir + "/a.txt.ctl" ) );
-        fileMovingPersistence.moveBoth( ctlFile, new File( targetDir ) );
+            Files.write( sourceFileA, "Hallo".getBytes() );
+            Files.write( sourceLogA, "logData".getBytes() );
+            Files.write( sourceCtlA, "a".getBytes() );
 
-        Assert.assertFalse( Files.exists( sourceFileA ) );
-        Assert.assertTrue( Files.exists( targetFileA ) );
+            FileMovingPersistence<Object> fileMovingPersistence = new FileMovingPersistence<>( sourceDir, targetDir, "" );
+            ControlFile ctlFile = new ControlFile( sourceDir, "a.txt", "a.txt.log", new File( sourceDir + "/a.txt.ctl" ) );
+            fileMovingPersistence.moveBoth( ctlFile, new File( targetDir ) );        
 
-        Assert.assertFalse( Files.exists( sourceLogA ) );
-        Assert.assertTrue( Files.exists( targetLogA ) );
+            Assert.assertFalse( Files.exists( sourceFileA ) );
+            Assert.assertTrue( Files.exists( targetFileA ) );
 
-        Assert.assertFalse( Files.exists( sourceCtlA ) );
-        Assert.assertTrue( Files.exists( targetCtlA ) );
+            Assert.assertFalse( Files.exists( sourceLogA ) );
+            Assert.assertTrue( Files.exists( targetLogA ) );
 
-        testDir.cleanup();
+            Assert.assertFalse( Files.exists( sourceCtlA ) );
+            Assert.assertTrue( Files.exists( targetCtlA ) );
+        }
+        finally {
+            testDir.cleanup();
+        }
     }
 
     @Test
-    public void testMoveBothFailingLog() throws Exception {
+    public void testMoveBothNoLog() throws Exception {
         BatchTestDirectory testDir = new BatchTestDirectory( "file-moving" );
 
-        String sourceDir = testDir.getDownloadsDir();
-        String targetDir = testDir.getArchiveDir();
+        try {
+            String sourceDir = testDir.getDownloadsDir();
+            String targetDir = testDir.getArchiveDir();
 
-        Files.createDirectory( Paths.get( sourceDir ) );
-        Files.createDirectory( Paths.get( targetDir ) );
+            Files.createDirectory( Paths.get( sourceDir ) );
+            Files.createDirectory( Paths.get( targetDir ) );
 
-        String fileA = "/a.txt";
-        String logA = fileA + ".log";
-        String ctlA = fileA + ".ctl";
+            String fileA = "/a.txt";
+            String logA = fileA + ".log";
+            String ctlA = fileA + ".ctl";
 
-        Path sourceFileA = Paths.get( sourceDir, fileA );
-        Path sourceLogA = Paths.get( sourceDir, logA );
-        Path sourceCtlA = Paths.get( sourceDir, ctlA );
+            Path sourceFileA = Paths.get( sourceDir, fileA );
+            Path sourceLogA = Paths.get( sourceDir, logA );
+            Path sourceCtlA = Paths.get( sourceDir, ctlA );
 
-        Path targetFileA = Paths.get( targetDir, fileA );
-        Path targetLogA = Paths.get( targetDir, logA );
-        Path targetCtlA = Paths.get( targetDir, ctlA );
+            Path targetFileA = Paths.get( targetDir, fileA );
+            Path targetLogA = Paths.get( targetDir, logA );
+            Path targetCtlA = Paths.get( targetDir, ctlA );
 
-        Files.write( sourceFileA, "Hallo".getBytes() );
-        Files.write( sourceCtlA, "a".getBytes() );
+            Files.write( sourceFileA, "Hallo".getBytes() );
+            Files.write( sourceCtlA, "a".getBytes() );
 
-        FileMovingPersistence<Object> fileMovingPersistence = new FileMovingPersistence<>( sourceDir, targetDir, "" );
-        ControlFile ctlFile = new ControlFile( sourceDir, "a.txt", "a.txt.log", new File( sourceDir + "/a.txt.ctl" ) );
-        fileMovingPersistence.moveBoth( ctlFile, new File( targetDir ) );
+            FileMovingPersistence<Object> fileMovingPersistence = new FileMovingPersistence<>( sourceDir, targetDir, "" );
+            ControlFile ctlFile = new ControlFile( sourceDir, "a.txt", "a.txt.log", new File( sourceDir + "/a.txt.ctl" ) );
+            fileMovingPersistence.moveBoth( ctlFile, new File( targetDir ) );
 
-        Assert.assertFalse( Files.exists( sourceFileA ) );
-        Assert.assertTrue( Files.exists( targetFileA ) );
 
-        Assert.assertFalse( Files.exists( sourceLogA ) );
-        Assert.assertFalse( Files.exists( targetLogA ) );
+            Assert.assertFalse( Files.exists( sourceFileA ) );
+            Assert.assertTrue( Files.exists( targetFileA ) );
 
-        Assert.assertFalse( Files.exists( sourceCtlA ) );
-        Assert.assertTrue( Files.exists( targetCtlA ) );
+            Assert.assertFalse( Files.exists( sourceLogA ) );
+            Assert.assertFalse( Files.exists( targetLogA ) );
 
-        testDir.cleanup();
+            Assert.assertFalse( Files.exists( sourceCtlA ) );
+            Assert.assertTrue( Files.exists( targetCtlA ) );
+
+        } finally {
+            testDir.cleanup();
+        }
     }
 }
