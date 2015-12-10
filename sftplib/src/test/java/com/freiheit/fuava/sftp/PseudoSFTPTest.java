@@ -17,8 +17,11 @@
 package com.freiheit.fuava.sftp;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -33,10 +36,12 @@ import com.freiheit.fuava.sftp.testclient.TestFolder;
 import com.freiheit.fuava.sftp.util.FileType;
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob;
+import com.freiheit.fuava.simplebatch.logging.JsonLogEntry;
 import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 
 @Test
 public class PseudoSFTPTest {
@@ -44,6 +49,8 @@ public class PseudoSFTPTest {
     @Test
     public void testPseudoSFTP() throws IOException {
         final String localTestDir = Files.createTempDirectory( "simplebatch_sftplib-pseudotest" ).toFile().getAbsolutePath();
+        final String downloadFileName = "test_pseudo_152000_20101010_120000.csv";
+        final String downloadFileContent = "{name:'pseudojson'}";
         final CtlDownloaderJob.Configuration localConfig = new CtlDownloaderJob.Configuration() {
 
             @Override
@@ -63,7 +70,7 @@ public class PseudoSFTPTest {
                 "/incoming",
                 new TestFolder<String>(
                         ImmutableMap.<String, String> builder()
-                                .put( "test_pseudo_152000_20101010_120000.csv", "{name:'pseudojson'}" )
+                                .put( downloadFileName, downloadFileContent )
                                 .put( "test_pseudo_152000_20101010_120000.ok", "" )
                                 .build()
 
@@ -82,24 +89,45 @@ public class PseudoSFTPTest {
 
         final ResultStatistics stat = job.run();
 
-        Assert.assertTrue( stat.isAllSuccess() );
-        Assert.assertFalse( stat.isAllFailed() );
-        Assert.assertEquals( stat.getFetchCounts().getSuccess(), 1 );
-        Assert.assertEquals( stat.getProcessingCounts().getSuccess(), 1 );
-        Assert.assertEquals( stat.getFetchCounts().getError(), 0 );
-        Assert.assertEquals( stat.getProcessingCounts().getError(), 0 );
+        try {        
+            Assert.assertTrue( stat.isAllSuccess() );
+            Assert.assertFalse( stat.isAllFailed() );
+            Assert.assertEquals( stat.getFetchCounts().getSuccess(), 1 );
+            Assert.assertEquals( stat.getProcessingCounts().getSuccess(), 1 );
+            Assert.assertEquals( stat.getFetchCounts().getError(), 0 );
+            Assert.assertEquals( stat.getProcessingCounts().getError(), 0 );
 
-        final Map<String, TestFolder<String>> finalState = client.getStateCopy();
-        assertIsNullOrEmpty( finalState, "/incoming" );
-        assertIsNullOrEmpty( finalState, "/skipped/" + LocalDate.now().format( DateTimeFormatter.BASIC_ISO_DATE ) );
-        assertIsNullOrEmpty( finalState, "/processed" );
-        assertIsNullOrEmpty( finalState, "/archived" );
-        final String archivedDirPath = "/archived/" + LocalDate.now().format( DateTimeFormatter.BASIC_ISO_DATE ) + "/";
-        final TestFolder<String> testFolder = finalState.get( archivedDirPath );
-        Assert.assertNotNull( testFolder, "Date-Dependend Archived directory '" + archivedDirPath + "' should not  be null" );
-        final Set<String> archiveContent = testFolder.getItemKeys();
-        Assert.assertEquals( archiveContent.size(), 2 );
-        System.out.println( archiveContent );
+            final Map<String, TestFolder<String>> finalState = client.getStateCopy();
+            assertIsNullOrEmpty( finalState, "/incoming" );
+            assertIsNullOrEmpty( finalState, "/skipped/" + LocalDate.now().format( DateTimeFormatter.BASIC_ISO_DATE ) );
+            assertIsNullOrEmpty( finalState, "/processed" );
+            assertIsNullOrEmpty( finalState, "/archived" );
+            final String archivedDirPath = "/archived/" + LocalDate.now().format( DateTimeFormatter.BASIC_ISO_DATE ) + "/";
+            final TestFolder<String> testFolder = finalState.get( archivedDirPath );
+            Assert.assertNotNull( testFolder, "Date-Dependend Archived directory '" + archivedDirPath + "' should not  be null" );
+            final Set<String> archiveContent = testFolder.getItemKeys();
+            Assert.assertEquals( archiveContent.size(), 2 );
+            System.out.println( archiveContent );
+
+            Path downloadedFile = Files.newDirectoryStream( Paths.get( localTestDir ), "*" + downloadFileName ).iterator().next();
+            String content = Files.readAllLines( downloadedFile ).get( 0 );
+            Assert.assertEquals( content, downloadFileContent );
+
+            Path logFile = Files.newDirectoryStream( Paths.get( localTestDir ), "*" + downloadFileName + ".log" ).iterator().next();
+            String logContent = Files.readAllLines( logFile ).get( 0 );
+
+            JsonLogEntry logEntry = new Gson().fromJson( logContent, JsonLogEntry.class );
+
+            Assert.assertEquals( logEntry.getContext(), "write" );
+            Assert.assertEquals( logEntry.getInput(), downloadFileName );
+            Assert.assertEquals( logEntry.getEvent(), "end" );
+            Assert.assertEquals( logEntry.isSuccess(), true );
+            Assert.assertNotNull( logEntry.getTime() );
+
+        } finally {
+            FileUtils.deleteDirectoryRecursively( new File(localTestDir) );
+        }
+        
         // FIXME: check state -> one success, no skipped dir, one archived subdir with name of current date, nothing in incoming, nothing in processing
     }
 
