@@ -60,7 +60,7 @@ public class FileMovingPersistence<D> extends AbstractSingleItemProcessor<Fetche
         }
     }
 
-    private void moveBoth( final ControlFile input, final File targetDir ) throws FailedToMoveFileException {
+    void moveBoth( final ControlFile input, final File targetDir ) throws FailedToMoveFileException {
         final File dir = processingDir;
         if ( !targetDir.exists() ) {
             if ( !targetDir.mkdirs() ) {
@@ -68,7 +68,10 @@ public class FileMovingPersistence<D> extends AbstractSingleItemProcessor<Fetche
             }
         }
         fileMover.moveFile( new File( dir, input.getFileName() ), targetDir );
-        fileMover.moveFile( new File( dir, input.getLogFileName() ), targetDir );
+        File logFile = new File( dir, input.getLogFileName() );
+        if ( logFile.exists() ) {
+            fileMover.moveFile( logFile, targetDir );
+        }
         if ( input.getControlledFileName() != null ) {
             fileMover.moveFile( new File( dir, input.getControlledFileName() ), targetDir );
         }
