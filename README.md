@@ -276,6 +276,9 @@ client.disconnect();
 
 ## Changes
 
+### 0.5.2 (2015-12-11)
+ - Fix: NPE related to log files
+
 ### 0.5.1 (2015-12-08)
  - Add: Chaining of processors via "then"
 
