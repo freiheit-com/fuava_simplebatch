@@ -276,6 +276,9 @@ client.disconnect();
 
 ## Changes
 
+### 0.5.3 (2015-12-14)
+ - Fix: Include Messages when logging failed results
+
 ### 0.5.2 (2015-12-11)
  - Fix: NPE related to log files
 
