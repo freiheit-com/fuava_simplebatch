@@ -9,11 +9,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 
 /**
@@ -55,19 +57,19 @@ public class JsonLogger {
     }
 
     public void logWriteEnd( final String input, final boolean isSuccess ) {
-        log( new JsonLogEntry( "write", "end", isSuccess, null, input ) );
+        log( new JsonLogEntry( "write", "end", isSuccess, null, input, ImmutableList.of() ) );
 
     }
 
     public void logImportStart() {
-        log( new JsonLogEntry( "import", "start", null, null, null ) );
+        log( new JsonLogEntry( "import", "start", null, null, null, ImmutableList.of() ) );
     }
 
     public void logImportEnd( final boolean isSuccess ) {
-        log( new JsonLogEntry( "import", "end", isSuccess, null, null ) );
+        log( new JsonLogEntry( "import", "end", isSuccess, null, null, ImmutableList.of() ) );
     }
 
-    public void logImportItem( final boolean isSuccess, final int number ) {
-        log( new JsonLogEntry( "import", "item", isSuccess, number, null ) );
+    public void logImportItem( final boolean isSuccess, final int number, final List<String> messages ) {
+        log( new JsonLogEntry( "import", "item", isSuccess, number, null, messages ) );
     }
 }

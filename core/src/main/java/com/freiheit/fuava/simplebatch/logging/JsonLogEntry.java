@@ -1,20 +1,24 @@
 package com.freiheit.fuava.simplebatch.logging;
 
+import java.util.List;
+
 public class JsonLogEntry {
     
     private final String context;
     private final String event;
     private final Boolean success;
     private final String input;
+    private final List<String> messages;
     private final Integer number;
     private final long time;
 
-    public JsonLogEntry( final String context, final String event, final Boolean success, final Integer number, final String input ) {
+    public JsonLogEntry( final String context, final String event, final Boolean success, final Integer number, final String input, final List<String> messages ) {
         this.context = context;
         this.event = event;
         this.success = success;
         this.input = input;
-        this.number = number;                 
+        this.number = number;   
+        this.messages = messages;
         this.time = System.currentTimeMillis();
     }        
 
@@ -42,4 +46,7 @@ public class JsonLogEntry {
         return time;
     }    
     
+    public List<String> getMessages() {
+        return messages;
+    }
 }
