@@ -105,6 +105,7 @@ public class Result<Input, Output> {
                     : Joiner.on( " | " ).join( failureMessages ) );
                 LOG.error( msg, t );
             }
+            withFailureMessage( t.getMessage() );
             withThrowable( t );
             return build( true );
         }
