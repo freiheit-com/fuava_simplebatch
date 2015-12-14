@@ -394,6 +394,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
          */
         public CtlDownloaderJob<Id, ProcessingResult> build( final Processor<FetchedItem<Id>, Data, ProcessingResult> fileWriter ) {
             Preconditions.checkNotNull( fileWriter, "You need to call setFileWriterAdapter first" );
+            Preconditions.checkNotNull( downloader, "You need to set a downloader" );
             final Fetcher<Id> fetcher = builder.getFetcher();
             Preconditions.checkNotNull( fetcher, "Fetcher missing." );
 
