@@ -62,7 +62,8 @@ public class HttpFetcherImpl implements HttpFetcher {
             if ( !( responseCode == 200 || responseCode == 204 ) ) {
                 // TODO: maybe we need to handle responses in a better way?
                 throw new FetchFailedException(
-                        String.format( "Failed to add articles for url %s. Response is %s ", uri,
+                        String.format( "Failed to add items for url %s . Response is %s - %s ", Integer.toString( responseCode ),
+                                uri,
                                 IOStreamUtils.consumeAsString( response.getEntity().getContent() ) ) );
             }
 

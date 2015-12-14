@@ -25,7 +25,8 @@ public class JsonLoggingBatchedFailureProcessor<Input, Output> implements Proces
         List<String> failedInputs = new ArrayList<String>();
         for ( Result<FetchedItem<Input>, Output> res : iterable ) {
             if ( res.isFailed() ) {
-                Input input = res.getInput().getValue();
+                FetchedItem<Input> fetchedItem = res.getInput();
+                Input input = fetchedItem == null ? null : fetchedItem.getValue();
                 String inputStr = input == null ? "null" : input.toString();
                 failedInputs.add( inputStr );
             }
