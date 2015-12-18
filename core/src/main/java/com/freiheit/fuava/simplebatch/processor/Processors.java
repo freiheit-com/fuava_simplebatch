@@ -30,6 +30,7 @@ import com.freiheit.fuava.simplebatch.fsjobs.importer.ControlFile;
 import com.freiheit.fuava.simplebatch.http.HttpDownloaderSettings;
 import com.freiheit.fuava.simplebatch.logging.JsonLogger;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
+import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.freiheit.fuava.simplebatch.util.IOStreamUtils;
 import com.google.common.base.Function;
@@ -38,6 +39,65 @@ public class Processors {
 
     public static final Logger LOG = LoggerFactory.getLogger( JsonLogger.class );
 
+    /**
+     * Takes the original input value and uses it as result, replacing the
+     * previous result but keeping the success/failure state.
+     * 
+     * @author klas
+     *
+     * @param <I>
+     *            Type of the fetched Item
+     * @param <T>
+     *            Type of the previous result
+     */
+    private static final class FetchedInputItemValueProcessor<I, T>
+            extends AbstractSingleItemProcessor<FetchedItem<I>, T, I> {
+        @Override
+        public Result<FetchedItem<I>, I> processItem(
+                final Result<FetchedItem<I>, T> previous ) {
+            final boolean failed = previous.isFailed();
+            final FetchedItem<I> item = previous.getInput();
+            final I input = item == null
+                ? null
+                : item.getValue();
+
+            if ( failed ) {
+                return Result.<FetchedItem<I>, I> builder( previous ).withOutput( input ).failed();
+            } else {
+                return Result.<FetchedItem<I>, I> builder( previous ).withOutput( input ).success();
+            }
+        }
+    }
+
+    /**
+     * Takes the original input value and uses it as result, replacing the
+     * previous result but keeping the success/failure state.
+     * 
+     * @author klas
+     *
+     * @param <I>
+     *            Type of the fetched Item
+     * @param <T>
+     *            Type of the previous result
+     */
+    public static <I, T> Processor<FetchedItem<I>, T, I> fetchedInputItemValueProcessor() {
+        return new FetchedInputItemValueProcessor<I, T>();
+    }
+    
+    /**
+     * Takes the original input value and uses it as result, replacing the
+     * previous result but keeping the success/failure state.
+     * 
+     * @author klas
+     *
+     * @param <I>
+     *            Type of the fetched Item
+     * @param <T>
+     *            Type of the previous result
+     */
+    public static <I, T> Processor<FetchedItem<I>, T, I> fetchedInputItemValueProcessor( final Class<I> cls, final Class<T> cls2 ) {
+        return new FetchedInputItemValueProcessor<I, T>();
+    }
 
     /**
      * Compose two processors. Note that the input of g will be a set of the
