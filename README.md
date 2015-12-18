@@ -276,6 +276,10 @@ client.disconnect();
 
 ## Changes
 
+### 0.5.4 (2015-12-18)
+ - Change: BatchJobMain.exec never calls System.exit but returns an exit Code you need to call System.exit yourself
+ - Add: new Processor in Processors that helps with keeping the type signature of the original type.
+
 ### 0.5.3 (2015-12-14)
  - Fix: Include Messages when logging failed results
 
