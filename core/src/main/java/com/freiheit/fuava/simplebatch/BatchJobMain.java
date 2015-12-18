@@ -38,17 +38,16 @@ public class BatchJobMain {
                 .append( '\n' );
     }
 
-    public static <Input, Output> void exec( final BatchJob<Input, Output> batchJob ) {
+    public static <Input, Output> int exec( final BatchJob<Input, Output> batchJob ) {
         final long startTimeMillis = System.currentTimeMillis();
         final ResultStatistics statistics = batchJob.run();
         final long endTimeMillis = System.currentTimeMillis();
 
         final boolean allFailed = printStatistics( startTimeMillis, statistics, endTimeMillis );
 
-        if ( allFailed ) {
-            System.exit( -1 );
-        }
-        // will exit by itself
+        return allFailed
+            ? -1
+            : 0;
     }
 
     private static <Input, Output> boolean printStatistics(
