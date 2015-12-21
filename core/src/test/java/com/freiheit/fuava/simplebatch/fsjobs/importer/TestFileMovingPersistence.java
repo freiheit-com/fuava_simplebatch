@@ -1,6 +1,7 @@
 package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,34 +16,34 @@ public class TestFileMovingPersistence {
 
     @Test
     public void testMoveBoth() throws Exception {
-        BatchTestDirectory testDir = new BatchTestDirectory( "file-moving" );
+        final BatchTestDirectory testDir = new BatchTestDirectory( "file-moving" );
 
         try {
 
-            String sourceDir = testDir.getDownloadsDir();
-            String targetDir = testDir.getArchiveDir();
+            final String sourceDir = testDir.getDownloadsDir();
+            final String targetDir = testDir.getArchiveDir();
 
             Files.createDirectory( Paths.get( sourceDir ) );
             Files.createDirectory( Paths.get( targetDir ) );
 
-            String fileA = "/a.txt";
-            String logA = fileA + ".log";
-            String ctlA = fileA + ".ctl";
+            final String fileA = "/a.txt";
+            final String logA = fileA + ".log";
+            final String ctlA = fileA + ".ctl";
 
-            Path sourceFileA = Paths.get( sourceDir, fileA );
-            Path sourceLogA = Paths.get( sourceDir, logA );
-            Path sourceCtlA = Paths.get( sourceDir, ctlA );
+            final Path sourceFileA = Paths.get( sourceDir, fileA );
+            final Path sourceLogA = Paths.get( sourceDir, logA );
+            final Path sourceCtlA = Paths.get( sourceDir, ctlA );
 
-            Path targetFileA = Paths.get( targetDir, fileA );
-            Path targetLogA = Paths.get( targetDir, logA );
-            Path targetCtlA = Paths.get( targetDir, ctlA );
+            final Path targetFileA = Paths.get( targetDir, fileA );
+            final Path targetLogA = Paths.get( targetDir, logA );
+            final Path targetCtlA = Paths.get( targetDir, ctlA );
 
-            Files.write( sourceFileA, "Hallo".getBytes() );
-            Files.write( sourceLogA, "logData".getBytes() );
-            Files.write( sourceCtlA, "a".getBytes() );
+            Files.write( sourceFileA, "Hallo".getBytes( StandardCharsets.UTF_8 ) );
+            Files.write( sourceLogA, "logData".getBytes( StandardCharsets.UTF_8 ) );
+            Files.write( sourceCtlA, "a".getBytes( StandardCharsets.UTF_8 ) );
 
-            FileMovingPersistence<Object> fileMovingPersistence = new FileMovingPersistence<>( sourceDir, targetDir, "" );
-            ControlFile ctlFile = new ControlFile( sourceDir, "a.txt", "a.txt.log", new File( sourceDir + "/a.txt.ctl" ) );
+            final FileMovingPersistence<Object> fileMovingPersistence = new FileMovingPersistence<>( sourceDir, targetDir, "" );
+            final ControlFile ctlFile = new ControlFile( sourceDir, "a.txt", "a.txt.log", new File( sourceDir + "/a.txt.ctl" ) );
             fileMovingPersistence.moveBoth( ctlFile, new File( targetDir ) );        
 
             Assert.assertFalse( Files.exists( sourceFileA ) );
@@ -61,32 +62,32 @@ public class TestFileMovingPersistence {
 
     @Test
     public void testMoveBothNoLog() throws Exception {
-        BatchTestDirectory testDir = new BatchTestDirectory( "file-moving" );
+        final BatchTestDirectory testDir = new BatchTestDirectory( "file-moving" );
 
         try {
-            String sourceDir = testDir.getDownloadsDir();
-            String targetDir = testDir.getArchiveDir();
+            final String sourceDir = testDir.getDownloadsDir();
+            final String targetDir = testDir.getArchiveDir();
 
             Files.createDirectory( Paths.get( sourceDir ) );
             Files.createDirectory( Paths.get( targetDir ) );
 
-            String fileA = "/a.txt";
-            String logA = fileA + ".log";
-            String ctlA = fileA + ".ctl";
+            final String fileA = "/a.txt";
+            final String logA = fileA + ".log";
+            final String ctlA = fileA + ".ctl";
 
-            Path sourceFileA = Paths.get( sourceDir, fileA );
-            Path sourceLogA = Paths.get( sourceDir, logA );
-            Path sourceCtlA = Paths.get( sourceDir, ctlA );
+            final Path sourceFileA = Paths.get( sourceDir, fileA );
+            final Path sourceLogA = Paths.get( sourceDir, logA );
+            final Path sourceCtlA = Paths.get( sourceDir, ctlA );
 
-            Path targetFileA = Paths.get( targetDir, fileA );
-            Path targetLogA = Paths.get( targetDir, logA );
-            Path targetCtlA = Paths.get( targetDir, ctlA );
+            final Path targetFileA = Paths.get( targetDir, fileA );
+            final Path targetLogA = Paths.get( targetDir, logA );
+            final Path targetCtlA = Paths.get( targetDir, ctlA );
 
-            Files.write( sourceFileA, "Hallo".getBytes() );
-            Files.write( sourceCtlA, "a".getBytes() );
+            Files.write( sourceFileA, "Hallo".getBytes( StandardCharsets.UTF_8 ) );
+            Files.write( sourceCtlA, "a".getBytes( StandardCharsets.UTF_8 ) );
 
-            FileMovingPersistence<Object> fileMovingPersistence = new FileMovingPersistence<>( sourceDir, targetDir, "" );
-            ControlFile ctlFile = new ControlFile( sourceDir, "a.txt", "a.txt.log", new File( sourceDir + "/a.txt.ctl" ) );
+            final FileMovingPersistence<Object> fileMovingPersistence = new FileMovingPersistence<>( sourceDir, targetDir, "" );
+            final ControlFile ctlFile = new ControlFile( sourceDir, "a.txt", "a.txt.log", new File( sourceDir + "/a.txt.ctl" ) );
             fileMovingPersistence.moveBoth( ctlFile, new File( targetDir ) );
 
 
