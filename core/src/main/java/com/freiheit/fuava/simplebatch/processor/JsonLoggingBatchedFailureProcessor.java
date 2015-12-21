@@ -10,32 +10,34 @@ import com.freiheit.fuava.simplebatch.result.Result;
 
 public class JsonLoggingBatchedFailureProcessor<Input, Output> implements Processor<FetchedItem<Input>, Output, Output> {
 
-    private String dirName;
-    private String controlFileEnding;
-    private String logFileEnding;
+    private final String dirName;
+    private final String controlFileEnding;
+    private final String logFileEnding;
 
-    public JsonLoggingBatchedFailureProcessor( String dirName, String controlFileEnding, String logFileEnding ) {
+    public JsonLoggingBatchedFailureProcessor( final String dirName, final String controlFileEnding, final String logFileEnding ) {
         this.dirName = dirName;
         this.controlFileEnding = controlFileEnding;
         this.logFileEnding = logFileEnding;
     }
 
     @Override
-    public Iterable<Result<FetchedItem<Input>, Output>> process( Iterable<Result<FetchedItem<Input>, Output>> iterable ) {
-        List<String> failedInputs = new ArrayList<String>();
-        for ( Result<FetchedItem<Input>, Output> res : iterable ) {
+    public Iterable<Result<FetchedItem<Input>, Output>> process( final Iterable<Result<FetchedItem<Input>, Output>> iterable ) {
+        final List<String> failedInputs = new ArrayList<String>();
+        final List<String> failureMessages = new ArrayList<String>();
+        for ( final Result<FetchedItem<Input>, Output> res : iterable ) {
             if ( res.isFailed() ) {
-                FetchedItem<Input> fetchedItem = res.getInput();
-                Input input = fetchedItem == null ? null : fetchedItem.getValue();
-                String inputStr = input == null ? "null" : input.toString();
+                final FetchedItem<Input> fetchedItem = res.getInput();
+                final Input input = fetchedItem == null ? null : fetchedItem.getValue();
+                final String inputStr = input == null ? "null" : input.toString();
                 failedInputs.add( inputStr );
+                failureMessages.addAll( res.getAllMessages() );
             }
         }
         if ( !failedInputs.isEmpty() ) {
-            String failedPrefix = JsonLogger.nextFailedDownloadsName();
-            JsonLogger l = new JsonLogger( Paths.get( dirName, failedPrefix + logFileEnding ) );
-            for ( String failedInput : failedInputs ) {
-                l.logWriteEnd( failedInput, false );
+            final String failedPrefix = JsonLogger.nextFailedDownloadsName();
+            final JsonLogger l = new JsonLogger( Paths.get( dirName, failedPrefix + logFileEnding ) );
+            for ( final String failedInput : failedInputs ) {
+                l.logWriteEnd( failedInput, false, failureMessages );
             }
             ControlFileWriter.write(
                     Paths.get( dirName, failedPrefix + controlFileEnding ),

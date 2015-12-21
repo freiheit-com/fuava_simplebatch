@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 
 public class Result<Input, Output> {
     private static final Logger LOG = LoggerFactory.getLogger( Result.class );
@@ -186,6 +187,10 @@ public class Result<Input, Output> {
 
     public Iterable<Throwable> getThrowables() {
         return throwables;
+    }
+
+    public List<String> getAllMessages() {
+        return ImmutableList.copyOf( Iterables.concat( getWarningMessages(), getFailureMessages() ) );
     }
 
     public static <I, O> Result<I, O> success( final I input, final O output ) {

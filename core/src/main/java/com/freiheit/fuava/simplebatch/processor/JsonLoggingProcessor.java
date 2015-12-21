@@ -10,11 +10,11 @@ import com.freiheit.fuava.simplebatch.result.Result;
 public class JsonLoggingProcessor<Input>
         implements Processor<FetchedItem<Input>, FilePersistenceOutputInfo, FilePersistenceOutputInfo> {
 
-    private String dirName;
-    private String controlFileEnding;
-    private String logFileEnding;
+    private final String dirName;
+    private final String controlFileEnding;
+    private final String logFileEnding;
 
-    public JsonLoggingProcessor( String dirName, String controlFileEnding, String logFileEnding ) {
+    public JsonLoggingProcessor( final String dirName, final String controlFileEnding, final String logFileEnding ) {
         this.dirName = dirName;
         this.controlFileEnding = controlFileEnding;
         this.logFileEnding = logFileEnding;
@@ -22,8 +22,8 @@ public class JsonLoggingProcessor<Input>
 
     @Override
     public Iterable<Result<FetchedItem<Input>, FilePersistenceOutputInfo>> process(
-            Iterable<Result<FetchedItem<Input>, FilePersistenceOutputInfo>> iterable ) {
-        for ( Result<FetchedItem<Input>, FilePersistenceOutputInfo> res : iterable ) {
+            final Iterable<Result<FetchedItem<Input>, FilePersistenceOutputInfo>> iterable ) {
+        for ( final Result<FetchedItem<Input>, FilePersistenceOutputInfo> res : iterable ) {
             Path logFile;
             String failedPrefix = "";
             if ( res.isFailed() ) {
@@ -32,12 +32,12 @@ public class JsonLoggingProcessor<Input>
             } else {
                 logFile = Paths.get( res.getOutput().getDataFile() + logFileEnding );
             }
-            JsonLogger l = new JsonLogger( logFile );
-            Input input = res.getInput().getValue();
-            String inputStr = input == null
+            final JsonLogger l = new JsonLogger( logFile );
+            final Input input = res.getInput().getValue();
+            final String inputStr = input == null
                 ? "null"
                 : input.toString();
-            l.logWriteEnd( inputStr, res.isSuccess() );
+            l.logWriteEnd( inputStr, res.isSuccess(), res.getAllMessages() );
             if ( res.isFailed() ) {
                 ControlFileWriter.write(
                         Paths.get( dirName, failedPrefix + controlFileEnding ),

@@ -56,8 +56,8 @@ public class JsonLogger {
         }
     }
 
-    public void logWriteEnd( final String input, final boolean isSuccess ) {
-        log( new JsonLogEntry( "write", "end", isSuccess, null, input, ImmutableList.of() ) );
+    public void logWriteEnd( final String input, final boolean isSuccess, final List<String> messages ) {
+        log( new JsonLogEntry( "write", "end", isSuccess, null, input, messages ) );
 
     }
 
@@ -65,8 +65,8 @@ public class JsonLogger {
         log( new JsonLogEntry( "import", "start", null, null, null, ImmutableList.of() ) );
     }
 
-    public void logImportEnd( final boolean isSuccess ) {
-        log( new JsonLogEntry( "import", "end", isSuccess, null, null, ImmutableList.of() ) );
+    public void logImportEnd( final boolean isSuccess, final List<String> messages ) {
+        log( new JsonLogEntry( "import", "end", isSuccess, null, null, messages ) );
     }
 
     public void logImportItem( final boolean isSuccess, final int number, final List<String> messages ) {
