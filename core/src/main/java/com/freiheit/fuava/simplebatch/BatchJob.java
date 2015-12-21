@@ -17,6 +17,7 @@
 package com.freiheit.fuava.simplebatch;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.annotation.CheckReturnValue;
@@ -102,8 +103,18 @@ public class BatchJob<Input, Output> {
             return this;
         }
 
+        public Builder<Input, Output> addListeners( final Collection<ProcessingResultListener<Input, Output>> listeners ) {
+            this.listeners.addAll( listeners );
+            return this;
+        }
+
         public Builder<Input, Output> removeListener( final ProcessingResultListener<Input, Output> listener ) {
             this.listeners.remove( listener );
+            return this;
+        }
+
+        public Builder<Input, Output> removeListeners( final Collection<ProcessingResultListener<Input, Output>> listeners ) {
+            this.listeners.removeAll( listeners );
             return this;
         }
 
