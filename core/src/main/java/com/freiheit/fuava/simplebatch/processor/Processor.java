@@ -18,7 +18,7 @@ package com.freiheit.fuava.simplebatch.processor;
 
 import com.freiheit.fuava.simplebatch.result.Result;
 
-public interface Processor<Input, Data, Persisted> {
+public interface Processor<OriginalItem, Input, Output> {
 
     /**
      * Write the processing results. Note that you can not expect to only
@@ -38,9 +38,9 @@ public interface Processor<Input, Data, Persisted> {
      * </p>
      * 
      */
-    Iterable<Result<Input, Persisted>> process( Iterable<Result<Input, Data>> iterable );
+    Iterable<Result<OriginalItem, Output>> process( Iterable<Result<OriginalItem, Input>> iterable );
 
-    default <D> ChainedProcessor<Input, Data, D> then( final Processor<Input, Persisted, D> g ) {
-        return new ChainedProcessor<Input, Data, D>( this, g );
+    default <D> ChainedProcessor<OriginalItem, Input, D> then( final Processor<OriginalItem, Output, D> g ) {
+        return new ChainedProcessor<OriginalItem, Input, D>( this, g );
     }
 }
