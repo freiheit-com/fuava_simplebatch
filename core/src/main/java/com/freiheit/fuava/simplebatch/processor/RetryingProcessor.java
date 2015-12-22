@@ -102,7 +102,7 @@ class RetryingProcessor<Input, Output, ProcessorResult> implements Processor<Inp
         final ImmutableList<Result<Input, Output>> successes = FluentIterable.from( iterable ).filter( Result::isSuccess ).toList();
         final ImmutableList<Result<Input, Output>> fails = FluentIterable.from( iterable ).filter( Result::isFailed ).toList();
 
-        final ImmutableList<Output> outputs = FluentIterable.from( successes ).transform( Result::getOutput ).toList();
+        final ImmutableList<Output> outputs = getSuccessOutputs( successes );
 
         final List<ProcessorResult> persistenceResults = outputs.isEmpty()
             ? ImmutableList.of()
@@ -123,6 +123,23 @@ class RetryingProcessor<Input, Output, ProcessorResult> implements Processor<Inp
             b.add( Result.<Input, ProcessorResult> builder( failed ).failed() );
         }
 
+        return b.build();
+    }
+
+    private ImmutableList<Output> getSuccessOutputs( final ImmutableList<Result<Input, Output>> results ) {
+        final ImmutableList.Builder<Output> b = ImmutableList.builder();
+        for ( final Result<Input, Output> r : results ) {
+            if ( r == null ) {
+                throw new IllegalArgumentException( "Result was null in list " + results );
+            }
+            if ( r.isSuccess() ) {
+                final Output o = r.getOutput();
+                if ( o == null ) {
+                    throw new IllegalArgumentException( "A successful Item must not have a null output" );
+                }
+                b.add( o );
+            }
+        }
         return b.build();
     }
 }

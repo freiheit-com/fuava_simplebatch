@@ -131,6 +131,9 @@ public class Result<Input, Output> {
             final Iterable<String> warningMessages,
             final Iterable<String> failureMessages,
             final Iterable<Throwable> ts ) {
+        if ( !failed && output == null ) {
+            throw new IllegalArgumentException( "Successful results always must contain a result" );
+        }
         this.input = input;
         this.output = output;
         this.failed = failed;
