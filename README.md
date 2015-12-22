@@ -276,6 +276,13 @@ client.disconnect();
 
 ## Changes
 
+### 0.5.5 (2015-12-22)
+ - Fix: Include more error messages in JSON Log files
+ - Polishing: fixed findbugs error in tests
+ - Polishing: Processor generic parameter names improved
+ - Add: BatchJob.Builder can handle Lists of listeners
+ - Fix: Fail more verbose if a successful result contains null output value, improve fetcher to be more robust in this case
+ 
 ### 0.5.4 (2015-12-18)
  - Change: BatchJobMain.exec never calls System.exit but returns an exit Code you need to call System.exit yourself
  - Add: new Processor in Processors that helps with keeping the type signature of the original type.
