@@ -61,6 +61,9 @@ public class FileMovingPersistence<D> extends AbstractSingleItemProcessor<Fetche
     }
 
     void moveBoth( final ControlFile input, final File targetDir ) throws FailedToMoveFileException {
+        if ( input == null ) {
+            throw new FailedToMoveFileException( "Cannot Move null control file." );
+        }
         final File dir = processingDir;
         if ( !targetDir.exists() ) {
             if ( !targetDir.mkdirs() ) {
@@ -68,7 +71,7 @@ public class FileMovingPersistence<D> extends AbstractSingleItemProcessor<Fetche
             }
         }
         fileMover.moveFile( new File( dir, input.getFileName() ), targetDir );
-        File logFile = new File( dir, input.getLogFileName() );
+        final File logFile = new File( dir, input.getLogFileName() );
         if ( logFile.exists() ) {
             fileMover.moveFile( logFile, targetDir );
         }

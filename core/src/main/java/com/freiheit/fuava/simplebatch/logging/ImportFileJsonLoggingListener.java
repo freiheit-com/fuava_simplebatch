@@ -22,16 +22,21 @@ public class ImportFileJsonLoggingListener implements ProcessingResultListener<C
 
     @Override
     public void onFetchResult( final Result<FetchedItem<ControlFile>, ControlFile> result ) {
-        FetchedItem<ControlFile> fetchedItem = result.getInput();
-        ControlFile value = fetchedItem == null ? null : fetchedItem.getValue();
-        final String logFileName = value == null ? "failed_control_files.log": value.getLogFileName();
+        final String logFileName = getLogfileName( result );
         final JsonLogger l = new JsonLogger( Paths.get( downloadDir, logFileName ) );
         l.logImportStart();
     }
 
+    private String getLogfileName( final Result<FetchedItem<ControlFile>, ?> result ) {
+        final FetchedItem<ControlFile> fetchedItem = result.getInput();
+        final ControlFile value = fetchedItem == null ? null : fetchedItem.getValue();
+        final String logFileName = value == null ? "failed_control_files.log": value.getLogFileName();
+        return logFileName;
+    }
+
     @Override
     public void onProcessingResult( final Result<FetchedItem<ControlFile>, ResultStatistics> result ) {
-        final String logFileName = result.getInput().getValue().getLogFileName();
+        final String logFileName = getLogfileName( result );
         final String dir = result.isSuccess()
             ? archivedDir
             : failedDir;
