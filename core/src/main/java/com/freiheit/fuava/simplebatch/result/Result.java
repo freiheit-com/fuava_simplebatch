@@ -65,7 +65,8 @@ public class Result<Input, Output> {
             if ( failureMessages == null ) {
                 failureMessages = new ArrayList<String>();
             }
-            failureMessages.add( msg );
+            
+            failureMessages.add( msg == null ? "Failure Message is null!" : msg );
             return this;
         }
 
@@ -80,7 +81,9 @@ public class Result<Input, Output> {
             if ( throwables == null ) {
                 throwables = new ArrayList<Throwable>();
             }
-            throwables.add( t );
+            if ( t != null ) {
+                throwables.add( t );
+            }
             return this;
         }
 
@@ -105,9 +108,9 @@ public class Result<Input, Output> {
                     ? ""
                     : Joiner.on( " | " ).join( failureMessages ) );
                 LOG.error( msg, t );
+                withFailureMessage( t.getMessage() );
+                withThrowable( t );
             }
-            withFailureMessage( t.getMessage() );
-            withThrowable( t );
             return build( true );
         }
 

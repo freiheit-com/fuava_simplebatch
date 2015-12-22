@@ -156,6 +156,54 @@ public class CtlImporterTest {
         tmp.cleanup();
     }
 
+    @Test
+    public void testImportWithNullItems() throws FileNotFoundException, IOException {
+
+        final BatchTestDirectory tmp = new BatchTestDirectory( "CtlImporterTest" );
+        final Map<Integer, String> data = ImmutableMap.of( 1, "test\n\nshould work again" );
+
+        final ResultStatistics downloadResults = new CtlDownloaderJob.Builder<Integer, String>()
+                .setConfiguration(
+                        new ConfigurationImpl()
+                        .setDownloadDirPath( tmp.getDownloadsDir() ) 
+                )
+                .setDownloaderBatchSize( 1 )
+                .setIdsFetcher( Fetchers.iterable( data.keySet() ) )
+                .setDownloader( Processors.retryableBatchedFunction( new MapBasedBatchDownloader<Integer, String>( data ) ) )
+                .setFileWriterAdapter( new StringFileWriterAdapter<FetchedItem<Integer>>() )
+                .build()
+                .run();
+
+        Assert.assertTrue( downloadResults.isAllSuccess() );
+        Assert.assertFalse( downloadResults.isAllFailed() );
+
+        final List<String> importedLines = new ArrayList<String>();
+
+        new CtlImporterJob.Builder<String>()
+                .setConfiguration(
+                        new CtlImporterJob.ConfigurationImpl()
+                        .setArchivedDirPath( tmp.getArchiveDir() )
+                        .setDownloadDirPath( tmp.getDownloadsDir() )
+                        .setFailedDirPath( tmp.getFailsDir() )
+                        .setProcessingDirPath( tmp.getProcessingDir() ) 
+                ).setFileInputStreamReader( input -> {
+                         // Override the actual data, enforce a null in the result 
+                        final ArrayList<String> list = new ArrayList<String>();
+                        list.add( "test" );
+                        list.add( null );
+                        list.add( "should work again" );
+                        return list;
+                    }
+                ).setContentProcessor( Processors.retryableBatchedFunction( input -> {
+                        importedLines.addAll( input );
+                        return input;
+                    } ) 
+                ).build().run();
+
+        Assert.assertEquals( ImmutableSet.copyOf( importedLines ), ImmutableSet.of( "test", "should work again" ) );
+        tmp.cleanup();
+    }
+
     private JsonLogEntry parse( final String logLine ) {
         return GSON.fromJson( logLine, JsonLogEntry.class );
     }
