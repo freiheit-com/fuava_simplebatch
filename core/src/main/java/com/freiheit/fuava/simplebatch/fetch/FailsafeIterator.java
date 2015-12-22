@@ -58,7 +58,11 @@ public final class FailsafeIterator<T> implements Iterator<Result<FetchedItem<T>
         }
         try {
             final T value = iterator.next();
-            return Result.success( nextFetchedItem( value ), value );
+            if ( value == null ) {
+                return Result.failed( nextFetchedItem( null ), "Null is not a valid fetching result" );
+            } else {
+                return Result.success( nextFetchedItem( value ), value );
+            }
         } catch ( final Throwable t ) {
             return Result.failed( nextFetchedItem( null ), "Failed to call next for delegate iterator", t );
         }
