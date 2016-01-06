@@ -25,6 +25,7 @@ import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.fetch.Fetchers;
+import com.freiheit.fuava.simplebatch.fetch.IterableFetcherWrapper;
 import com.freiheit.fuava.simplebatch.fsjobs.downloader.CtlDownloaderJob;
 import com.freiheit.fuava.simplebatch.logging.BatchStatisticsLoggingListener;
 import com.freiheit.fuava.simplebatch.logging.ImportFileJsonLoggingListener;
@@ -32,10 +33,12 @@ import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
+import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
+import com.google.common.collect.ImmutableList;
 
 /**
  * An importer that imports files from the file system, adhering to the control
@@ -194,7 +197,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                 new ArrayList<>();
         private Processor<FetchedItem<Data>, Data, Data> contentProcessor;
         private String description;
-        private Processor<FetchedItem<ControlFile>, File, Iterable<Data>> fileReader;
+        private Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<Data>, Data>>> fileReader;
 
         public Builder() {
         }
@@ -240,9 +243,39 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
          * This function is a simple alternative to
          * {@link #setFileProcessor(Processor)}.
          * </p>
+         * 
+         * @deprecated Use
+         *             {@link #setFetchedItemsFileInputStreamReader(Function)}
+         *             instead
          */
+        @Deprecated
         public Builder<Data> setFileInputStreamReader( final Function<InputStream, Iterable<Data>> documentReader ) {
-            final Function<File, Iterable<Data>> fileProcessorFunction = new FileToInputStreamFunction<>( documentReader );
+            final Function<File, Iterable<Result<FetchedItem<Data>, Data>>> fileProcessorFunction =
+                    new FileToInputStreamFunction<>( is -> new IterableFetcherWrapper<Data>( documentReader.apply( is ) ) );
+            fileReader = Processors.singleItemFunction( fileProcessorFunction );
+            //Result<FetchedItem<Data>, Data>
+            return this;
+        }
+
+        /**
+         * The given function is used for each file to convert the contents of
+         * that file (accessed by an {@link InputStream}) into an iterable.
+         *
+         * <p>
+         * Note that your Iterable will be processed lazily by creating
+         * partitions of size {@link #setContentBatchSize(int)}. After that, it
+         * will be passed to the persistence configured in
+         * {@link #setContentProcessor(Processor)}.
+         * </p>
+         *
+         * <p>
+         * This function is a simple alternative to
+         * {@link #setFetchedItemsFileProcessor(Processor)}.
+         * </p>
+         */
+        public Builder<Data> setFetchedItemsFileInputStreamReader(
+                final Function<InputStream, Iterable<Result<FetchedItem<Data>, Data>>> documentReader ) {
+            final Function<File, Iterable<Result<FetchedItem<Data>, Data>>> fileProcessorFunction = new FileToInputStreamFunction<>( documentReader );
             fileReader = Processors.singleItemFunction( fileProcessorFunction );
             return this;
         }
@@ -262,8 +295,57 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
          * This function is a powerful alternative to
          * {@link #setFileInputStreamReader(Function)}.
          * </p>
+         * 
+         * @deprecated Use {@link #setFetchedItemsFileProcessor(Processor)}
+         *             instead
          */
+        @Deprecated
         public Builder<Data> setFileProcessor( final Processor<FetchedItem<ControlFile>, File, Iterable<Data>> processor ) {
+            this.fileReader = new Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<Data>, Data>>>() {
+
+                @Override
+                public Iterable<Result<FetchedItem<ControlFile>, Iterable<Result<FetchedItem<Data>, Data>>>> process(
+                        final Iterable<Result<FetchedItem<ControlFile>, File>> iterable ) {
+                    final Iterable<Result<FetchedItem<ControlFile>, Iterable<Data>>> origResult = processor.process( iterable );
+                    final ImmutableList.Builder<Result<FetchedItem<ControlFile>, Iterable<Result<FetchedItem<Data>, Data>>>> b =
+                            ImmutableList.builder();
+                    for ( final Result<FetchedItem<ControlFile>, Iterable<Data>> r : origResult ) {
+                        final Iterable<Data> output = r.getOutput();
+                        final Result.Builder<FetchedItem<ControlFile>, Iterable<Result<FetchedItem<Data>, Data>>> builder =
+                                Result.builder( r );
+                        if ( r.isSuccess() ) {
+                            b.add( builder.withOutput( output == null
+                                ? null
+                                : new IterableFetcherWrapper<Data>( output ) ).success() );
+                        } else {
+                            b.add( builder.failed() );
+                        }
+                    }
+                    return b.build();
+                }
+            };
+            return this;
+        }
+
+        /**
+         * Set the processor which is used to convert the File into an iterable
+         * of Data items.
+         *
+         * <p>
+         * Note that your Iterable will be processed lazily by creating
+         * partitions of size {@link #setContentBatchSize(int)}. After that, it
+         * will be passed to the persistence configured in
+         * {@link #setContentProcessor(Processor)}.
+         * </p>
+         * 
+         * <p>
+         * This function is a powerful alternative to
+         * {@link #setFetchedItemsFileInputStreamReader(Function)}.
+         * </p>
+         * 
+         */
+        public Builder<Data> setFetchedItemsFileProcessor(
+                final Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<Data>, Data>>> processor ) {
             this.fileReader = processor;
             return this;
         }

@@ -246,7 +246,7 @@ public class Processors {
      * Note that this means, that the instances provided to the builder will be
      * used for multiple instances of the (inner) BatchJob.
      */
-    public static <Input, Data> Processor<Input, Iterable<Data>, ResultStatistics> runBatchJobProcessor(
+    public static <Input, Data> Processor<Input, Iterable<Result<FetchedItem<Data>, Data>>, ResultStatistics> runBatchJobProcessor(
             final Function<Input, String> jobDescriptionFunc, final int processingBatchSize,
             final Processor<FetchedItem<Data>, Data, Data> contentProcessor,
             final List<Function<? super Input, ProcessingResultListener<Data, Data>>> contentProcessingListeners ) {

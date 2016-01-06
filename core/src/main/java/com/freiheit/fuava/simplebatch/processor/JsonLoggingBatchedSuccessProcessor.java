@@ -31,7 +31,7 @@ public class JsonLoggingBatchedSuccessProcessor<Input>
                     final JsonLogger l = new JsonLogger( Paths.get(
                             output.getDataFile().toString() + logFileEnding ) );
                     for ( final FetchedItem<Input> item : res.getInput() ) {
-                        l.logWriteEnd( item.getValue().toString(), res.isSuccess(), res.getAllMessages() );
+                        l.logWriteEnd( item.getValue().toString(), res.isSuccess(), res.getAllMessages(), item.getIdentifier() );
                     }
                 } else {
                     LOG.warn( "No Output for successfully processed Item " + res );

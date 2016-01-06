@@ -33,11 +33,12 @@ public class JsonLoggingProcessor<Input>
                 logFile = Paths.get( res.getOutput().getDataFile() + logFileEnding );
             }
             final JsonLogger l = new JsonLogger( logFile );
-            final Input input = res.getInput().getValue();
+            final FetchedItem<Input> fetchedItem = res.getInput();
+            final Input input = fetchedItem.getValue();
             final String inputStr = input == null
                 ? "null"
                 : input.toString();
-            l.logWriteEnd( inputStr, res.isSuccess(), res.getAllMessages() );
+            l.logWriteEnd( inputStr, res.isSuccess(), res.getAllMessages(), fetchedItem.getIdentifier() );
             if ( res.isFailed() ) {
                 ControlFileWriter.write(
                         Paths.get( dirName, failedPrefix + controlFileEnding ),

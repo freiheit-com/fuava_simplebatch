@@ -26,8 +26,15 @@ public class ImportContentJsonLoggingListenerFactory<Data>
         return new ProcessingResultListener<Data, Data>() {
             @Override
             public void onProcessingResult( final Result<FetchedItem<Data>, Data> result ) {
+                final FetchedItem<Data> fetchedItem = result.getInput();
+                final String identifier = fetchedItem == null
+                    ? null
+                    : fetchedItem.getIdentifier();
+
                 logger.logImportItem( result.isSuccess(), result.getInput().getNum(),
-                        ImmutableList.copyOf( Iterables.concat( result.getWarningMessages(), result.getFailureMessages() ) ) );
+                        ImmutableList.copyOf(
+                                Iterables.concat( result.getWarningMessages(), result.getFailureMessages() ) ),
+                        identifier );
             }
         };
     }

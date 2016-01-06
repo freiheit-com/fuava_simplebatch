@@ -23,8 +23,13 @@ public class ImportFileJsonLoggingListener implements ProcessingResultListener<C
     @Override
     public void onFetchResult( final Result<FetchedItem<ControlFile>, ControlFile> result ) {
         final String logFileName = getLogfileName( result );
+        final FetchedItem<ControlFile> fetchedItem = result.getInput();
+        final String identifier = fetchedItem == null
+            ? null
+            : fetchedItem.getIdentifier();
+
         final JsonLogger l = new JsonLogger( Paths.get( downloadDir, logFileName ) );
-        l.logImportStart();
+        l.logImportStart( identifier );
     }
 
     private String getLogfileName( final Result<FetchedItem<ControlFile>, ?> result ) {
@@ -36,11 +41,16 @@ public class ImportFileJsonLoggingListener implements ProcessingResultListener<C
 
     @Override
     public void onProcessingResult( final Result<FetchedItem<ControlFile>, ResultStatistics> result ) {
+        final FetchedItem<ControlFile> fetchedItem = result.getInput();
+        final String identifier = fetchedItem == null
+            ? null
+            : fetchedItem.getIdentifier();
+
         final String logFileName = getLogfileName( result );
         final String dir = result.isSuccess()
             ? archivedDir
             : failedDir;
         final JsonLogger l = new JsonLogger( Paths.get( dir, logFileName ) );
-        l.logImportEnd( result.isSuccess(), result.getAllMessages() );
+        l.logImportEnd( result.isSuccess(), result.getAllMessages(), identifier );
     }
 }

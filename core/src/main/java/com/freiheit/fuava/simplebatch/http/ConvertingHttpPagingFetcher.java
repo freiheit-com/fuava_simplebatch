@@ -67,12 +67,17 @@ public class ConvertingHttpPagingFetcher<Raw, T> implements Fetcher<T> {
         this( new HttpFetcherImpl( client ), settings, converter, resultTransformer, initialFrom, pageSize );
     }
 
-    public static final class ResultStateKeepingTransformerImpl<I, T> implements ResultTransformer<Result<I, T>, T> {
+    public static class ResultStateKeepingTransformerImpl<I, T> implements ResultTransformer<Result<I, T>, T> {
         // ResultTransformer will be called while iterating over the
         // concatenated iterable. This will happen within one thread - so we do not
         // need to handle concurrency here. Furtheremore, we can simply use this function
         // to count the rows, because it is used tor transforming an iterator, not an iterable.
         private int counter;
+        
+        protected String getIdentifier(final Result<I, T> input) {
+            final I i = input.getInput();
+            return i == null ? null : i.toString();
+        }
 
         @Override
         public Iterator<Result<FetchedItem<T>, T>> apply( final Result<PagingInput, Iterable<Result<I, T>>> input ) {
@@ -87,16 +92,17 @@ public class ConvertingHttpPagingFetcher<Raw, T> implements Fetcher<T> {
             return Iterators.transform( fetchedItems, new Function<Result<I, T>, Result<FetchedItem<T>, T>>() {
                 @Override
                 public Result<FetchedItem<T>, T> apply( final Result<I, T> input ) {
+                    final String identifier = getIdentifier( input );
                     if (input.isFailed()) {
                         return Result.<FetchedItem<T>, T>builder()
-                                .withInput( FetchedItem.of( null, counter++ ) )
+                                .withInput( FetchedItem.of( null, counter++, identifier ) )
                                 .withFailureMessages( input.getFailureMessages() )
                                 .withThrowables( input.getThrowables() )
                                 .failed();
                         
                     }
                     return Result.<FetchedItem<T>, T>builder()
-                            .withInput( FetchedItem.of( input.getOutput(), counter++ ) )
+                            .withInput( FetchedItem.of( input.getOutput(), counter++, identifier ) )
                             .withOutput( input.getOutput() )
                             .withWarningMessages( input.getWarningMessages() )
                             .withFailureMessages( input.getFailureMessages() )

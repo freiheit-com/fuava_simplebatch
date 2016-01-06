@@ -160,6 +160,54 @@ public class CtlImporterTest {
     public void testImportWithNullItems() throws FileNotFoundException, IOException {
 
         final BatchTestDirectory tmp = new BatchTestDirectory( "CtlImporterTest" );
+        final Map<Integer, String> data = ImmutableMap.of( 1, "test\nshould work again" );
+
+        final ResultStatistics downloadResults = new CtlDownloaderJob.Builder<Integer, String>()
+                .setConfiguration(
+                        new ConfigurationImpl()
+                        .setDownloadDirPath( tmp.getDownloadsDir() ) 
+                )
+                .setDownloaderBatchSize( 1 )
+                .setIdsFetcher( Fetchers.iterable( data.keySet() ) )
+                .setDownloader( Processors.retryableBatchedFunction( new MapBasedBatchDownloader<Integer, String>( data ) ) )
+                .setFileWriterAdapter( new StringFileWriterAdapter<FetchedItem<Integer>>() )
+                .build()
+                .run();
+
+        Assert.assertTrue( downloadResults.isAllSuccess() );
+        Assert.assertFalse( downloadResults.isAllFailed() );
+
+        final List<String> importedLines = new ArrayList<String>();
+
+        new CtlImporterJob.Builder<String>()
+                .setConfiguration(
+                        new CtlImporterJob.ConfigurationImpl()
+                        .setArchivedDirPath( tmp.getArchiveDir() )
+                        .setDownloadDirPath( tmp.getDownloadsDir() )
+                        .setFailedDirPath( tmp.getFailsDir() )
+                        .setProcessingDirPath( tmp.getProcessingDir() ) 
+                ).setFetchedItemsFileInputStreamReader( input -> {
+                         // Override the actual data, enforce a null in the result 
+                        final ArrayList<Result<FetchedItem<String>, String>> list = new ArrayList<Result<FetchedItem<String>, String>>();
+                        list.add( Result.success( FetchedItem.of( "test", 1, "id:1" ), "test" ) );
+                        list.add( Result.failed( FetchedItem.of( null, 2, "id:2" ), "message: null row invalid" ) );
+                        list.add( Result.success( FetchedItem.of( "test", 3, "id:3" ), "should work again" ) );
+                        return list;
+                    }
+                ).setContentProcessor( Processors.retryableBatchedFunction( input -> {
+                        importedLines.addAll( input );
+                        return input;
+                    } ) 
+                ).build().run();
+
+        Assert.assertEquals( ImmutableSet.copyOf( importedLines ), ImmutableSet.of( "test", "should work again" ) );
+        tmp.cleanup();
+    }
+    
+    @Test
+    public void testFetchedImport() throws FileNotFoundException, IOException {
+
+        final BatchTestDirectory tmp = new BatchTestDirectory( "CtlImporterTest" );
         final Map<Integer, String> data = ImmutableMap.of( 1, "test\n\nshould work again" );
 
         final ResultStatistics downloadResults = new CtlDownloaderJob.Builder<Integer, String>()
@@ -203,7 +251,6 @@ public class CtlImporterTest {
         Assert.assertEquals( ImmutableSet.copyOf( importedLines ), ImmutableSet.of( "test", "should work again" ) );
         tmp.cleanup();
     }
-
     private JsonLogEntry parse( final String logLine ) {
         return GSON.fromJson( logLine, JsonLogEntry.class );
     }

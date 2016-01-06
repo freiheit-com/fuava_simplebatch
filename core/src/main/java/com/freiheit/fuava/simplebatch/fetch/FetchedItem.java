@@ -16,21 +16,37 @@
  */
 package com.freiheit.fuava.simplebatch.fetch;
 
+import javax.annotation.Nullable;
+
 import com.freiheit.fuava.simplebatch.util.StringUtils;
 
 public class FetchedItem<T> {
     public static final int FIRST_ROW = 0;
     private final int num;
     private final T value;
+    @Nullable
+    private final String rowIdentifier;
 
-    protected FetchedItem( final T value, final int num ) {
+    protected FetchedItem( final T value, final int num, @Nullable final String rowIdentifier ) {
         this.value = value;
         this.num = num;
+        this.rowIdentifier = rowIdentifier;
     }
 
+    /**
+     * Creates a fetched Item from a value and row num. You should use the
+     * creation function with a row identifier instead.
+     */
+    @Deprecated
     public static <T> FetchedItem<T> of( final T value, final int rowNum ) {
-        return new FetchedItem<T>( value, rowNum );
+        return of( value, rowNum, null );
+    }
 
+    /**
+     * Creates a fetched Item from a value, row num and a row identifier.
+     */
+    public static <T> FetchedItem<T> of( final T value, final int rowNum, @Nullable final String rowIdentifier ) {
+        return new FetchedItem<T>( value, rowNum, rowIdentifier );
     }
 
     /**
@@ -44,8 +60,16 @@ public class FetchedItem<T> {
         return value;
     }
 
+    public String getIdentifier() {
+        return rowIdentifier;
+    }
+
     @Override
     public String toString() {
-        return "[" + this.num + "] " + StringUtils.toMaxLengthString( value, 40 );
+
+        if ( rowIdentifier == null ) {
+            return "[Row: " + this.num + "] " + StringUtils.toMaxLengthString( value, 100 );
+        }
+        return "[" + rowIdentifier + " | Row: " + this.num + "] " + StringUtils.toMaxLengthString( value, 100 );
     }
 }

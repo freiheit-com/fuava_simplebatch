@@ -23,6 +23,7 @@ public class JsonLoggingBatchedFailureProcessor<Input, Output> implements Proces
     @Override
     public Iterable<Result<FetchedItem<Input>, Output>> process( final Iterable<Result<FetchedItem<Input>, Output>> iterable ) {
         final List<String> failedInputs = new ArrayList<String>();
+        final List<String> failedIds = new ArrayList<String>();
         final List<String> failureMessages = new ArrayList<String>();
         for ( final Result<FetchedItem<Input>, Output> res : iterable ) {
             if ( res.isFailed() ) {
@@ -30,6 +31,12 @@ public class JsonLoggingBatchedFailureProcessor<Input, Output> implements Proces
                 final Input input = fetchedItem == null ? null : fetchedItem.getValue();
                 final String inputStr = input == null ? "null" : input.toString();
                 failedInputs.add( inputStr );
+                final String idString = fetchedItem == null
+                    ? null
+                    : fetchedItem.getIdentifier();
+                if ( idString != null ) {
+                    failedIds.add( idString );
+                }
                 failureMessages.addAll( res.getAllMessages() );
             }
         }
@@ -37,7 +44,7 @@ public class JsonLoggingBatchedFailureProcessor<Input, Output> implements Proces
             final String failedPrefix = JsonLogger.nextFailedDownloadsName();
             final JsonLogger l = new JsonLogger( Paths.get( dirName, failedPrefix + logFileEnding ) );
             for ( final String failedInput : failedInputs ) {
-                l.logWriteEnd( failedInput, false, failureMessages );
+                l.logWriteEnd( failedInput, false, failureMessages, failedIds.toString() );
             }
             ControlFileWriter.write(
                     Paths.get( dirName, failedPrefix + controlFileEnding ),

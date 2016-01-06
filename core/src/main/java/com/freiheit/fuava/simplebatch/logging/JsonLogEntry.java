@@ -11,14 +11,23 @@ public class JsonLogEntry {
     private final List<String> messages;
     private final Integer number;
     private final long time;
+    private final String idString;
 
-    public JsonLogEntry( final String context, final String event, final Boolean success, final Integer number, final String input, final List<String> messages ) {
+    public JsonLogEntry(
+            final String context,
+            final String event,
+            final Boolean success,
+            final Integer number,
+            final String input,
+            final List<String> messages,
+            final String idString ) {
         this.context = context;
         this.event = event;
         this.success = success;
         this.input = input;
         this.number = number;   
         this.messages = messages;
+        this.idString = idString;
         this.time = System.currentTimeMillis();
     }        
 
@@ -49,4 +58,9 @@ public class JsonLogEntry {
     public List<String> getMessages() {
         return messages;
     }
+
+    public String getIdString() {
+        return idString;
+    }
+
 }

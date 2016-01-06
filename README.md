@@ -276,6 +276,9 @@ client.disconnect();
 
 ## Changes
 
+### 0.5.8 (2016-01-06)
+ - Support for providing an (optional) identifier for each processed item, which will be used for logging
+
 ### 0.5.5 (2015-12-22)
  - Fix: Include more error messages in JSON Log files
  - Polishing: fixed findbugs error in tests
