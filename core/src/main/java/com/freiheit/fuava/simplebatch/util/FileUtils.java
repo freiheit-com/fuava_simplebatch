@@ -27,8 +27,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-import com.google.common.base.Strings;
-
 public class FileUtils {
 
     public static final String PLACEHOLDER_DATE = "%(DATE)";
