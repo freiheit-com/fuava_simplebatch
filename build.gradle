@@ -18,13 +18,16 @@ subprojects {
     apply plugin: 'eclipse'
     apply plugin: 'checkstyle'
     apply plugin: 'findbugs'
+    apply plugin: 'maven-publish'
+
+    group = 'com.freiheit.fuava'
 
     sourceCompatibility = JavaVersion.VERSION_1_8
 
     dependencies {
         testCompile 'org.testng:testng:6.9.4'
     }
-   
+
     checkstyle {
         configFile = file( "${rootProject.projectDir}/etc/checkstyle/checkstyle_checks.xml" )
         configProperties = [ 'basedir': "${rootProject.projectDir}/etc/" ]
@@ -47,6 +50,6 @@ subprojects {
 
     test {
         useTestNG()
-    }   
+    }
 }
 

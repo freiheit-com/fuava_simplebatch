@@ -20,3 +20,25 @@ dependencies {
 
 }
 
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId 'fuava-simplebatch-sftplib'
+            from components.java
+            artifact sourceJar {
+                classifier "sources"
+            }
+
+        }
+    }
+
+    repositories {
+        maven {
+            url "build/maven_repo"
+        }
+    }
+}
