@@ -20,6 +20,17 @@ import javax.annotation.Nullable;
 
 import com.freiheit.fuava.simplebatch.util.StringUtils;
 
+/**
+ * A FetchedItem is a container for a single item.
+ * 
+ * It is used to transport information about the original input value, the row
+ * number wrt the complete input, and a possible identifying string of the item
+ * being processed.
+ * 
+ * @author klas.kalass@freiheit.com
+ *
+ * @param <T>
+ */
 public class FetchedItem<T> {
     public static final int FIRST_ROW = 0;
     private final int num;

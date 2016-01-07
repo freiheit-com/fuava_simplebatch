@@ -26,6 +26,19 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
+/**
+ * Contains the result of a fetching or processing step.
+ * 
+ * A result can either be successful or failed.
+ * 
+ * @author klas.kalass@freiheit.com
+ *
+ * @param <Input>
+ *            The item which is considered the input for the fetching or
+ *            processing step
+ * @param <Output>
+ *            The item which is the result of the fetching or processing step
+ */
 public class Result<Input, Output> {
     private static final Logger LOG = LoggerFactory.getLogger( Result.class );
 
