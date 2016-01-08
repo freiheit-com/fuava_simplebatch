@@ -19,16 +19,16 @@ package com.freiheit.fuava.simplebatch.processor;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.collect.ImmutableList;
 
-public abstract class AbstractSingleItemProcessor<Input, Output, P> implements Processor<Input, Output, P> {
+public abstract class AbstractSingleItemProcessor<OriginalItem, Input, Output> implements Processor<OriginalItem, Input, Output> {
 
     @Override
-    public final Iterable<Result<Input, P>> process( final Iterable<Result<Input, Output>> iterable ) {
-        final ImmutableList.Builder<Result<Input, P>> b = ImmutableList.builder();
-        for ( final Result<Input, Output> input : iterable ) {
+    public final Iterable<Result<OriginalItem, Output>> process( final Iterable<Result<OriginalItem, Input>> iterable ) {
+        final ImmutableList.Builder<Result<OriginalItem, Output>> b = ImmutableList.builder();
+        for ( final Result<OriginalItem, Input> input : iterable ) {
             b.add( processItem( input ) );
         }
         return b.build();
     }
 
-    public abstract Result<Input, P> processItem( Result<Input, Output> input );
+    public abstract Result<OriginalItem, Output> processItem( Result<OriginalItem, Input> input );
 }

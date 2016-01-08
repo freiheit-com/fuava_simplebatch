@@ -45,26 +45,26 @@ public class Processors {
      * 
      * @author klas
      *
-     * @param <I>
+     * @param <Output>
      *            Type of the fetched Item
-     * @param <T>
+     * @param <Input>
      *            Type of the previous result
      */
-    private static final class FetchedInputItemValueProcessor<I, T>
-            extends AbstractSingleItemProcessor<FetchedItem<I>, T, I> {
+    private static final class FetchedInputItemValueProcessor<Output, Input>
+            extends AbstractSingleItemProcessor<FetchedItem<Output>, Input, Output> {
         @Override
-        public Result<FetchedItem<I>, I> processItem(
-                final Result<FetchedItem<I>, T> previous ) {
+        public Result<FetchedItem<Output>, Output> processItem(
+                final Result<FetchedItem<Output>, Input> previous ) {
             final boolean failed = previous.isFailed();
-            final FetchedItem<I> item = previous.getInput();
-            final I input = item == null
+            final FetchedItem<Output> item = previous.getInput();
+            final Output input = item == null
                 ? null
                 : item.getValue();
 
             if ( failed ) {
-                return Result.<FetchedItem<I>, I> builder( previous ).withOutput( input ).failed();
+                return Result.<FetchedItem<Output>, Output> builder( previous ).withOutput( input ).failed();
             } else {
-                return Result.<FetchedItem<I>, I> builder( previous ).withOutput( input ).success();
+                return Result.<FetchedItem<Output>, Output> builder( previous ).withOutput( input ).success();
             }
         }
     }
@@ -75,13 +75,13 @@ public class Processors {
      * 
      * @author klas
      *
-     * @param <I>
+     * @param <Output>
      *            Type of the fetched Item
-     * @param <T>
+     * @param <Input>
      *            Type of the previous result
      */
-    public static <I, T> Processor<FetchedItem<I>, T, I> fetchedInputItemValueProcessor() {
-        return new FetchedInputItemValueProcessor<I, T>();
+    public static <Output, Input> Processor<FetchedItem<Output>, Input, Output> fetchedInputItemValueProcessor() {
+        return new FetchedInputItemValueProcessor<Output, Input>();
     }
     
     /**
@@ -90,13 +90,13 @@ public class Processors {
      * 
      * @author klas
      *
-     * @param <I>
+     * @param <Output>
      *            Type of the fetched Item
-     * @param <T>
+     * @param <Input>
      *            Type of the previous result
      */
-    public static <I, T> Processor<FetchedItem<I>, T, I> fetchedInputItemValueProcessor( final Class<I> cls, final Class<T> cls2 ) {
-        return new FetchedInputItemValueProcessor<I, T>();
+    public static <Output, Input> Processor<FetchedItem<Output>, Input, Output> fetchedInputItemValueProcessor( final Class<Output> cls, final Class<Input> cls2 ) {
+        return new FetchedInputItemValueProcessor<Output, Input>();
     }
 
     /**
@@ -104,8 +104,8 @@ public class Processors {
      * successful and failed output values from f. Also note that f must not
      * return null outputs for successfully processed items!
      */
-    public static <A, B, C, D> Processor<A, B, D> compose( final Processor<A, C, D> g, final Processor<A, B, C> f ) {
-        return new ComposedProcessor<A, B, C, D>( g, f );
+    public static <OriginalItem, Input, Intermediate, Output> Processor<OriginalItem, Input, Output> compose( final Processor<OriginalItem, Intermediate, Output> g, final Processor<OriginalItem, Input, Intermediate> f ) {
+        return new ComposedProcessor<OriginalItem, Input, Intermediate, Output>( g, f );
     }
 
     /**
@@ -123,9 +123,9 @@ public class Processors {
      * thrown.
      *
      */
-    public static <JobInput, PersistenceInput, PersistenceOutput> Processor<JobInput, PersistenceInput, PersistenceOutput> retryableBatchedFunction(
-            final Function<List<PersistenceInput>, List<PersistenceOutput>> function ) {
-        return new RetryingProcessor<JobInput, PersistenceInput, PersistenceOutput>( function );
+    public static <OriginalItem, Input, Output> Processor<OriginalItem, Input, Output> retryableBatchedFunction(
+            final Function<List<Input>, List<Output>> function ) {
+        return new RetryingFunctionProcessor<OriginalItem, Input, Output>( function );
     }
 
     /**
@@ -146,9 +146,9 @@ public class Processors {
      *
      * @see #retryableBatchedFunction(Function)
      */
-    public static <JobInput, PersistenceInput, PersistenceOutput> Processor<JobInput, PersistenceInput, PersistenceOutput> singleItemFunction(
-            final Function<PersistenceInput, PersistenceOutput> function ) {
-        return new SingleItemProcessor<JobInput, PersistenceInput, PersistenceOutput>( function );
+    public static <OriginalItem, Input, Output> Processor<OriginalItem, Input, Output> singleItemFunction(
+            final Function<Input, Output> function ) {
+        return new SingleItemFunctionProcessor<OriginalItem, Input, Output>( function );
     }
 
     /**
@@ -163,9 +163,9 @@ public class Processors {
      * @return a persistence which writes each pair of input/output items to a
      *         file in the given directory.
      */
-    public static <Input, Output> Processor<Input, Output, FilePersistenceOutputInfo> fileWriter(
-            final String dirName, final FileOutputStreamAdapter<Input, Output> adapter ) {
-        return new FilePersistence<Input, Output>( dirName, adapter );
+    public static <OriginalItem, Input> Processor<OriginalItem, Input, FilePersistenceOutputInfo> fileWriter(
+            final String dirName, final FileOutputStreamAdapter<OriginalItem, Input> adapter ) {
+        return new FilePersistence<OriginalItem, Input>( dirName, adapter );
     }
 
     /**
@@ -173,18 +173,18 @@ public class Processors {
      * writes a control-file that can be used for waiting until this file has
      * been completely written as well as a log file with extra information
      */
-    public static <T, Output> Processor<FetchedItem<T>, Output, ControlFilePersistenceOutputInfo> controlledFileWriter(
+    public static <OriginalInput, Input> Processor<FetchedItem<OriginalInput>, Input, ControlFilePersistenceOutputInfo> controlledFileWriter(
             final String dirName,
             final String controlFileEnding,
             final String logFileEnding,
-            final FileOutputStreamAdapter<FetchedItem<T>, Output> adapter ) {
+            final FileOutputStreamAdapter<FetchedItem<OriginalInput>, Input> adapter ) {
         return
             // Write File
-            new FilePersistence<FetchedItem<T>, Output>( dirName, adapter )
+            new FilePersistence<FetchedItem<OriginalInput>, Input>( dirName, adapter )
             // Write Log
-            .then(new JsonLoggingProcessor<T>( dirName, controlFileEnding, logFileEnding ) )
+            .then(new JsonLoggingProcessor<OriginalInput>( dirName, controlFileEnding, logFileEnding ) )
             // Move File, Log File and Control File 
-            .then(new ControlFilePersistence<FetchedItem<T>>(
+            .then(new ControlFilePersistence<FetchedItem<OriginalInput>>(
                 new ControlFilePersistenceConfigImpl( dirName, controlFileEnding, logFileEnding ) ));
     }
 
@@ -198,9 +198,9 @@ public class Processors {
      *
      * @return
      */
-    public static <Input, Output> Processor<Input, Output, BatchProcessorResult<FilePersistenceOutputInfo>> batchFileWriter(
-            final String dirName, final FileWriterAdapter<List<Input>, List<Output>> adapter ) {
-        return new BatchedSuccessesProcessor<Input, Output, FilePersistenceOutputInfo>( fileWriter( dirName, adapter ) );
+    public static <OriginalItem, Input> Processor<OriginalItem, Input, BatchProcessorResult<FilePersistenceOutputInfo>> batchFileWriter(
+            final String dirName, final FileWriterAdapter<List<OriginalItem>, List<Input>> adapter ) {
+        return new BatchedSuccessesProcessor<OriginalItem, Input, FilePersistenceOutputInfo>( fileWriter( dirName, adapter ) );
     }
 
     /**
@@ -216,21 +216,21 @@ public class Processors {
      * {@link #batchFileWriter(String, FileWriterAdapter)}, but for each
      * persisted file there will be a control file and a log file as well.
      */
-    public static <Input, Output> Processor<FetchedItem<Input>, Output, BatchProcessorResult<ControlFilePersistenceOutputInfo>> controlledBatchFileWriter(
+    public static <OriginalInput, Input> Processor<FetchedItem<OriginalInput>, Input, BatchProcessorResult<ControlFilePersistenceOutputInfo>> controlledBatchFileWriter(
             final String dirName,
             final String controlFileEnding,
             final String logFileEnding,
-            final FileOutputStreamAdapter<List<FetchedItem<Input>>, List<Output>> adapter ) {
+            final FileOutputStreamAdapter<List<FetchedItem<OriginalInput>>, List<Input>> adapter ) {
         return 
-            new JsonLoggingBatchedFailureProcessor<Input, Output>( dirName, controlFileEnding, logFileEnding ) 
-            .then(new BatchedSuccessesProcessor<FetchedItem<Input>, Output, ControlFilePersistenceOutputInfo>(
+            new JsonLoggingBatchedFailureProcessor<OriginalInput, Input>( dirName, controlFileEnding, logFileEnding ) 
+            .then(new BatchedSuccessesProcessor<FetchedItem<OriginalInput>, Input, ControlFilePersistenceOutputInfo>(
                     // "Main" processing pipeline, where not a list of results is processed, but a result with a list of successfull items
                     // write the batch file with the successfull items
-                    new FilePersistence<List<FetchedItem<Input>>, List<Output>>( dirName, adapter )
+                    new FilePersistence<List<FetchedItem<OriginalInput>>, List<Input>>( dirName, adapter )
                     // add the log entries for the batched items
-                    .then( new JsonLoggingBatchedSuccessProcessor<Input>( logFileEnding ) )
+                    .then( new JsonLoggingBatchedSuccessProcessor<OriginalInput>( logFileEnding ) )
                     // move the batch file and the control file
-                    .then( new ControlFilePersistence<List<FetchedItem<Input>>>( new ControlFilePersistenceConfigImpl( dirName, controlFileEnding, logFileEnding ) ))
+                    .then( new ControlFilePersistence<List<FetchedItem<OriginalInput>>>( new ControlFilePersistenceConfigImpl( dirName, controlFileEnding, logFileEnding ) ))
                 )
             );
     }
@@ -246,11 +246,11 @@ public class Processors {
      * Note that this means, that the instances provided to the builder will be
      * used for multiple instances of the (inner) BatchJob.
      */
-    public static <Input, Data> Processor<Input, Iterable<Result<FetchedItem<Data>, Data>>, ResultStatistics> runBatchJobProcessor(
-            final Function<Input, String> jobDescriptionFunc, final int processingBatchSize,
-            final Processor<FetchedItem<Data>, Data, Data> contentProcessor,
-            final List<Function<? super Input, ProcessingResultListener<Data, Data>>> contentProcessingListeners ) {
-        return new InnerJobProcessor<Input, Data>( jobDescriptionFunc, processingBatchSize, contentProcessor,
+    public static <OriginalItem, InnerInput> Processor<OriginalItem, Iterable<Result<FetchedItem<InnerInput>, InnerInput>>, ResultStatistics> runBatchJobProcessor(
+            final Function<OriginalItem, String> jobDescriptionFunc, final int processingBatchSize,
+            final Processor<FetchedItem<InnerInput>, InnerInput, InnerInput> contentProcessor,
+            final List<Function<? super OriginalItem, ProcessingResultListener<InnerInput, InnerInput>>> contentProcessingListeners ) {
+        return new InnerJobProcessor<OriginalItem, InnerInput>( jobDescriptionFunc, processingBatchSize, contentProcessor,
                 contentProcessingListeners );
     }
 
@@ -258,21 +258,21 @@ public class Processors {
      * A Processor that uses an apache HttpClient to download the required data,
      * based on the input data that was provided by the fetcher.
      */
-    public static <I, Input, Output> Processor<I, Input, Output> httpDownloader(
+    public static <OriginalItem, Input, Output> Processor<OriginalItem, Input, Output> httpDownloader(
             final HttpClient client,
             final HttpDownloaderSettings<Input> settings,
             final Function<InputStream, Output> converter ) {
-        return new HttpDownloader<I, Input, Output>( client, settings, converter );
+        return new HttpDownloader<OriginalItem, Input, Output>( client, settings, converter );
     }
 
     /**
-     * A Processor that uses an apache HttpClient to download the required data,
-     * based on the input data that was provided by the fetcher.
+     * A Processor that uses an apache HttpClient to download the required data
+     * as string, based on the input data that was provided by the fetcher.
      */
-    public static <I, Input, Output> Processor<I, Input, String> httpDownloader(
+    public static <OriginalItem, Input> Processor<OriginalItem, Input, String> httpDownloader(
             final HttpClient client,
             final HttpDownloaderSettings<Input> settings ) {
-        return new HttpDownloader<I, Input, String>( client, settings, input -> IOStreamUtils.consumeAsString( input ) );
+        return new HttpDownloader<OriginalItem, Input, String>( client, settings, input -> IOStreamUtils.consumeAsString( input ) );
     }
 
     /**
@@ -281,8 +281,8 @@ public class Processors {
      *
      *
      */
-    public static <Input> Processor<Input, ControlFile, File> controlledFileMover( final String targetDir ) {
-        return new ControlledFileMovingProcessor<Input>( targetDir );
+    public static <OriginalItem> Processor<OriginalItem, ControlFile, File> controlledFileMover( final String targetDir ) {
+        return new ControlledFileMovingProcessor<OriginalItem>( targetDir );
     }
 
     /**
@@ -290,8 +290,8 @@ public class Processors {
      * 
      * @return
      */
-    public static <Input> Processor<Input, File, File> fileMover( final String targetDir ) {
-        return new FileMovingProcessor<Input>( targetDir );
+    public static <OriginalItem> Processor<OriginalItem, File, File> fileMover( final String targetDir ) {
+        return new FileMovingProcessor<OriginalItem>( targetDir );
     }
 
 }

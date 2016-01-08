@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -42,11 +41,11 @@ import com.google.common.collect.Iterables;
  * for <b>all</b> exceptions.
  *
  *
+ * @param <OriginalItem>
  * @param <Input>
- * @param <Output>
  */
-class RetryingProcessor<Input, Output, ProcessorResult> implements Processor<Input, Output, ProcessorResult> {
-    private final Function<List<Output>, List<ProcessorResult>> _func;
+public abstract class RetryingProcessor<OriginalItem, Input, Output>
+        implements Processor<OriginalItem, Input, Output> {
     private static final Logger LOG = LoggerFactory.getLogger( RetryingProcessor.class );
 
     /**
@@ -66,14 +65,13 @@ class RetryingProcessor<Input, Output, ProcessorResult> implements Processor<Inp
      * 
      * @param func
      */
-    public RetryingProcessor( final Function<List<Output>, List<ProcessorResult>> func ) {
-        _func = func;
+    public RetryingProcessor() {
     }
 
     @Override
-    public Iterable<Result<Input, ProcessorResult>> process( final Iterable<Result<Input, Output>> inputs ) {
+    public Iterable<Result<OriginalItem, Output>> process( final Iterable<Result<OriginalItem, Input>> inputs ) {
 
-        final List<Result<Input, Output>> inputList = ImmutableList.copyOf( inputs );
+        final List<Result<OriginalItem, Input>> inputList = ImmutableList.copyOf( inputs );
         if ( inputList.isEmpty() ) {
             return ImmutableList.of();
         }
@@ -81,14 +79,14 @@ class RetryingProcessor<Input, Output, ProcessorResult> implements Processor<Inp
             return doPersist( inputList );
         } catch ( final Throwable t ) {
             if ( inputList.size() == 1 ) {
-                final Result<Input, Output> result = inputList.get( 0 );
-                return ImmutableList.of( Result.<Input, ProcessorResult> builder( result ).failed( t ) );
+                final Result<OriginalItem, Input> result = inputList.get( 0 );
+                return ImmutableList.of( Result.<OriginalItem, Output> builder( result ).failed( t ) );
             }
             LOG.info( "Caught Exception during processing of batch with " + inputList.size()
                     + " items, will RETRY in single item batches", t );
-            final ImmutableList.Builder<Result<Input, ProcessorResult>> retriedResults = ImmutableList.builder();
-            for ( final Result<Input, Output> input : inputList ) {
-                final Iterable<Result<Input, ProcessorResult>> outputs = process( ImmutableList.of( input ) );
+            final ImmutableList.Builder<Result<OriginalItem, Output>> retriedResults = ImmutableList.builder();
+            for ( final Result<OriginalItem, Input> input : inputList ) {
+                final Iterable<Result<OriginalItem, Output>> outputs = process( ImmutableList.of( input ) );
                 if ( Iterables.isEmpty( outputs ) ) {
                     throw new IllegalStateException( "processing of singletons must never lead to empty lists here" );
                 }
@@ -98,42 +96,44 @@ class RetryingProcessor<Input, Output, ProcessorResult> implements Processor<Inp
         }
     }
 
-    private Iterable<Result<Input, ProcessorResult>> doPersist( final Iterable<Result<Input, Output>> iterable ) {
-        final ImmutableList<Result<Input, Output>> successes = FluentIterable.from( iterable ).filter( Result::isSuccess ).toList();
-        final ImmutableList<Result<Input, Output>> fails = FluentIterable.from( iterable ).filter( Result::isFailed ).toList();
+    private Iterable<Result<OriginalItem, Output>> doPersist( final Iterable<Result<OriginalItem, Input>> iterable ) {
+        final ImmutableList<Result<OriginalItem, Input>> successes = FluentIterable.from( iterable ).filter( Result::isSuccess ).toList();
+        final ImmutableList<Result<OriginalItem, Input>> fails = FluentIterable.from( iterable ).filter( Result::isFailed ).toList();
 
-        final ImmutableList<Output> outputs = getSuccessOutputs( successes );
+        final ImmutableList<Input> outputs = getSuccessOutputs( successes );
 
-        final List<ProcessorResult> persistenceResults = outputs.isEmpty()
+        final List<Output> persistenceResults = outputs.isEmpty()
             ? ImmutableList.of()
-            : this._func.apply( outputs );
+            : apply( outputs );
 
         if ( persistenceResults.size() != outputs.size() || persistenceResults.size() != successes.size() ) {
-            throw new IllegalStateException( "persistence results of unexpected size produced by " + this._func );
+            throw new IllegalStateException( "persistence results of unexpected size produced by " + this );
         }
-        final ImmutableList.Builder<Result<Input, ProcessorResult>> b = ImmutableList.builder();
+        final ImmutableList.Builder<Result<OriginalItem, Output>> b = ImmutableList.builder();
 
         for ( int i = 0; i < outputs.size(); i++ ) {
-            final Result<Input, Output> processingResult = successes.get( i );
-            final ProcessorResult persistenceResult = persistenceResults.get( i );
-            b.add( Result.<Input, ProcessorResult> builder( processingResult ).withOutput( persistenceResult ).success() );
+            final Result<OriginalItem, Input> processingResult = successes.get( i );
+            final Output persistenceResult = persistenceResults.get( i );
+            b.add( Result.<OriginalItem, Output> builder( processingResult ).withOutput( persistenceResult ).success() );
         }
 
-        for ( final Result<Input, Output> failed : fails ) {
-            b.add( Result.<Input, ProcessorResult> builder( failed ).failed() );
+        for ( final Result<OriginalItem, Input> failed : fails ) {
+            b.add( Result.<OriginalItem, Output> builder( failed ).failed() );
         }
 
         return b.build();
     }
 
-    private ImmutableList<Output> getSuccessOutputs( final ImmutableList<Result<Input, Output>> results ) {
-        final ImmutableList.Builder<Output> b = ImmutableList.builder();
-        for ( final Result<Input, Output> r : results ) {
+    protected abstract List<Output> apply( final List<Input> outputs );
+
+    private ImmutableList<Input> getSuccessOutputs( final ImmutableList<Result<OriginalItem, Input>> results ) {
+        final ImmutableList.Builder<Input> b = ImmutableList.builder();
+        for ( final Result<OriginalItem, Input> r : results ) {
             if ( r == null ) {
                 throw new IllegalArgumentException( "Result was null in list " + results );
             }
             if ( r.isSuccess() ) {
-                final Output o = r.getOutput();
+                final Input o = r.getOutput();
                 if ( o == null ) {
                     throw new IllegalArgumentException( "A successful Item must not have a null output" );
                 }
