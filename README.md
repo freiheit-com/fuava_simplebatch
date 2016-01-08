@@ -276,6 +276,9 @@ client.disconnect();
 
 ## Changes
 
+### 0.5.9 (2016-01-08)
+ - New base classes for implementing retryable batch processors and simple single item functions  
+
 ### 0.5.8 (2016-01-06)
  - Support for providing an (optional) identifier for each processed item, which will be used for logging
 
