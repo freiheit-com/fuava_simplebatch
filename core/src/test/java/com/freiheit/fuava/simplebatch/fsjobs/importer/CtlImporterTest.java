@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -251,6 +252,59 @@ public class CtlImporterTest {
         Assert.assertEquals( ImmutableSet.copyOf( importedLines ), ImmutableSet.of( "test", "should work again" ) );
         tmp.cleanup();
     }
+
+    @Test
+    public void testFailingDownloader() throws FileNotFoundException, IOException {
+
+        final BatchTestDirectory tmp = new BatchTestDirectory( "CtlImporterTest" );
+
+        final ResultStatistics downloadResults = new CtlDownloaderJob.Builder<Integer, String>()
+                .setConfiguration(new ConfigurationImpl().setDownloadDirPath( tmp.getDownloadsDir() ) )
+                .setDownloaderBatchSize( 1 ).setIdsFetcher( Fetchers.iterable( data.keySet() ) )
+                .setDownloader( Processors.retryableBatchedFunction( new Function<List<Integer>, List<String>>() {
+                    @Override
+                    public List<String> apply( List<Integer> intList ) {
+                        if ( intList.contains( 3 ) ) {
+                            throw new RuntimeException( "TESTING EXCEPTION IN DOWNLOADER" );
+                        } else {
+                            return intList.stream().map( x -> x.toString() ).collect( Collectors.toList() );
+                        }
+                    }
+                } ) )
+                .setFileWriterAdapter( new StringFileWriterAdapter<FetchedItem<Integer>>() )
+                .build()
+                .run();
+
+        Assert.assertEquals( downloadResults.getProcessingCounts().getError(), 1 );
+        Assert.assertEquals( downloadResults.getProcessingCounts().getSuccess(), 3 );
+
+        final List<String> importedLines = new ArrayList<String>();
+
+        new CtlImporterJob.Builder<String>()
+            .setConfiguration(new CtlImporterJob.ConfigurationImpl()
+                    .setArchivedDirPath( tmp.getArchiveDir() )
+                    .setDownloadDirPath(tmp.getDownloadsDir() )
+                    .setFailedDirPath( tmp.getFailsDir() )
+                    .setProcessingDirPath(tmp.getProcessingDir() ) )
+            .setFileInputStreamReader( input -> {
+                                    // The actual result doesn't matter for this test
+                                    final ArrayList<String> list = new ArrayList<String>();
+                                    list.add( "test" );
+                                    return list;
+                                } )
+            .setContentProcessor( Processors.retryableBatchedFunction( input -> {
+                                    importedLines.addAll( input );
+                                    return input;
+                                } ) )
+            .build()
+            .run();
+
+        // TODO: assert that only our own exception was thrown, nothing else
+
+        Assert.assertEquals( ImmutableSet.copyOf( importedLines ), ImmutableSet.of( "test" ) );
+        tmp.cleanup();
+    }
+
     private JsonLogEntry parse( final String logLine ) {
         return GSON.fromJson( logLine, JsonLogEntry.class );
     }

@@ -45,7 +45,7 @@ public class ReadControlFileFunction implements Function<File, ControlFile> {
         String controlledFileName = prop.getProperty( "file" );
         String logFileName = prop.getProperty( "log" );
         String status = prop.getProperty( "status" );
-        boolean downloadFailed = status == "DOWNLOAD_FAILED";
+        boolean downloadFailed = "DOWNLOAD_FAILED".equals( status );
         return new ControlFile( this.baseDir, controlledFileName, logFileName, file, downloadFailed );
     }
 
