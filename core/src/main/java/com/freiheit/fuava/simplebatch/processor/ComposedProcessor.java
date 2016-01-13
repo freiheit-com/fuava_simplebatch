@@ -18,19 +18,27 @@ package com.freiheit.fuava.simplebatch.processor;
 
 import com.freiheit.fuava.simplebatch.result.Result;
 
-final class ComposedProcessor<A, B, C, D> implements Processor<A, B, D> {
-    private final Processor<A, B, C> f;
-    private final Processor<A, C, D> g;
+final class ComposedProcessor<OriginalItem, Input, Intermediate, Output> implements Processor<OriginalItem, Input, Output> {
+    private final Processor<OriginalItem, Input, Intermediate> f;
+    private final Processor<OriginalItem, Intermediate, Output> g;
 
-    ComposedProcessor( final Processor<A, C, D> g, final Processor<A, B, C> f ) {
+    ComposedProcessor( final Processor<OriginalItem, Intermediate, Output> g, final Processor<OriginalItem, Input, Intermediate> f ) {
         this.g = g;
         this.f = f;
     }
 
+    Processor<OriginalItem, Input, Intermediate> getFirst() {
+        return f;
+    }
+
+    Processor<OriginalItem, Intermediate, Output> getSecond() {
+        return g;
+    }
+
     @Override
-    public Iterable<Result<A, D>> process( final Iterable<Result<A, B>> toPersist ) {
-        final Iterable<Result<A, C>> fResults = this.f.process( toPersist );
-        final Iterable<Result<A, D>> gResults = this.g.process( fResults );
+    public Iterable<Result<OriginalItem, Output>> process( final Iterable<Result<OriginalItem, Input>> toPersist ) {
+        final Iterable<Result<OriginalItem, Intermediate>> fResults = this.f.process( toPersist );
+        final Iterable<Result<OriginalItem, Output>> gResults = this.g.process( fResults );
         return gResults;
     }
 
