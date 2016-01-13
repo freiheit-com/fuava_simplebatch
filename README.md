@@ -275,6 +275,8 @@ client.disconnect();
 ```
 
 ## Changes
+### 0.5.10 (2016-01-13)
+ - Fixed FileNotFound exception when a failed file was written
 
 ### 0.5.9 (2016-01-08)
  - New base classes for implementing retryable batch processors and simple single item functions  
