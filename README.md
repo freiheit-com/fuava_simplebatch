@@ -275,6 +275,10 @@ client.disconnect();
 ```
 
 ## Changes
+
+### 0.5.11 (2016-01-13)
+ - New TimeLoggingProcessor, will unwrap composed processors and log the times per stage
+
 ### 0.5.10 (2016-01-13)
  - Fixed FileNotFound exception when a failed file was written
 
