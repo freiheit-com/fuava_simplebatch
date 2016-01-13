@@ -32,6 +32,7 @@ import com.freiheit.fuava.simplebatch.logging.ImportFileJsonLoggingListener;
 import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.Processors;
+import com.freiheit.fuava.simplebatch.processor.TimeLoggingProcessor;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
@@ -401,7 +402,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                     .then( Processors.runBatchJobProcessor(
                             item -> item.getValue().getControlledFileName(), 
                             processingBatchSize, 
-                            contentProcessor, 
+                                    TimeLoggingProcessor.wrap( "Content", contentProcessor ),
                             contentProcessingListenerFactories 
                         ))
                     .then( new FileMovingPersistence<ResultStatistics>(
@@ -414,7 +415,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                     1 /* process one file at a time, no use for batching */,
                     Fetchers.folderFetcher( this.configuration.getDownloadDirPath(), this.configuration.getControlFileEnding(),
                             new ReadControlFileFunction( this.configuration.getDownloadDirPath() ) ),
-                    processor,
+                    TimeLoggingProcessor.wrap( "File", processor ),
                     fileProcessingListeners );
         }
     }

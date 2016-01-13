@@ -28,6 +28,7 @@ import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo
 import com.freiheit.fuava.simplebatch.processor.FileOutputStreamAdapter;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.Processors;
+import com.freiheit.fuava.simplebatch.processor.TimeLoggingProcessor;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
 import com.google.common.base.Preconditions;
@@ -408,7 +409,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
                     this.configuration == null
                         ? new ConfigurationImpl()
                         : this.configuration,
-                    downloader.then( fileWriter ),
+                    TimeLoggingProcessor.wrap( "File", downloader.then( fileWriter ) ),
                     builder.getListeners() );
         }
 

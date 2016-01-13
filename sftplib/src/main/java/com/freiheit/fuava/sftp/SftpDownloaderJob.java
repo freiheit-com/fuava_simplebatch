@@ -25,6 +25,7 @@ import com.freiheit.fuava.simplebatch.logging.BatchStatisticsLoggingListener;
 import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
 import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo;
 import com.freiheit.fuava.simplebatch.processor.Processors;
+import com.freiheit.fuava.simplebatch.processor.TimeLoggingProcessor;
 
 /**
  * Standard Sftp Downloader Job for the purpose of downloading and processing
@@ -120,14 +121,14 @@ public class SftpDownloaderJob {
                 .addListener( new ItemProgressLoggingListener<>( CtlDownloaderJob.LOG_NAME_ITEM ) )
                 .setProcessor(
                         // downloader
-                        Processors.controlledFileWriter( 
-                            config.getDownloadDirPath(), 
-                            config.getControlFileEnding(),
-                            config.getLogFileEnding(),
-                            new SftpDownloadingFileWriterAdapter( client ) 
-                        )
-                        // move downloaded files on remote system
-                        .then( new SftpResultFileMover( client, remoteConfiguration.getArchivedFolder() ) ) 
+                        TimeLoggingProcessor.wrap( "File", Processors.controlledFileWriter( 
+                                config.getDownloadDirPath(), 
+                                config.getControlFileEnding(),
+                                config.getLogFileEnding(),
+                                new SftpDownloadingFileWriterAdapter( client ) 
+                            )
+                            // move downloaded files on remote system
+                            .then( new SftpResultFileMover( client, remoteConfiguration.getArchivedFolder() ) ) ) 
                     )
                 .setProcessingBatchSize( 1 /*No advantage in processing multiple files at once*/ )
                 .build();

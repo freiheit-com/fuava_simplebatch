@@ -75,7 +75,7 @@ public class TimeLoggingProcessorTest {
         assertResults( processor.process( data( "2", "3" ) ), "2a", "3a" );
         final Map<String, Counts> counts = processor.getCurrentCounts();
         Assert.assertEquals( ImmutableSet.copyOf( counts.keySet() ),
-                ImmutableSet.of( TimeLoggingProcessor.STAGE_ID_ALL, "Stage 01" ) );
+                ImmutableSet.of( processor.getStageIdTotal(), "Stage 01" ) );
         for ( final Counts c : counts.values() ) {
             Assert.assertEquals( c.getItems(), 2 );
         }
@@ -99,7 +99,7 @@ public class TimeLoggingProcessorTest {
         assertResults( processor.process( data( "2", "3" ) ), "2abcd", "3abcd" );
         final Map<String, Counts> counts = processor.getCurrentCounts();
         Assert.assertEquals( ImmutableSet.copyOf( counts.keySet() ),
-                ImmutableSet.of( TimeLoggingProcessor.STAGE_ID_ALL, "Stage 01", "Stage 02", "Stage 03", "Stage 04" ) );
+                ImmutableSet.of( processor.getStageIdTotal(), "Stage 01", "Stage 02", "Stage 03", "Stage 04" ) );
         for ( final Counts c : counts.values() ) {
             Assert.assertEquals( c.getItems(), 2 );
         }
@@ -114,7 +114,7 @@ public class TimeLoggingProcessorTest {
         assertResults( processor.process( data( "2", "3" ) ), "2abcd", "3abcd" );
         final Map<String, Counts> counts = processor.getCurrentCounts();
         Assert.assertEquals( ImmutableSet.copyOf( counts.keySet() ),
-                ImmutableSet.of( TimeLoggingProcessor.STAGE_ID_ALL, "Stage 01", "Stage 02", "Stage 03", "Stage 04" ) );
+                ImmutableSet.of( processor.getStageIdTotal(), "Stage 01", "Stage 02", "Stage 03", "Stage 04" ) );
         for ( final Counts c : counts.values() ) {
             Assert.assertEquals( c.getItems(), 2 );
         }

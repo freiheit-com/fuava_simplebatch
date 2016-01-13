@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,7 @@ import com.google.common.collect.ImmutableList;
 
 public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Processor<OriginalItem, Input, Output> {
     public static final Logger JOB_PERFORMANCE_LOGGER = LoggerFactory.getLogger( "Job Performance Logger" );
-    public static final String STAGE_ID_ALL = "Total";
+    private static final String STAGE_ID_TOTAL = "Total   ";
 
     private static final class Stage {
         private final String id;
@@ -117,29 +118,41 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         }
     }
 
+    private final AtomicLong lastloggedMillis = new AtomicLong( 0 );
+
+    private final long minMillisBetweenLogging = TimeUnit.SECONDS.toMillis( 10 );
+
     private final List<Stage> stages;
     private final ConcurrentHashMap<String, Counts> counts;
+    private final String stageIdTotal;
 
-    private TimeLoggingProcessor( final Processor<OriginalItem, Input, Output> processor ) {
-        this.stages = fixStageIds( toStages( processor ) );
+    private TimeLoggingProcessor( final String prefix, final Processor<OriginalItem, Input, Output> processor ) {
+        this.stageIdTotal = prefix + " " + STAGE_ID_TOTAL;
+        this.stages = fixStageIds( prefix, toStages( processor ) );
         this.counts = new ConcurrentHashMap<>();
     }
 
     public static <OriginalItem, Input, Output> Processor<OriginalItem, Input, Output> wrap(
             final Processor<OriginalItem, Input, Output> processor ) {
+        return wrap( "", processor );
+    }
+
+    public static <OriginalItem, Input, Output> Processor<OriginalItem, Input, Output> wrap(
+            final String prefix,
+            final Processor<OriginalItem, Input, Output> processor ) {
         if ( processor instanceof TimeLoggingProcessor ) {
             return processor;
         }
-        return new TimeLoggingProcessor<OriginalItem, Input, Output>( processor );
+        return new TimeLoggingProcessor<OriginalItem, Input, Output>( prefix, processor );
     }
 
-    private List<Stage> fixStageIds( final List<Stage> stages ) {
+    private List<Stage> fixStageIds( final String prefix, final List<Stage> stages ) {
         final ImmutableList.Builder<Stage> b = ImmutableList.builder();
 
         for ( int i = 0; i < stages.size(); i++ ) {
             final Stage stage = stages.get( i );
 
-            b.add( new Stage( String.format( "Stage %02d", i + 1 ), stage.getDisplayName(), stage.processor ) );
+            b.add( new Stage( String.format( "%s Stage %02d", prefix, i + 1 ), stage.getDisplayName(), stage.processor ) );
         }
         return b.build();
     }
@@ -162,12 +175,21 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
     public Iterable<Result<OriginalItem, Output>> process( final Iterable<Result<OriginalItem, Input>> input ) {
         final Iterable values = doProcess( input );
 
-        // TODO: nicht jedes mal?
-        logCounts( stages, counts );
+        // maximal alle x millisekunden loggen
+        final long now = System.currentTimeMillis();
+        final long last = lastloggedMillis.get();
+        if ( now - last > minMillisBetweenLogging ) {
+            lastloggedMillis.set( now );
+            logCounts( stages, counts );
+        }
 
         return values;
     }
 
+    public void forceLogCounts() {
+        logCounts( stages, counts );
+
+    }
     /**
      * Calls process for the delegated stages and collects processing duration
      * data.
@@ -189,7 +211,7 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         }
 
         final long stopAll = System.nanoTime();
-        updateCounts( STAGE_ID_ALL, numItemsMax, stopAll - startAll );
+        updateCounts( stageIdTotal, numItemsMax, stopAll - startAll );
 
         return values;
     }
@@ -201,10 +223,10 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         JOB_PERFORMANCE_LOGGER.info( "\n" + renderCounts( stages, counts ) );
     }
 
-    static String renderCounts( final List<Stage> stages, final ConcurrentHashMap<String, Counts> counts ) {
+    String renderCounts( final List<Stage> stages, final ConcurrentHashMap<String, Counts> counts ) {
         final StringBuilder sb = new StringBuilder();
-        final Counts total = counts.getOrDefault( STAGE_ID_ALL, Counts.NOTHING );
-        sb.append( renderCounts( STAGE_ID_ALL, total.items, total.durationNanos, "" ) ).append( "\n" );
+        final Counts total = counts.getOrDefault( stageIdTotal, Counts.NOTHING );
+        sb.append( renderCounts( stageIdTotal, total.items, total.durationNanos, "" ) ).append( "\n" );
 
         for ( int i = 0; i < stages.size(); i++ ) {
             final Stage stage = stages.get( i );
@@ -256,6 +278,10 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         return counts.compute( stageId, ( key, oldValue ) -> ( oldValue == null
             ? Counts.NOTHING
             : oldValue ).plus( numItems, durationNanos ) );
+    }
+
+    public String getStageIdTotal() {
+        return stageIdTotal;
     }
 
 }
