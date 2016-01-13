@@ -2,6 +2,7 @@ package com.freiheit.fuava.simplebatch.processor;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
@@ -11,16 +12,19 @@ import org.slf4j.LoggerFactory;
 
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 
 public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Processor<OriginalItem, Input, Output> {
+    public static final Logger JOB_PERFORMANCE_LOGGER = LoggerFactory.getLogger( "Job Performance Logger" );
+    public static final String STAGE_ID_ALL = "Total";
 
     private static final class Stage {
+        private final String id;
         private final String name;
         private final Processor<?, ?, ?> processor;
 
         @SuppressWarnings( "rawtypes" )
-        private Stage( final String name, final Processor processor ) {
+        private Stage( final String id, final String name, final Processor processor ) {
+            this.id = id;
             this.name = name;
             this.processor = processor;
         }
@@ -31,8 +35,13 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         }
 
         public String getId() {
+            return id;
+        }
+
+        public String getDisplayName() {
             return name;
         }
+
     }
 
     private static final class CountingIterable<T> implements Iterable<T> {
@@ -53,7 +62,9 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
 
         @Override
         public Iterator<T> iterator() {
-            return new CountingIterator<T>( it.iterator() );
+            final CountingIterator<T> c = new CountingIterator<T>( it.iterator() );
+            this.q.add( c );
+            return c;
         }
     }
 
@@ -82,7 +93,7 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         }
     }
 
-    private static final class Counts {
+    public static final class Counts {
         public static final Counts NOTHING = new Counts( 0, 0 );
 
         private final int items;
@@ -93,28 +104,44 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
             this.durationNanos = durationNanos;
         }
 
+        public int getItems() {
+            return items;
+        }
+
+        public long getDurationNanos() {
+            return durationNanos;
+        }
+
         public Counts plus( final int items, final long durationNanos ) {
-            return new Counts( this.items + this.items, this.durationNanos + this.durationNanos );
+            return new Counts( this.items + items, this.durationNanos + durationNanos );
         }
     }
-
-    private static final String STAGE_ID_ALL = "Total";
-
-    public static final Logger JOB_PERFORMANCE_LOGGER = LoggerFactory.getLogger( "Job Performance Logger" );
 
     private final List<Stage> stages;
     private final ConcurrentHashMap<String, Counts> counts;
 
     private TimeLoggingProcessor( final Processor<OriginalItem, Input, Output> processor ) {
-        this.stages = toStages( processor );
+        this.stages = fixStageIds( toStages( processor ) );
         this.counts = new ConcurrentHashMap<>();
     }
 
-    public static <OriginalItem, Input, Output> Processor<OriginalItem, Input, Output> wrap( final Processor<OriginalItem, Input, Output> processor ) {
+    public static <OriginalItem, Input, Output> Processor<OriginalItem, Input, Output> wrap(
+            final Processor<OriginalItem, Input, Output> processor ) {
         if ( processor instanceof TimeLoggingProcessor ) {
             return processor;
         }
         return new TimeLoggingProcessor<OriginalItem, Input, Output>( processor );
+    }
+
+    private List<Stage> fixStageIds( final List<Stage> stages ) {
+        final ImmutableList.Builder<Stage> b = ImmutableList.builder();
+
+        for ( int i = 0; i < stages.size(); i++ ) {
+            final Stage stage = stages.get( i );
+
+            b.add( new Stage( String.format( "Stage %02d", i + 1 ), stage.getDisplayName(), stage.processor ) );
+        }
+        return b.build();
     }
 
     @SuppressWarnings( "rawtypes" )
@@ -122,14 +149,31 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         if ( processor instanceof ComposedProcessor ) {
             final ComposedProcessor cp = (ComposedProcessor) processor;
             return ImmutableList.<Stage> builder().addAll( toStages( cp.getFirst() ) ).addAll( toStages( cp.getSecond() ) ).build();
+        } else if ( processor instanceof ChainedProcessor ) {
+            final ChainedProcessor chained = (ChainedProcessor) processor;
+            return toStages( chained.f );
         } else {
-            return ImmutableList.of( new Stage( processor.getClass().getSimpleName(), processor ) );
+            return ImmutableList.of( new Stage( "", processor.getClass().getSimpleName(), processor ) );
         }
     }
 
     @SuppressWarnings( { "unchecked", "rawtypes" } )
     @Override
     public Iterable<Result<OriginalItem, Output>> process( final Iterable<Result<OriginalItem, Input>> input ) {
+        final Iterable values = doProcess( input );
+
+        // TODO: nicht jedes mal?
+        logCounts( stages, counts );
+
+        return values;
+    }
+
+    /**
+     * Calls process for the delegated stages and collects processing duration
+     * data.
+     */
+    @SuppressWarnings( { "unchecked", "rawtypes" } )
+    private Iterable<Result<OriginalItem, Output>> doProcess( final Iterable<Result<OriginalItem, Input>> input ) {
         Iterable values = input;
         final long startAll = System.nanoTime();
         int numItemsMax = 0;
@@ -147,32 +191,40 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         final long stopAll = System.nanoTime();
         updateCounts( STAGE_ID_ALL, numItemsMax, stopAll - startAll );
 
-        // FIXME nicht jedes mal
-        logCounts( Lists.transform( stages, stage -> stage.getId() ), counts );
-
         return values;
     }
 
-    private void logCounts( final List<String> stageIds, final ConcurrentHashMap<String, Counts> counts ) {
+    private void logCounts( final List<Stage> stages, final ConcurrentHashMap<String, Counts> counts ) {
         if ( !JOB_PERFORMANCE_LOGGER.isInfoEnabled() ) {
             return;
         }
-        JOB_PERFORMANCE_LOGGER.info( "\n" + renderCounts( stageIds, counts ) );
+        JOB_PERFORMANCE_LOGGER.info( "\n" + renderCounts( stages, counts ) );
     }
 
-    static String renderCounts( final List<String> stageIds, final ConcurrentHashMap<String, Counts> counts ) {
+    static String renderCounts( final List<Stage> stages, final ConcurrentHashMap<String, Counts> counts ) {
         final StringBuilder sb = new StringBuilder();
         final Counts total = counts.getOrDefault( STAGE_ID_ALL, Counts.NOTHING );
         sb.append( renderCounts( STAGE_ID_ALL, total.items, total.durationNanos, "" ) ).append( "\n" );
 
-        for ( int i = 0; i < stageIds.size(); i++ ) {
-            final String stageId = stageIds.get( i );
+        for ( int i = 0; i < stages.size(); i++ ) {
+            final Stage stage = stages.get( i );
+            final String stageId = stage.getId();
             final Counts stageCounts = counts.getOrDefault( stageId, Counts.NOTHING );
             sb.append(
-                    renderCounts( String.format( "Stage %2d", i ), stageCounts.items, stageCounts.durationNanos, stageId ) ).append(
+                    renderCounts( stageId, stageCounts.items, stageCounts.durationNanos, stage.getDisplayName() ) ).append(
                             "\n" );
         }
         return sb.toString();
+    }
+
+    /**
+     * Expose the current counts for testing or reporting.
+     * 
+     * Note that the underlying datastructure is a concurrent hash map and
+     * concurrent updates may happen.
+     */
+    public Map<String, Counts> getCurrentCounts() {
+        return java.util.Collections.unmodifiableMap( counts );
     }
 
     static String renderCounts( final String name, final int items, final long durationNanos, final String desc ) {

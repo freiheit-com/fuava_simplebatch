@@ -1,10 +1,16 @@
 package com.freiheit.fuava.simplebatch.processor;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import com.freiheit.fuava.simplebatch.processor.TimeLoggingProcessor.Counts;
+import com.freiheit.fuava.simplebatch.result.Result;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 public class TimeLoggingProcessorTest {
 
@@ -25,5 +31,116 @@ public class TimeLoggingProcessorTest {
             final String expected ) {
         final String result = TimeLoggingProcessor.renderCounts( id, items, nanos, name );
         Assert.assertEquals( result, expected );
-  }
+    }
+
+    private static final class AddA extends SingleItemProcessor<String, String, String> {
+
+        @Override
+        protected String apply( final String input ) {
+            return input + "a";
+        }
+
+    }
+
+    private static final class AddB extends SingleItemProcessor<String, String, String> {
+
+        @Override
+        protected String apply( final String input ) {
+            return input + "b";
+        }
+
+    }
+
+    private static final class AddC extends SingleItemProcessor<String, String, String> {
+
+        @Override
+        protected String apply( final String input ) {
+            return input + "c";
+        }
+
+    }
+
+    private static final class AddD extends SingleItemProcessor<String, String, String> {
+
+        @Override
+        protected String apply( final String input ) {
+            return input + "d";
+        }
+
+    }
+
+    @Test
+    public void testProcessorChainSingle() {
+        final TimeLoggingProcessor<String, String, String> processor = wrap( new AddA() );
+        assertResults( processor.process( data( "2", "3" ) ), "2a", "3a" );
+        final Map<String, Counts> counts = processor.getCurrentCounts();
+        Assert.assertEquals( ImmutableSet.copyOf( counts.keySet() ),
+                ImmutableSet.of( TimeLoggingProcessor.STAGE_ID_ALL, "Stage 01" ) );
+        for ( final Counts c : counts.values() ) {
+            Assert.assertEquals( c.getItems(), 2 );
+        }
+
+    }
+
+    @Test
+    public void testProcessorChainWrapTwice() {
+        final AddA a = new AddA();
+        final Processor<String, String, String> processor = TimeLoggingProcessor.wrap( a );
+        Assert.assertTrue( a != processor );
+        final Processor<String, String, String> processor2 = TimeLoggingProcessor.wrap( processor );
+        Assert.assertTrue( processor == processor2 );
+
+    }
+
+    @Test
+    public void testProcessorChainMultiple() {
+        final TimeLoggingProcessor<String, String, String> processor =
+                wrap( new AddA().then( new AddB() ).then( new AddC() ).then( new AddD() ) );
+        assertResults( processor.process( data( "2", "3" ) ), "2abcd", "3abcd" );
+        final Map<String, Counts> counts = processor.getCurrentCounts();
+        Assert.assertEquals( ImmutableSet.copyOf( counts.keySet() ),
+                ImmutableSet.of( TimeLoggingProcessor.STAGE_ID_ALL, "Stage 01", "Stage 02", "Stage 03", "Stage 04" ) );
+        for ( final Counts c : counts.values() ) {
+            Assert.assertEquals( c.getItems(), 2 );
+        }
+    }
+
+    @Test
+    public void testProcessorChainMultipleCompose() {
+        final TimeLoggingProcessor<String, String, String> processor =
+                wrap( Processors.compose( new AddD(),
+                        Processors.compose( Processors.compose( new AddC(), new AddB() ), new AddA() ) ) );
+
+        assertResults( processor.process( data( "2", "3" ) ), "2abcd", "3abcd" );
+        final Map<String, Counts> counts = processor.getCurrentCounts();
+        Assert.assertEquals( ImmutableSet.copyOf( counts.keySet() ),
+                ImmutableSet.of( TimeLoggingProcessor.STAGE_ID_ALL, "Stage 01", "Stage 02", "Stage 03", "Stage 04" ) );
+        for ( final Counts c : counts.values() ) {
+            Assert.assertEquals( c.getItems(), 2 );
+        }
+    }
+
+    private void assertResults( final Iterable<Result<String, String>> results, final String... expected ) {
+        int i = 0;
+        for ( final Result<String, String> r : results ) {
+            final String exp = expected[i];
+            final String actual = r.getOutput();
+            Assert.assertTrue( r.isSuccess() );
+            Assert.assertEquals( actual, exp );
+            i++;
+        }
+    }
+
+    private Iterable<Result<String, String>> data( final String... values ) {
+        final ImmutableList.Builder<Result<String, String>> b = ImmutableList.builder();
+        for ( final String v : values ) {
+            b.add( Result.success( v, v ) );
+        }
+        return b.build();
+    }
+
+    private TimeLoggingProcessor<String, String, String> wrap( final Processor<String, String, String> addA ) {
+        return (TimeLoggingProcessor<String, String, String>) TimeLoggingProcessor.wrap( addA );
+    }
+
 }
