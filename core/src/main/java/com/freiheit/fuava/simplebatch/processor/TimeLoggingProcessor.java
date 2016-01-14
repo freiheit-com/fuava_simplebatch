@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -18,7 +19,7 @@ import com.google.common.collect.ImmutableList;
 public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Processor<OriginalItem, Input, Output> {
     public static final Logger JOB_PERFORMANCE_LOGGER = LoggerFactory.getLogger( "Job Performance Logger" );
     private static final String STAGE_ID_TOTAL = "Total   ";
-    private static final String STAGE_ID_PREPARE = "Prepare";
+    private static final String STAGE_ID_PREPARE = "Prepare ";
     private static final long NOT_INITIALIZED_NANOS = -1;
 
     private static final class Stage {
@@ -131,7 +132,7 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         }
     }
 
-    private final AtomicLong lastloggedMillis = new AtomicLong( NOT_INITIALIZED_NANOS );
+    private final AtomicLong lastloggedMillis = new AtomicLong( 0 );
 
     private final long minMillisBetweenLogging = TimeUnit.SECONDS.toMillis( 10 );
 
@@ -139,16 +140,17 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
     private final ConcurrentHashMap<String, Counts> counts;
     private final String stageIdTotal;
     private final String stageIdPrepare;
-    private final long totalStartNanos;
-    private final AtomicLong processingStartNanos = new AtomicLong( 0 );
+    private final long initializationNanos;
+    private final AtomicLong processingStartNanos = new AtomicLong( NOT_INITIALIZED_NANOS );
+    private final AtomicInteger totalCounter = new AtomicInteger( 0 );
 
     private TimeLoggingProcessor( final String prefix, final Processor<OriginalItem, Input, Output> processor ) {
-        this.totalStartNanos = System.nanoTime();
+        this.initializationNanos = System.nanoTime();
         this.stageIdTotal = buildStageName( prefix, STAGE_ID_TOTAL );
         this.stageIdPrepare = buildStageName( prefix, STAGE_ID_PREPARE );
         this.stages = fixStageIds( prefix, toStages( processor ) );
         this.counts = new ConcurrentHashMap<>();
-        this.counts.put( stageIdPrepare, Counts.NOTHING );
+
     }
 
     private String buildStageName( final String prefix, final String name ) {
@@ -214,7 +216,6 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
     }
 
     public void logFinalCounts() {
-        logPrepareStage();
         logCounts( stages, counts );
     }
 
@@ -230,8 +231,7 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         final long processingStartNanos = this.processingStartNanos.get();
         if (processingStartNanos == NOT_INITIALIZED_NANOS) {
             if ( this.processingStartNanos.compareAndSet( NOT_INITIALIZED_NANOS, processingBatchStartNanos ) ) {
-                replaceCounts( stageIdPrepare, Counts.NUM_ITEMS_UNKNOWN, processingBatchStartNanos - this.totalStartNanos );
-                logPrepareStage();
+                replaceCounts( stageIdPrepare, Counts.NUM_ITEMS_UNKNOWN, processingBatchStartNanos - this.initializationNanos );
             }
         }
         int numItemsMax = 0;
@@ -254,17 +254,10 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
          * g. by a fetcher or some other outside stuff, or decreased e. g. by
          * doing things in parallel.
          */
-        replaceCounts( stageIdTotal, numItemsMax, processingBatchStopNanos - this.processingStartNanos.get() );
+        final int totalItems = this.totalCounter.addAndGet( numItemsMax );
+        replaceCounts( stageIdTotal, totalItems, processingBatchStopNanos - this.processingStartNanos.get() );
 
         return values;
-    }
-
-    private void logPrepareStage() {
-        if ( JOB_PERFORMANCE_LOGGER.isInfoEnabled() ) {
-            final Counts prepareCounts = counts.get( stageIdPrepare );
-            JOB_PERFORMANCE_LOGGER.info(
-                    "\n" + renderCounts( stageIdPrepare, prepareCounts.items, prepareCounts.durationNanos, "" ) );
-        }
     }
 
     private void logCounts( final List<Stage> stages, final ConcurrentHashMap<String, Counts> counts ) {
@@ -276,7 +269,9 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
 
     String renderCounts( final List<Stage> stages, final ConcurrentHashMap<String, Counts> counts ) {
         final StringBuilder sb = new StringBuilder();
+        final Counts prepare = counts.getOrDefault( stageIdPrepare, Counts.NOTHING );
         final Counts total = counts.getOrDefault( stageIdTotal, Counts.NOTHING );
+        sb.append( renderCounts( stageIdPrepare, prepare.items, prepare.durationNanos, "" ) ).append( "\n" );
         sb.append( renderCounts( stageIdTotal, total.items, total.durationNanos, "" ) ).append( "\n" );
 
         for ( int i = 0; i < stages.size(); i++ ) {
@@ -309,20 +304,22 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         final long seconds = secondsAll - TimeUnit.MINUTES.toSeconds( minutesAll );
         final long minutes = minutesAll - TimeUnit.HOURS.toMinutes( hoursAll );
 
-        final long millisPerItemAll = TimeUnit.NANOSECONDS.toMillis( items == 0
+        final long millisPerItemAll = TimeUnit.NANOSECONDS.toMillis( items == 0 || items == Counts.NUM_ITEMS_UNKNOWN
             ? 0
             : durationNanos / items );
         final long secondsPerItemAll = TimeUnit.MILLISECONDS.toSeconds( millisPerItemAll );
         final long millisPerItem = millisPerItemAll - TimeUnit.SECONDS.toMillis( secondsPerItemAll );
 
         final double durationHours = (double) durationNanos / (double) TimeUnit.HOURS.toNanos( 1 );
-        final double itemsPerHour = durationNanos == 0
+        final double itemsPerHour = ( durationNanos == 0 || items == Counts.NUM_ITEMS_UNKNOWN )
             ? 0.0
             : items / durationHours;
 
-        return String.format( "%s:\t %8d total | %2d h %2d min %2d sec | %2d sec %2d ms | %10.0f items / hour | %s ",
+        return String.format( "%s:\t %8d total | %2d h %2d min %2d sec | %2d sec %3d ms | %10.0f items / hour | %s ",
                  name, 
-                items,
+                items == Counts.NUM_ITEMS_UNKNOWN
+                    ? 0
+                    : items,
                  hoursAll, minutes, seconds,
                 secondsPerItemAll, millisPerItem,
                 itemsPerHour,

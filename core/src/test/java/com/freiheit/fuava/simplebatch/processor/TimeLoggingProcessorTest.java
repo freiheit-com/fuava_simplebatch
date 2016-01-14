@@ -17,15 +17,15 @@ public class TimeLoggingProcessorTest {
     @DataProvider
     public Object[][] durationAsStringsTestData() {
         return new Object[][] {
-                { "All", "", 0, 0, "All:\t        0 total |  0 h  0 min  0 sec |  0 sec  0 ms |          0 items / hour |  " },
+                { "All", "", 0, 0, "All:\t        0 total |  0 h  0 min  0 sec |  0 sec   0 ms |          0 items / hour |  " },
                 { "All", "", 1, TimeUnit.SECONDS.toNanos( 1 ),
-                        "All:\t        1 total |  0 h  0 min  1 sec |  1 sec  0 ms |       3600 items / hour |  " },
+                        "All:\t        1 total |  0 h  0 min  1 sec |  1 sec   0 ms |       3600 items / hour |  " },
                 { "All", "", 1, TimeUnit.MINUTES.toNanos( 1 ),
-                        "All:\t        1 total |  0 h  1 min  0 sec | 60 sec  0 ms |         60 items / hour |  " },
+                        "All:\t        1 total |  0 h  1 min  0 sec | 60 sec   0 ms |         60 items / hour |  " },
                 { "All", "", 60, TimeUnit.HOURS.toNanos( 1 ),
-                        "All:\t       60 total |  1 h  0 min  0 sec | 60 sec  0 ms |         60 items / hour |  " },
+                        "All:\t       60 total |  1 h  0 min  0 sec | 60 sec   0 ms |         60 items / hour |  " },
                 { "All", "", 1, TimeUnit.SECONDS.toNanos( 25 ) + TimeUnit.MINUTES.toNanos( 23 ) + TimeUnit.HOURS.toNanos( 2 ),
-                        "All:\t        1 total |  2 h 23 min 25 sec | 8605 sec  0 ms |          0 items / hour |  " }
+                        "All:\t        1 total |  2 h 23 min 25 sec | 8605 sec   0 ms |          0 items / hour |  " }
         };
     }
 
@@ -95,9 +95,10 @@ public class TimeLoggingProcessorTest {
     }
 
     @Test
-    public void testProcessorChainMultiple() {
+    public void testProcessorChainMultiple() throws InterruptedException {
         final TimeLoggingProcessor<String, String, String> processor =
                 wrap( new AddA().then( new AddB() ).then( new AddC() ).then( new AddD() ) );
+
         assertResults( processor.process( data( "2", "3" ) ), "2abcd", "3abcd" );
         final Map<String, Counts> counts = processor.getCurrentCounts();
         Assert.assertEquals( ImmutableSet.copyOf( counts.keySet() ),
