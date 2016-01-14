@@ -19,6 +19,8 @@ package com.freiheit.fuava.simplebatch;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.StreamSupport;
 
 import javax.annotation.CheckReturnValue;
 
@@ -59,8 +61,27 @@ import com.google.common.collect.Iterables;
 public class BatchJob<Input, Output> {
     static final Logger LOG = LoggerFactory.getLogger( BatchJob.class );
 
+    private final class CallProcessor implements Consumer<List<Result<FetchedItem<Input>, Input>>> {
+        private final DelegatingProcessingResultListener<Input, Output> listeners;
+
+        private CallProcessor( final DelegatingProcessingResultListener<Input, Output> listeners ) {
+            this.listeners = listeners;
+        }
+
+        @Override
+        public void accept( final List<Result<FetchedItem<Input>, Input>> sourceResults ) {
+
+            listeners.onFetchResults( sourceResults );
+
+            final Iterable<? extends Result<FetchedItem<Input>, Output>> processingResults = persistence.process( sourceResults );
+
+            listeners.onProcessingResults( processingResults );
+        }
+    }
+
     public static class Builder<Input, Output> {
         private int processingBatchSize = 1000;
+        private boolean parallel = false;
         private Fetcher<Input> fetcher;
         private Processor<FetchedItem<Input>, Input, Output> processor;
 
@@ -73,6 +94,15 @@ public class BatchJob<Input, Output> {
 
         public int getProcessingBatchSize() {
             return processingBatchSize;
+        }
+
+        public boolean isParallel() {
+            return parallel;
+        }
+
+        public Builder<Input, Output> setParallel( final boolean parallel ) {
+            this.parallel = parallel;
+            return this;
         }
 
         public Builder<Input, Output> setProcessingBatchSize( final int processingBatchSize ) {
@@ -128,7 +158,7 @@ public class BatchJob<Input, Output> {
         }
 
         public BatchJob<Input, Output> build() {
-            return new BatchJob<Input, Output>( description, processingBatchSize, fetcher, processor, listeners );
+            return new BatchJob<Input, Output>( description, processingBatchSize, parallel, fetcher, processor, listeners );
         }
 
         public String getDescription() {
@@ -138,6 +168,7 @@ public class BatchJob<Input, Output> {
     }
 
     private final int processingBatchSize;
+    private final boolean parallel;
     private final Fetcher<Input> fetcher;
     private final Processor<FetchedItem<Input>, Input, Output> persistence;
 
@@ -147,11 +178,13 @@ public class BatchJob<Input, Output> {
     protected BatchJob(
             final String description,
             final int processingBatchSize,
+            final boolean parallel,
             final Fetcher<Input> fetcher,
             final Processor<FetchedItem<Input>, Input, Output> persistence,
             final List<ProcessingResultListener<Input, Output>> listeners ) {
         this.description = description;
         this.processingBatchSize = processingBatchSize;
+        this.parallel = parallel;
         this.fetcher = fetcher;
         this.persistence = persistence;
         this.listeners = ImmutableList.copyOf( listeners );
@@ -175,15 +208,9 @@ public class BatchJob<Input, Output> {
 
         final Iterable<Result<FetchedItem<Input>, Input>> sourceIterable = fetcher.fetchAll();
 
-        for ( final List<Result<FetchedItem<Input>, Input>> sourceResults : Iterables.partition( sourceIterable,
-                processingBatchSize ) ) {
-
-            listeners.onFetchResults( sourceResults );
-
-            final Iterable<? extends Result<FetchedItem<Input>, Output>> processingResults = persistence.process( sourceResults );
-
-            listeners.onProcessingResults( processingResults );
-        }
+        final Iterable<List<Result<FetchedItem<Input>, Input>>> partitions = Iterables.partition( sourceIterable, processingBatchSize );
+        
+        StreamSupport.stream( partitions.spliterator(), parallel ).forEach( new CallProcessor( listeners ) );
 
         listeners.onAfterRun();
         resultBuilder.setListenerDelegationFailures( listeners.hasDelegationFailures() );

@@ -250,7 +250,29 @@ public class Processors {
             final Function<OriginalItem, String> jobDescriptionFunc, final int processingBatchSize,
             final Processor<FetchedItem<InnerInput>, InnerInput, InnerInput> contentProcessor,
             final List<Function<? super OriginalItem, ProcessingResultListener<InnerInput, InnerInput>>> contentProcessingListeners ) {
-        return new InnerJobProcessor<OriginalItem, InnerInput>( jobDescriptionFunc, processingBatchSize, contentProcessor,
+        return runBatchJobProcessor( jobDescriptionFunc, processingBatchSize,
+                false /* not parallel */, contentProcessor, contentProcessingListeners );
+    }
+
+
+    /**
+     * A persistence that takes the Iterable which is passed as a data item and
+     * uses it as input to the job builder, which it uses to create a job that
+     * will subsequently be executed as an inner job.
+     *
+     * Note that this Persistence always works on a single item of the input
+     * data, which must be an iterable.
+     *
+     * Note that this means, that the instances provided to the builder will be
+     * used for multiple instances of the (inner) BatchJob.
+     */
+    public static <OriginalItem, InnerInput> Processor<OriginalItem, Iterable<Result<FetchedItem<InnerInput>, InnerInput>>, ResultStatistics> runBatchJobProcessor(
+            final Function<OriginalItem, String> jobDescriptionFunc, final int processingBatchSize,
+            final boolean parallelContent,
+            final Processor<FetchedItem<InnerInput>, InnerInput, InnerInput> contentProcessor,
+            final List<Function<? super OriginalItem, ProcessingResultListener<InnerInput, InnerInput>>> contentProcessingListeners ) {
+        return new InnerJobProcessor<OriginalItem, InnerInput>( jobDescriptionFunc, processingBatchSize, parallelContent,
+                contentProcessor,
                 contentProcessingListeners );
     }
 

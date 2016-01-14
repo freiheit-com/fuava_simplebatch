@@ -18,7 +18,7 @@ import com.google.common.collect.ImmutableList;
 public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Processor<OriginalItem, Input, Output> {
     public static final Logger JOB_PERFORMANCE_LOGGER = LoggerFactory.getLogger( "Job Performance Logger" );
     private static final String STAGE_ID_TOTAL = "Total   ";
-    private static final String STAGE_ID_PREPARE = "Prepare   ";
+    private static final String STAGE_ID_PREPARE = "Prepare";
     private static final long NOT_INITIALIZED_NANOS = -1;
 
     private static final class Stage {
@@ -157,16 +157,16 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
             : prefix + " " + name;
     }
 
-    public static <OriginalItem, Input, Output> Processor<OriginalItem, Input, Output> wrap(
+    public static <OriginalItem, Input, Output> TimeLoggingProcessor<OriginalItem, Input, Output> wrap(
             final Processor<OriginalItem, Input, Output> processor ) {
         return wrap( "", processor );
     }
 
-    public static <OriginalItem, Input, Output> Processor<OriginalItem, Input, Output> wrap(
+    public static <OriginalItem, Input, Output> TimeLoggingProcessor<OriginalItem, Input, Output> wrap(
             final String prefix,
             final Processor<OriginalItem, Input, Output> processor ) {
         if ( processor instanceof TimeLoggingProcessor ) {
-            return processor;
+            return (TimeLoggingProcessor<OriginalItem, Input, Output>) processor;
         }
         return new TimeLoggingProcessor<OriginalItem, Input, Output>( prefix, processor );
     }
@@ -213,7 +213,7 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         return values;
     }
 
-    public void forceLogCounts() {
+    public void logFinalCounts() {
         logPrepareStage();
         logCounts( stages, counts );
     }

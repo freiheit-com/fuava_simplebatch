@@ -31,14 +31,17 @@ final class InnerJobProcessor<Input, Data>
     private final int processingBatchSize;
     private final Processor<FetchedItem<Data>, Data, Data> contentProcessor;
     private final List<Function<? super Input, ProcessingResultListener<Data, Data>>> contentProcessingListeners;
+    private final boolean parallelContent;
 
     public InnerJobProcessor(
             final Function<Input, String> jobDescriptionFunc,
             final int processingBatchSize,
+            final boolean parallelContent,
             final Processor<FetchedItem<Data>, Data, Data> contentProcessor,
             final List<Function<? super Input, ProcessingResultListener<Data, Data>>> contentProcessingListeners ) {
         this.jobDescriptionFunc = jobDescriptionFunc;
         this.processingBatchSize = processingBatchSize;
+        this.parallelContent = parallelContent;
         this.contentProcessor = contentProcessor;
         this.contentProcessingListeners = contentProcessingListeners;
     }
@@ -53,7 +56,10 @@ final class InnerJobProcessor<Input, Data>
         final Iterable<Result<FetchedItem<Data>, Data>> output = previous.getOutput();
         final String desc = jobDescriptionFunc.apply( i );
         final BatchJob.Builder<Data, Data> builder =
-                BatchJob.<Data, Data> builder().setProcessingBatchSize( processingBatchSize ).setProcessor( contentProcessor );
+                BatchJob.<Data, Data> builder()
+                .setProcessingBatchSize( processingBatchSize )
+                .setParallel( parallelContent )
+                .setProcessor( contentProcessor );
 
         for ( final Function<? super Input, ProcessingResultListener<Data, Data>> listenerFactory : contentProcessingListeners ) {
             final ProcessingResultListener<Data, Data> listener = listenerFactory.apply( i );

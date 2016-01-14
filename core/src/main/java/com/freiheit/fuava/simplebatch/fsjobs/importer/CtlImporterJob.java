@@ -198,6 +198,8 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                 new ArrayList<>();
         private Processor<FetchedItem<Data>, Data, Data> contentProcessor;
         private String description;
+        private boolean parallelFiles = false;
+        private boolean parallelContent = false;
         private Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<Data>, Data>>> fileReader;
 
         public Builder() {
@@ -213,6 +215,16 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
 
         public Builder<Data> setDescription( final String description ) {
             this.description = description;
+            return this;
+        }
+
+        public Builder<Data> setParallelFiles( final boolean parallelFiles ) {
+            this.parallelFiles = parallelFiles;
+            return this;
+        }
+
+        public Builder<Data> setParallelContent( final boolean parallelContent ) {
+            this.parallelContent = parallelContent;
             return this;
         }
 
@@ -402,7 +414,8 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                     .then( Processors.runBatchJobProcessor(
                             item -> item.getValue().getControlledFileName(), 
                             processingBatchSize, 
-                                    TimeLoggingProcessor.wrap( "Content", contentProcessor ),
+                            parallelContent,
+                            TimeLoggingProcessor.wrap( "Content", contentProcessor ),
                             contentProcessingListenerFactories 
                         ))
                     .then( new FileMovingPersistence<ResultStatistics>(
@@ -413,6 +426,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
             return new CtlImporterJob<Data>(
                     description,
                     1 /* process one file at a time, no use for batching */,
+                    parallelFiles,
                     Fetchers.folderFetcher( this.configuration.getDownloadDirPath(), this.configuration.getControlFileEnding(),
                             new ReadControlFileFunction( this.configuration.getDownloadDirPath() ) ),
                     TimeLoggingProcessor.wrap( "File", processor ),
@@ -423,10 +437,11 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
     private CtlImporterJob(
             final String description,
             final int processingBatchSize,
+            final boolean parallel,
             final Fetcher<ControlFile> fetcher,
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor,
             final List<ProcessingResultListener<ControlFile, ResultStatistics>> listeners ) {
-        super( description, processingBatchSize, fetcher, processor, listeners );
+        super( description, processingBatchSize, parallel, fetcher, processor, listeners );
     }
 
 }

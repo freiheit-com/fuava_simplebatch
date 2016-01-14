@@ -151,7 +151,7 @@ public class TimeLoggingProcessorTest {
     }
 
     private TimeLoggingProcessor<String, String, String> wrap( final Processor<String, String, String> addA ) {
-        return (TimeLoggingProcessor<String, String, String>) TimeLoggingProcessor.wrap( addA );
+        return TimeLoggingProcessor.wrap( addA );
     }
 
 }

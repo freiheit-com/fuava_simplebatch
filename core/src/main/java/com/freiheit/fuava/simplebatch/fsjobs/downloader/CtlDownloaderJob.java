@@ -177,6 +177,12 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             return this;
         }
 
+        @Override
+        public Builder<Id, Data> setParallelFiles( final boolean parallel ) {
+            super.setParallelFiles( parallel );
+            return this;
+        }
+
         /**
          * The amount of items from the fetch stage that are put together in a
          * list and passed on to the "Downloader" stage. If your downloader
@@ -255,6 +261,12 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         @Override
         public BatchFileWritingBuilder<Id, Data> setDescription( final String description ) {
             super.setDescription( description );
+            return this;
+        }
+
+        @Override
+        public BatchFileWritingBuilder<Id, Data> setParallelFiles( final boolean parallel ) {
+            super.setParallelFiles( parallel );
             return this;
         }
 
@@ -343,6 +355,11 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             return this;
         }
 
+        public AbstractBuilder<Id, Data, ProcessingResult> setParallelFiles( final boolean parallel ) {
+            builder.setParallel( parallel );
+            return this;
+        }
+
         /**
          * The amount of items from the fetch stage that are put together in a
          * list and passed on to the "Downloader" stage. If your downloader
@@ -405,6 +422,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             return new CtlDownloaderJob<Id, ProcessingResult>(
                     builder.getDescription(),
                     builder.getProcessingBatchSize(),
+                    builder.isParallel(),
                     fetcher,
                     this.configuration == null
                         ? new ConfigurationImpl()
@@ -418,11 +436,12 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
     private CtlDownloaderJob(
             final String description,
             final int processingBatchSize,
+            final boolean parallel,
             final Fetcher<Id> fetcher,
             final Configuration configuration,
             final Processor<FetchedItem<Id>, Id, Data> persistence,
             final List<ProcessingResultListener<Id, Data>> listeners ) {
-        super( description, processingBatchSize, fetcher, persistence, listeners );
+        super( description, processingBatchSize, parallel, fetcher, persistence, listeners );
     }
 
 }
