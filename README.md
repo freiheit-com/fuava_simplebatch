@@ -276,6 +276,10 @@ client.disconnect();
 
 ## Changes
 
+### 0.6.0 (2016-01-14)
+ - TimeLogging will be used by default for CtlDownloader, CtlImporter and SftpDownloader, improved logging information
+ - Introduced a new option for parallel processing
+
 ### 0.5.11 (2016-01-13)
  - New TimeLoggingProcessor, will unwrap composed processors and log the times per stage
 
