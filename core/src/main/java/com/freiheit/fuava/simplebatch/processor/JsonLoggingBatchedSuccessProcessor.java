@@ -1,6 +1,5 @@
 package com.freiheit.fuava.simplebatch.processor;
 
-import java.nio.file.Paths;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -28,8 +27,7 @@ public class JsonLoggingBatchedSuccessProcessor<Input>
             if ( res.isSuccess() ) {
                 final FilePersistenceOutputInfo output = res.getOutput();
                 if ( output != null ) {
-                    final JsonLogger l = new JsonLogger( Paths.get(
-                            output.getDataFile().toString() + logFileEnding ) );
+                    final JsonLogger l = new JsonLogger( FileUtil.getLogFilePath( output.getDataFile(), logFileEnding ) );
                     for ( final FetchedItem<Input> item : res.getInput() ) {
                         l.logWriteEnd( item.getValue().toString(), res.isSuccess(), res.getAllMessages(), item.getIdentifier() );
                     }

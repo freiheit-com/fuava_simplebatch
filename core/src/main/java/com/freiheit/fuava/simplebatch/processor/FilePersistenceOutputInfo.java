@@ -16,18 +16,19 @@
  */
 package com.freiheit.fuava.simplebatch.processor;
 
-import java.io.File;
+import java.nio.file.Path;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 
 public class FilePersistenceOutputInfo {
-    private final File dataFile;
+    private final Path dataFile;
 
-    public FilePersistenceOutputInfo( final File dataFile ) {
-        this.dataFile = dataFile;
+    public FilePersistenceOutputInfo( final Path dataFile ) {
+        this.dataFile = Preconditions.checkNotNull( dataFile );
     }
 
-    public File getDataFile() {
+    public Path getDataFile() {
         return dataFile;
     }
 

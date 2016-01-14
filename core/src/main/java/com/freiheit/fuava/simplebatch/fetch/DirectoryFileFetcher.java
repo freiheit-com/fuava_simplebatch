@@ -16,12 +16,16 @@
  */
 package com.freiheit.fuava.simplebatch.fetch;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 
@@ -30,18 +34,41 @@ import com.google.common.collect.Ordering;
  */
 class DirectoryFileFetcher<T> implements Fetcher<T> {
 
-    public static final Ordering<File> ORDERING_FILE_BY_PATH = Ordering.natural().onResultOf( File::getPath );
-    private final String filter;
-    private final String uri;
-    private final Function<File, T> func;
-    private final Ordering<File> fileOrdering;
+    private static final class FetchFile<T> implements java.util.function.Function<Path, Result<FetchedItem<T>, T>> {
+        private final Function<Path, T> func;
+        private int counter = FetchedItem.FIRST_ROW;
+        
+        public FetchFile( final Function<Path, T> func ) {
+            this.func = func;
+        }
+        
+        @Override
+        public Result<FetchedItem<T>, T> apply( final Path path ) {
+            final int rownum = counter;
+            counter++;
+            try {
+                final T r = func.apply( path );
+                final FetchedItem<T> fetchedItem = FetchedItem.<T> of( r, rownum, path.toString() );
+                return Result.success( fetchedItem, r );
+            } catch ( final Throwable t ) {
+                final FetchedItem<T> fetchedItem = FetchedItem.<T> of( null, rownum, path.toString() );
+                return Result.failed( fetchedItem, "Failed to read from " + path, t );
+            }
+        }
+    }
 
-    public DirectoryFileFetcher( final String uri, final String filter, final Function<File, T> func ) {
+    public static final Ordering<Path> ORDERING_FILE_BY_PATH = Ordering.natural().onResultOf( path -> path.getFileName().toString() );
+    private final String filter;
+    private final Path uri;
+    private final Function<Path, T> func;
+    private final Ordering<Path> fileOrdering;
+
+    public DirectoryFileFetcher( final Path uri, final String filter, final Function<Path, T> func ) {
         this( uri, filter, func, ORDERING_FILE_BY_PATH );
     }
 
-    public DirectoryFileFetcher( final String uri, final String filter, final Function<File, T> func,
-            final Ordering<File> fileOrdering ) {
+    public DirectoryFileFetcher( final Path uri, final String filter, final Function<Path, T> func,
+            final Ordering<Path> fileOrdering ) {
         this.fileOrdering = Preconditions.checkNotNull( fileOrdering );
         this.uri = Preconditions.checkNotNull( uri );
         this.filter = Preconditions.checkNotNull( filter );
@@ -50,29 +77,18 @@ class DirectoryFileFetcher<T> implements Fetcher<T> {
 
     @Override
     public Iterable<Result<FetchedItem<T>, T>> fetchAll() {
-        final File dir = new File( uri );
-        final File[] files = dir.listFiles( ( dir1, name ) -> {
-            return name != null && name.endsWith( filter );
-        } );
-
-        if ( files == null ) {
-            return ImmutableList.of();
+        try {
+        try (final Stream<Path> files = Files.walk( uri )) {
+            final List<Result<FetchedItem<T>, T>> result = files
+                .filter( path -> path.getFileName().toString().endsWith( filter ) )
+                .sorted( fileOrdering )
+                .map( new FetchFile<T>( this.func ) )
+                .collect( Collectors.toList() );
+            return result;
         }
-        final Iterable<File> sorted = FluentIterable.of( files ).toSortedList( fileOrdering );
-
-        final ImmutableList.Builder<Result<FetchedItem<T>, T>> b = ImmutableList.builder();
-        int i = FetchedItem.FIRST_ROW;
-        for ( final File f : sorted ) {
-            final int rownum = i++;
-            try {
-                final T r = func.apply( f );
-                final FetchedItem<T> fetchedItem = FetchedItem.<T> of( r, rownum );
-                b.add( Result.success( fetchedItem, r ) );
-            } catch ( final Throwable t ) {
-                final FetchedItem<T> fetchedItem = FetchedItem.<T> of( null, rownum );
-                b.add( Result.failed( fetchedItem, "Failed to read from " + f, t ) );
-            }
+        } catch ( final IOException e ) {
+            return ImmutableList.of( Result.failed( FetchedItem.of( null, 0, uri.toString() ), "Could not traverse download directory") );
         }
-        return b.build();
+        
     }
 }

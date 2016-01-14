@@ -8,6 +8,7 @@ package com.freiheit.fuava.simplebatch.logging;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -30,13 +31,13 @@ public class JsonLogger {
 
     private static final AtomicLong counter = new AtomicLong();
 
-    public static String nextFailedDownloadsName() {
+    public static Path nextFailedDownloadsName() {
         final String prefix = "" + System.currentTimeMillis();
         final String count = com.google.common.base.Strings.padStart(
                 Long.toString( counter.incrementAndGet() ),
                 3,
                 '0' );
-        return prefix + "_" + count + "_" + "failed_downloads";
+        return Paths.get( prefix + "_" + count + "_" + "failed_downloads" );
     }
 
     public JsonLogger( final Path logFile ) {

@@ -16,6 +16,8 @@
  */
 package com.freiheit.fuava.simplebatch.fsjobs.downloader;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
@@ -51,8 +53,8 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
     public interface Configuration {
 
-        String getDownloadDirPath();
-
+        Path getDownloadDirPath();
+ 
         default String getControlFileEnding() {
             return ".ctl";
         }
@@ -68,17 +70,22 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
     public static final class ConfigurationImpl implements Configuration {
 
-        private String downloadDirPath = DEFAULT_CONFIG_DOWNLOAD_DIR_PATH;
+        private Path downloadDirPath = Paths.get( DEFAULT_CONFIG_DOWNLOAD_DIR_PATH );
         private String controlFileEnding = DEFAULT_CONFIG_CONTROL_FILE_ENDING;
         private String logFileEnding = DEFAULT_CONFIG_LOG_FILE_ENDING;
 
         @Override
-        public String getDownloadDirPath() {
+        public Path getDownloadDirPath() {
             return downloadDirPath;
         }
 
-        public ConfigurationImpl setDownloadDirPath( final String path ) {
+        public ConfigurationImpl setDownloadDirPath( final Path path ) {
             this.downloadDirPath = path;
+            return this;
+        }
+
+        public ConfigurationImpl setDownloadDirPath( final String path ) {
+            this.downloadDirPath = Paths.get( path );
             return this;
         }
 
@@ -106,16 +113,16 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
     public static final class ConfigurationWithPlaceholderImpl implements Configuration {
 
-        private String downloadDirPath = DEFAULT_CONFIG_DOWNLOAD_DIR_PATH;
+        private Path downloadDirPath = Paths.get( DEFAULT_CONFIG_DOWNLOAD_DIR_PATH );
         private String controlFileEnding = DEFAULT_CONFIG_CONTROL_FILE_ENDING;
 
         @Override
-        public String getDownloadDirPath() {
+        public Path getDownloadDirPath() {
             return downloadDirPath;
         }
 
         public ConfigurationWithPlaceholderImpl setDownloadDirPath( final String path ) {
-            this.downloadDirPath = FileUtils.substitutePlaceholder( path );
+            this.downloadDirPath = Paths.get( FileUtils.substitutePlaceholder( path ) );
             return this;
         }
 

@@ -19,10 +19,11 @@ package com.freiheit.fuava.simplebatch;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.base.Function;
+import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
+import com.freiheit.fuava.simplebatch.processor.RetryingProcessor;
 import com.google.common.collect.ImmutableList;
 
-public final class MapBasedBatchDownloader<I, O> implements Function<List<I>, List<O>> {
+public final class MapBasedBatchDownloader<I, O> extends RetryingProcessor<FetchedItem<I>, I, O> {
     private final Map<I, O> map;
 
     public MapBasedBatchDownloader( final Map<I, O> map ) {

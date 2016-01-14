@@ -1,6 +1,6 @@
 package com.freiheit.fuava.simplebatch.processor;
 
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,12 +10,12 @@ import com.freiheit.fuava.simplebatch.result.Result;
 
 public class JsonLoggingBatchedFailureProcessor<Input, Output> implements Processor<FetchedItem<Input>, Output, Output> {
 
-    private final String dirName;
+    private final Path baseDir;
     private final String controlFileEnding;
     private final String logFileEnding;
 
-    public JsonLoggingBatchedFailureProcessor( final String dirName, final String controlFileEnding, final String logFileEnding ) {
-        this.dirName = dirName;
+    public JsonLoggingBatchedFailureProcessor( final Path baseDir, final String controlFileEnding, final String logFileEnding ) {
+        this.baseDir = baseDir;
         this.controlFileEnding = controlFileEnding;
         this.logFileEnding = logFileEnding;
     }
@@ -41,16 +41,20 @@ public class JsonLoggingBatchedFailureProcessor<Input, Output> implements Proces
             }
         }
         if ( !failedInputs.isEmpty() ) {
-            final String failedPrefix = JsonLogger.nextFailedDownloadsName();
-            final JsonLogger l = new JsonLogger( Paths.get( dirName, failedPrefix + logFileEnding ) );
+            final Path failedPrefix = JsonLogger.nextFailedDownloadsName();
+            final Path dataFile = baseDir.resolve( failedPrefix );
+            final Path logFilePath = FileUtil.getLogFilePath( dataFile, logFileEnding );
+            final JsonLogger l = new JsonLogger( logFilePath );
             for ( final String failedInput : failedInputs ) {
                 l.logWriteEnd( failedInput, false, failureMessages, failedIds.toString() );
             }
+            final Path controlFilePath = FileUtil.getControlFilePath( dataFile, controlFileEnding );
             ControlFileWriter.write(
-                    Paths.get( dirName, failedPrefix + controlFileEnding ),
+                    controlFilePath,
                     "DOWNLOAD_FAILED",
-                    failedPrefix,
-                    failedPrefix + logFileEnding );
+                    baseDir,
+                    dataFile,
+                    logFilePath );
         }
         return iterable;
     }

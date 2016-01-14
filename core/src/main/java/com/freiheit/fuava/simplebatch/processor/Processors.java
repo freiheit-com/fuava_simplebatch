@@ -19,6 +19,7 @@ package com.freiheit.fuava.simplebatch.processor;
 import java.io.File;
 import java.io.InputStream;
 import java.io.Writer;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.apache.http.client.HttpClient;
@@ -155,7 +156,7 @@ public class Processors {
      * Persists the processed data to files in a directory. Each Item will be
      * written to a single file.
      *
-     * @param dirName
+     * @param baseDirPath
      *            the path tho the directory where each file is written to
      * @param adapter
      *            implements the logic for determining a file name and for
@@ -164,8 +165,8 @@ public class Processors {
      *         file in the given directory.
      */
     public static <OriginalItem, Input> Processor<OriginalItem, Input, FilePersistenceOutputInfo> fileWriter(
-            final String dirName, final FileOutputStreamAdapter<OriginalItem, Input> adapter ) {
-        return new FilePersistence<OriginalItem, Input>( dirName, adapter );
+            final Path baseDirPath, final FileOutputStreamAdapter<OriginalItem, Input> adapter ) {
+        return new FilePersistence<OriginalItem, Input>( baseDirPath, adapter );
     }
 
     /**
@@ -174,18 +175,18 @@ public class Processors {
      * been completely written as well as a log file with extra information
      */
     public static <OriginalInput, Input> Processor<FetchedItem<OriginalInput>, Input, ControlFilePersistenceOutputInfo> controlledFileWriter(
-            final String dirName,
+            final Path baseDirPath,
             final String controlFileEnding,
             final String logFileEnding,
             final FileOutputStreamAdapter<FetchedItem<OriginalInput>, Input> adapter ) {
         return
             // Write File
-            new FilePersistence<FetchedItem<OriginalInput>, Input>( dirName, adapter )
+            new FilePersistence<FetchedItem<OriginalInput>, Input>( baseDirPath, adapter )
             // Write Log
-            .then(new JsonLoggingProcessor<OriginalInput>( dirName, controlFileEnding, logFileEnding ) )
+            .then(new JsonLoggingProcessor<OriginalInput>( baseDirPath, controlFileEnding, logFileEnding ) )
             // Move File, Log File and Control File 
             .then(new ControlFilePersistence<FetchedItem<OriginalInput>>(
-                new ControlFilePersistenceConfigImpl( dirName, controlFileEnding, logFileEnding ) ));
+                new ControlFilePersistenceConfigImpl( baseDirPath, controlFileEnding, logFileEnding ) ));
     }
 
     /**
@@ -199,8 +200,8 @@ public class Processors {
      * @return
      */
     public static <OriginalItem, Input> Processor<OriginalItem, Input, BatchProcessorResult<FilePersistenceOutputInfo>> batchFileWriter(
-            final String dirName, final FileWriterAdapter<List<OriginalItem>, List<Input>> adapter ) {
-        return new BatchedSuccessesProcessor<OriginalItem, Input, FilePersistenceOutputInfo>( fileWriter( dirName, adapter ) );
+            final Path baseDirPath, final FileWriterAdapter<List<OriginalItem>, List<Input>> adapter ) {
+        return new BatchedSuccessesProcessor<OriginalItem, Input, FilePersistenceOutputInfo>( fileWriter( baseDirPath, adapter ) );
     }
 
     /**
@@ -217,20 +218,20 @@ public class Processors {
      * persisted file there will be a control file and a log file as well.
      */
     public static <OriginalInput, Input> Processor<FetchedItem<OriginalInput>, Input, BatchProcessorResult<ControlFilePersistenceOutputInfo>> controlledBatchFileWriter(
-            final String dirName,
+            final Path baseDirPath,
             final String controlFileEnding,
             final String logFileEnding,
             final FileOutputStreamAdapter<List<FetchedItem<OriginalInput>>, List<Input>> adapter ) {
         return 
-            new JsonLoggingBatchedFailureProcessor<OriginalInput, Input>( dirName, controlFileEnding, logFileEnding ) 
+            new JsonLoggingBatchedFailureProcessor<OriginalInput, Input>( baseDirPath, controlFileEnding, logFileEnding ) 
             .then(new BatchedSuccessesProcessor<FetchedItem<OriginalInput>, Input, ControlFilePersistenceOutputInfo>(
                     // "Main" processing pipeline, where not a list of results is processed, but a result with a list of successfull items
                     // write the batch file with the successfull items
-                    new FilePersistence<List<FetchedItem<OriginalInput>>, List<Input>>( dirName, adapter )
+                    new FilePersistence<List<FetchedItem<OriginalInput>>, List<Input>>( baseDirPath, adapter )
                     // add the log entries for the batched items
                     .then( new JsonLoggingBatchedSuccessProcessor<OriginalInput>( logFileEnding ) )
                     // move the batch file and the control file
-                    .then( new ControlFilePersistence<List<FetchedItem<OriginalInput>>>( new ControlFilePersistenceConfigImpl( dirName, controlFileEnding, logFileEnding ) ))
+                    .then( new ControlFilePersistence<List<FetchedItem<OriginalInput>>>( new ControlFilePersistenceConfigImpl( baseDirPath, controlFileEnding, logFileEnding ) ))
                 )
             );
     }
@@ -299,12 +300,20 @@ public class Processors {
 
     /**
      * A Processor which reads control files and moves them (and the file
-     * referenced by the control file) to the targetDir. Returns the moved file.
+     * referenced by the control file) to the targetDir. 
      *
      *
      */
-    public static <OriginalItem> Processor<OriginalItem, ControlFile, File> controlledFileMover( final String targetDir ) {
-        return new ControlledFileMovingProcessor<OriginalItem>( targetDir );
+    public static <Data> Processor<FetchedItem<ControlFile>, Data, Data> toArchiveMover( final Path sourceDir, final Path targetDir, final Path failedDir ) {
+        return new ToArchiveMover<Data>( sourceDir, targetDir, failedDir );
+    }
+
+    /**
+     * A Processor which reads control files and moves them (and the file
+     * referenced by the control file) to the targetDir. Returns the moved file.
+     */
+    public static Processor<FetchedItem<ControlFile>, ControlFile, File> toProcessingMover( final Path sourceDir, final Path targetDir, final Path failedDir ) {
+        return new ToProcessingMover( sourceDir, targetDir, failedDir );
     }
 
     /**

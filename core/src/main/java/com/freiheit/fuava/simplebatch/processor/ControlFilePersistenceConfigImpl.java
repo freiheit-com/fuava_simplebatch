@@ -16,24 +16,26 @@
  */
 package com.freiheit.fuava.simplebatch.processor;
 
+import java.nio.file.Path;
+
 final class ControlFilePersistenceConfigImpl implements
         ControlFilePersistence.Configuration {
-    private final String dirName;
+    private final Path baseDirPath;
     private final String controlFileEnding;
     private final String logFileEnding;
 
     ControlFilePersistenceConfigImpl(
-            final String dirName,
+            final Path baseDirPath,
             final String controlFileEnding,
             final String logFileEnding ) {
-        this.dirName = dirName;
+        this.baseDirPath = baseDirPath;
         this.controlFileEnding = controlFileEnding;
         this.logFileEnding = logFileEnding;
     }
 
     @Override
-    public String getDownloadDirPath() {
-        return dirName;
+    public Path getDownloadDirPath() {
+        return baseDirPath;
     }
 
     @Override

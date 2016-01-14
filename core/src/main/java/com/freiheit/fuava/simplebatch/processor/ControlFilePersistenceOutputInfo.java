@@ -16,14 +16,14 @@
  */
 package com.freiheit.fuava.simplebatch.processor;
 
-import java.io.File;
+import java.nio.file.Path;
 
 import com.google.common.base.MoreObjects;
 
 public class ControlFilePersistenceOutputInfo {
-    private final File ctrlFile;
+    private final Path ctrlFile;
 
-    public ControlFilePersistenceOutputInfo( final File ctrlFile ) {
+    public ControlFilePersistenceOutputInfo( final Path ctrlFile ) {
         this.ctrlFile = ctrlFile;
     }
 

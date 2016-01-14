@@ -1,5 +1,6 @@
 package com.freiheit.fuava.simplebatch.logging;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
@@ -10,11 +11,11 @@ import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 
 public class ImportFileJsonLoggingListener implements ProcessingResultListener<ControlFile, ResultStatistics> {
 
-    private final String downloadDir;
-    private final String archivedDir;
-    private final String failedDir;
+    private final Path downloadDir;
+    private final Path archivedDir;
+    private final Path failedDir;
 
-    public ImportFileJsonLoggingListener( final String downloadDir, final String archivedDir, final String failedDir ) {
+    public ImportFileJsonLoggingListener( final Path downloadDir, final Path archivedDir, final Path failedDir ) {
         this.downloadDir = downloadDir;
         this.archivedDir = archivedDir;
         this.failedDir = failedDir;
@@ -22,21 +23,20 @@ public class ImportFileJsonLoggingListener implements ProcessingResultListener<C
 
     @Override
     public void onFetchResult( final Result<FetchedItem<ControlFile>, ControlFile> result ) {
-        final String logFileName = getLogfileName( result );
+        final Path logFileRelPath = getLogfileRelPath( result );
         final FetchedItem<ControlFile> fetchedItem = result.getInput();
         final String identifier = fetchedItem == null
             ? null
             : fetchedItem.getIdentifier();
 
-        final JsonLogger l = new JsonLogger( Paths.get( downloadDir, logFileName ) );
+        final JsonLogger l = new JsonLogger( downloadDir.resolve( logFileRelPath ) );
         l.logImportStart( identifier );
     }
 
-    private String getLogfileName( final Result<FetchedItem<ControlFile>, ?> result ) {
+    private Path getLogfileRelPath( final Result<FetchedItem<ControlFile>, ?> result ) {
         final FetchedItem<ControlFile> fetchedItem = result.getInput();
         final ControlFile value = fetchedItem == null ? null : fetchedItem.getValue();
-        final String logFileName = value == null ? "failed_control_files.log": value.getLogFileName();
-        return logFileName;
+        return value == null ? Paths.get( "failed_control_files.log" ): value.getLogFileRelPath();
     }
 
     @Override
@@ -46,11 +46,11 @@ public class ImportFileJsonLoggingListener implements ProcessingResultListener<C
             ? null
             : fetchedItem.getIdentifier();
 
-        final String logFileName = getLogfileName( result );
-        final String dir = result.isSuccess()
+        final Path logFileName = getLogfileRelPath( result );
+        final Path dir = result.isSuccess()
             ? archivedDir
             : failedDir;
-        final JsonLogger l = new JsonLogger( Paths.get( dir, logFileName ) );
+        final JsonLogger l = new JsonLogger( dir.resolve( logFileName ) );
         l.logImportEnd( result.isSuccess(), result.getAllMessages(), identifier );
     }
 }

@@ -16,8 +16,8 @@
  */
 package com.freiheit.fuava.simplebatch.fetch;
 
-import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Map;
 
 import org.apache.http.client.HttpClient;
@@ -114,7 +114,7 @@ public class Fetchers {
      * Iterates over all files in the given directory that end with the
      * specified fileEnding and converts them with the given function.
      */
-    public static <T> Fetcher<T> folderFetcher( final String dirName, final String fileEnding, final Function<File, T> fileFunction ) {
+    public static <T> Fetcher<T> folderFetcher( final Path dirName, final String fileEnding, final Function<Path, T> fileFunction ) {
         return folderFetcher( dirName, fileEnding, fileFunction, DirectoryFileFetcher.ORDERING_FILE_BY_PATH );
     }
 
@@ -122,7 +122,7 @@ public class Fetchers {
      * Iterates over all files in the given directory that end with the
      * specified fileEnding.
      */
-    public static Fetcher<File> folderFetcher( final String dirName, final String fileEnding ) {
+    public static Fetcher<Path> folderFetcher( final Path dirName, final String fileEnding ) {
         return folderFetcher( dirName, fileEnding, DirectoryFileFetcher.ORDERING_FILE_BY_PATH );
     }
 
@@ -130,8 +130,8 @@ public class Fetchers {
      * Iterates over all files in the given directory that end with the
      * specified fileEnding and converts them with the given function.
      */
-    public static <T> Fetcher<T> folderFetcher( final String dirName, final String fileEnding, final Function<File, T> fileFunction,
-            final Ordering<File> fileOrdering ) {
+    public static <T> Fetcher<T> folderFetcher( final Path dirName, final String fileEnding, final Function<Path, T> fileFunction,
+            final Ordering<Path> fileOrdering ) {
         return new DirectoryFileFetcher<T>( dirName, fileEnding, fileFunction, fileOrdering );
     }
 
@@ -139,8 +139,8 @@ public class Fetchers {
      * Iterates over all files in the given directory that end with the
      * specified fileEnding.
      */
-    public static Fetcher<File> folderFetcher( final String dirName, final String fileEnding, final Ordering<File> fileOrdering ) {
-        return new DirectoryFileFetcher<File>( dirName, fileEnding, Functions.<File> identity(), fileOrdering );
+    public static Fetcher<Path> folderFetcher( final Path dirName, final String fileEnding, final Ordering<Path> fileOrdering ) {
+        return new DirectoryFileFetcher<Path>( dirName, fileEnding, Functions.<Path> identity(), fileOrdering );
     }
 
 }

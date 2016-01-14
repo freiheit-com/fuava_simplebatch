@@ -18,11 +18,22 @@ package com.freiheit.fuava.simplebatch.processor;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.freiheit.fuava.simplebatch.result.Result;
 
 public interface FileOutputStreamAdapter<Input, Output> {
     String getFileName( Result<Input, Output> result );
+    
+    /**
+     * Get the relative path to be used for persisting the given result.
+     * @param result The result to persist
+     * @return a path - relative to the download directory. This may be directly a filename, or a file in a subdir 
+     */
+    default Path getRelativeFilePath( final Result<Input, Output> result ) {
+        return Paths.get( getFileName(result) );
+    }
 
     void writeToStream( OutputStream outputStream, Output data ) throws IOException;
 }

@@ -1,8 +1,8 @@
 package com.freiheit.fuava.simplebatch;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,53 +13,51 @@ public class BatchTestDirectory {
 
     private static final Logger LOG = LoggerFactory.getLogger( BatchTestDirectory.class );
 
-    private final String testDirBase;
-    private final String testDirDownloads;
-    private final String testDirProcessing;
-    private final String testDirArchive;
-    private final String testDirFails;
+    private final Path testDirBase;
+    private final Path testDirDownloads;
+    private final Path testDirProcessing;
+    private final Path testDirArchive;
+    private final Path testDirFails;
 
-    public String getTestDirBase() {
+    public Path getTestDirBase() {
         return testDirBase;
     }
 
-    public String getDownloadsDir() {
+    public Path getDownloadsDir() {
         return testDirDownloads;
     }
 
-    public String getProcessingDir() {
+    public Path getProcessingDir() {
         return testDirProcessing;
     }
 
-    public String getArchiveDir() {
+    public Path getArchiveDir() {
         return testDirArchive;
     }
 
-    public String getFailsDir() {
+    public Path getFailsDir() {
         return testDirFails;
     }
 
-    public BatchTestDirectory( String prefix ) {
-        String base = null;
+    public BatchTestDirectory( final String prefix ) {
+        Path base = null;
         try {
-            base = Files.createTempDirectory( prefix ).toString();
-        } catch ( Exception e ) {
+            base = Files.createTempDirectory( prefix );
+        } catch ( final Exception e ) {
             LOG.error( "Couldn't create temp directory " + prefix );
         }
         testDirBase = base;
-        testDirDownloads = testDirBase + "/downloads/";
-        testDirProcessing = testDirBase + "/processing/";
-        testDirArchive = testDirBase + "/archive/";
-        testDirFails = testDirBase + "/fails/";
-
+        testDirDownloads = testDirBase.resolve( "downloads" );
+        testDirProcessing = testDirBase.resolve( "processing" );
+        testDirArchive = testDirBase.resolve( "archive" );
+        testDirFails = testDirBase.resolve( "fails" );
     }
 
     public void cleanup() {
-        final File baseDir = new File( testDirBase );
         try {
-            FileUtils.deleteDirectoryRecursively( baseDir );
-        } catch ( IOException e ) {
-            LOG.error( "Couldn't delete directory " + baseDir );
+            FileUtils.deleteDirectoryRecursively( testDirBase );
+        } catch ( final IOException e ) {
+            LOG.error( "Couldn't delete directory " + testDirBase );
         }
     }
 }

@@ -32,7 +32,11 @@ public class FileUtils {
     public static final String PLACEHOLDER_DATE = "%(DATE)";
 
     public static void deleteDirectoryRecursively( final File dir ) throws IOException {
-        Files.walkFileTree( Paths.get( dir.toURI() ), new SimpleFileVisitor<Path>() {
+        deleteDirectoryRecursively( Paths.get( dir.toURI() ) );
+    }
+    
+    public static void deleteDirectoryRecursively( final Path dir ) throws IOException {
+        Files.walkFileTree( dir, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile( final Path file, final BasicFileAttributes attrs ) throws IOException {
                 Files.delete( file );

@@ -17,11 +17,9 @@
 package com.freiheit.fuava.sftp;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -48,13 +46,13 @@ public class PseudoSFTPTest {
 
     @Test
     public void testPseudoSFTP() throws IOException {
-        final String localTestDir = Files.createTempDirectory( "simplebatch_sftplib-pseudotest" ).toFile().getAbsolutePath();
+        final Path localTestDir = Files.createTempDirectory( "simplebatch_sftplib-pseudotest" );
         final String downloadFileName = "test_pseudo_152000_20101010_120000.csv";
         final String downloadFileContent = "{name:'pseudojson'}";
         final CtlDownloaderJob.Configuration localConfig = new CtlDownloaderJob.Configuration() {
 
             @Override
-            public String getDownloadDirPath() {
+            public Path getDownloadDirPath() {
                 return localTestDir;
             }
 
@@ -109,14 +107,14 @@ public class PseudoSFTPTest {
             Assert.assertEquals( archiveContent.size(), 2 );
             System.out.println( archiveContent );
 
-            Path downloadedFile = Files.newDirectoryStream( Paths.get( localTestDir ), "*" + downloadFileName ).iterator().next();
-            String content = Files.readAllLines( downloadedFile ).get( 0 );
+            final Path downloadedFile = Files.newDirectoryStream( localTestDir, "*" + downloadFileName ).iterator().next();
+            final String content = Files.readAllLines( downloadedFile ).get( 0 );
             Assert.assertEquals( content, downloadFileContent );
 
-            Path logFile = Files.newDirectoryStream( Paths.get( localTestDir ), "*" + downloadFileName + ".log" ).iterator().next();
-            String logContent = Files.readAllLines( logFile ).get( 0 );
+            final Path logFile = Files.newDirectoryStream( localTestDir, "*" + downloadFileName + ".log" ).iterator().next();
+            final String logContent = Files.readAllLines( logFile ).get( 0 );
 
-            JsonLogEntry logEntry = new Gson().fromJson( logContent, JsonLogEntry.class );
+            final JsonLogEntry logEntry = new Gson().fromJson( logContent, JsonLogEntry.class );
 
             Assert.assertEquals( logEntry.getContext(), "write" );
             Assert.assertEquals( logEntry.getInput(), downloadFileName );
@@ -125,7 +123,7 @@ public class PseudoSFTPTest {
             Assert.assertNotNull( logEntry.getTime() );
 
         } finally {
-            FileUtils.deleteDirectoryRecursively( new File(localTestDir) );
+            FileUtils.deleteDirectoryRecursively( localTestDir.toFile() );
         }
         
         // FIXME: check state -> one success, no skipped dir, one archived subdir with name of current date, nothing in incoming, nothing in processing

@@ -43,7 +43,6 @@ import com.freiheit.fuava.simplebatch.logging.JsonLogEntry;
 import com.freiheit.fuava.simplebatch.processor.BatchProcessorResult;
 import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo;
 import com.freiheit.fuava.simplebatch.processor.FileWriterAdapter;
-import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.google.common.base.Joiner;
@@ -64,12 +63,19 @@ public class CtlDownloaderTest {
     public void testBatchPersistence() throws FileNotFoundException, IOException {
 
         final String targetFileName = "batch";
-        final File expected = new File( tmp.getDownloadsDir(), targetFileName + "_1" );
+        final String subdirpath = "some/subdir";
+        final File expected = new File( tmp.getDownloadsDir() + "/" + subdirpath, targetFileName + "_1" );
+        final File unexpected = tmp.getDownloadsDir().resolve( targetFileName + "_1" ).toFile();
         if ( expected.exists() ) {
             expected.delete();
         }
+        if ( unexpected.exists() ) {
+            unexpected.delete();
+        }
+
         Assert.assertFalse( expected.exists(), "File was not deleted " );
-        final File expectedLog = new File( tmp.getDownloadsDir(), targetFileName + "_1.log" );
+        Assert.assertFalse( unexpected.exists(), "unexpected File was not deleted " );
+        final File expectedLog = new File( tmp.getDownloadsDir() + "/" + subdirpath, targetFileName + "_1.log" );
         if ( expectedLog.exists() ) {
             expectedLog.delete();
         }
@@ -84,30 +90,32 @@ public class CtlDownloaderTest {
         data.put( 6, "sechs" );
         final CtlDownloaderJob.BatchFileWritingBuilder<Integer, String> builder = newTestDownloaderBuilder();
         final CtlDownloaderJob<Integer, BatchProcessorResult<ControlFilePersistenceOutputInfo>> downloader =
-                builder.setDownloaderBatchSize( 100 )
-                // Fetch ids of the data to be downloaded, will be used by the downloader to fetch the data
-                .setIdsFetcher( Fetchers.iterable( data.keySet() ) ).setDownloader( Processors.retryableBatchedFunction(
-                        new MapBasedBatchDownloader<Integer, String>( data ) ) ).setBatchFileWriterAdapter(
-                                new FileWriterAdapter<List<FetchedItem<Integer>>, List<String>>() {
-                                    private final String prefix = targetFileName + "_";
-                                    private final AtomicLong counter = new AtomicLong();
+            builder.setDownloaderBatchSize( 100 )
+            // Fetch ids of the data to be downloaded, will be used by the downloader to fetch the data
+            .setIdsFetcher( Fetchers.iterable( data.keySet() ) )
+            .setDownloader( new MapBasedBatchDownloader<Integer, String>( data ) )
+            .setBatchFileWriterAdapter( new FileWriterAdapter<List<FetchedItem<Integer>>, List<String>>() {
+                    private final String prefix = targetFileName + "_";
+                    private final AtomicLong counter = new AtomicLong();
 
-                                    @Override
-                                    public void write( final Writer writer, final List<String> data ) throws IOException {
-                                        final String string = Joiner.on( '\n' ).join( data );
-                                        writer.write( string );
-                                    }
-
-                                    @Override
-                                    public String getFileName( final Result<List<FetchedItem<Integer>>, List<String>> result ) {
-                                        return prefix + counter.incrementAndGet();
-                                    }
-                                } ).build();
+                    @Override
+                    public void write( final Writer writer, final List<String> data ) throws IOException {
+                        final String string = Joiner.on( '\n' ).join( data );
+                        writer.write( string );
+                    }
+                    
+                    @Override
+                    public String getFileName( final Result<List<FetchedItem<Integer>>, List<String>> result ) {
+                        return subdirpath + "/" + prefix + counter.incrementAndGet();
+                    }
+                } 
+            ).build();
 
         final ResultStatistics results = downloader.run();
         Assert.assertTrue( results.isAllSuccess() );
         Assert.assertFalse( results.isAllFailed() );
 
+        Assert.assertFalse( unexpected.exists(), "batch file subdirectory was not handled correctly" );
         Assert.assertTrue( expected.exists(), "batch file was not created" );
         Assert.assertTrue( expectedLog.exists(), "log file was not created" );
 
@@ -150,6 +158,77 @@ public class CtlDownloaderTest {
         tmp.cleanup();
     }
 
+
+    @Test
+    public void testBatchPersistenceNoSubdir() throws FileNotFoundException, IOException {
+
+        final String targetFileName = "batch";
+        final File expected = tmp.getDownloadsDir().resolve( targetFileName + "_1" ).toFile();
+        if ( expected.exists() ) {
+            expected.delete();
+        }
+        Assert.assertFalse( expected.exists(), "File was not deleted " );
+        final File expectedLog = new File( tmp.getDownloadsDir() + "/", targetFileName + "_1.log" );
+        if ( expectedLog.exists() ) {
+            expectedLog.delete();
+        }
+        Assert.assertFalse( expectedLog.exists(), "Log file was not deleted " );
+
+        final Map<Integer, String> data = new LinkedHashMap<Integer, String>();
+        data.put( 1, "eins" );
+        data.put( 2, "zwei" );
+        data.put( 3, "drei" );
+        data.put( 4, "vier" );
+        data.put( 5, "fünf" );
+        data.put( 6, "sechs" );
+        final CtlDownloaderJob.BatchFileWritingBuilder<Integer, String> builder = newTestDownloaderBuilder();
+        final CtlDownloaderJob<Integer, BatchProcessorResult<ControlFilePersistenceOutputInfo>> downloader =
+            builder.setDownloaderBatchSize( 100 )
+            // Fetch ids of the data to be downloaded, will be used by the downloader to fetch the data
+            .setIdsFetcher( Fetchers.iterable( data.keySet() ) )
+            .setDownloader( new MapBasedBatchDownloader<Integer, String>( data ) )
+            .setBatchFileWriterAdapter( new FileWriterAdapter<List<FetchedItem<Integer>>, List<String>>() {
+                    private final String prefix = targetFileName + "_";
+                    private final AtomicLong counter = new AtomicLong();
+
+                    @Override
+                    public void write( final Writer writer, final List<String> data ) throws IOException {
+                        final String string = Joiner.on( '\n' ).join( data );
+                        writer.write( string );
+                    }
+                    
+                    @Override
+                    public String getFileName( final Result<List<FetchedItem<Integer>>, List<String>> result ) {
+                        return prefix + counter.incrementAndGet();
+                    }
+                } 
+            ).build();
+
+        final ResultStatistics results = downloader.run();
+        Assert.assertTrue( results.isAllSuccess() );
+        Assert.assertFalse( results.isAllFailed() );
+
+        Assert.assertTrue( expected.exists(), "batch file was not created" );
+        Assert.assertTrue( expectedLog.exists(), "log file was not created" );
+
+        final ImmutableList.Builder<String> resultsBuilder = ImmutableList.builder();
+        try ( BufferedReader reader = new BufferedReader( new FileReader( expected ) ) ) {
+            while ( reader.ready() ) {
+                resultsBuilder.add( reader.readLine() );
+            }
+        }
+
+        // test the log contents of THE LOG file
+        final List<String> logLines = Files.readAllLines( Paths.get( expectedLog.toURI() ) );
+
+        Assert.assertEquals( logLines.size(), 6 );
+
+        final ImmutableList<String> resultsList = resultsBuilder.build();
+        Assert.assertEquals( resultsList, data.values() );
+
+        tmp.cleanup();
+    }
+
     private JsonLogEntry parse( final String logLine ) {
         return GSON.fromJson( logLine, JsonLogEntry.class );
     }
@@ -161,7 +240,7 @@ public class CtlDownloaderTest {
 
         final String currentDate = LocalDate.now().format( DateTimeFormatter.BASIC_ISO_DATE );
 
-        Assert.assertEquals( config.getDownloadDirPath(), "/test/" + currentDate + "/DE/" );
+        Assert.assertEquals( config.getDownloadDirPath().toString(), "/test/" + currentDate + "/DE" );
     }
 
     @Test
@@ -171,7 +250,7 @@ public class CtlDownloaderTest {
 
         final String currentDate = LocalDate.now().format( DateTimeFormatter.BASIC_ISO_DATE );
 
-        Assert.assertEquals( config.getDownloadDirPath(), "/test/" + currentDate + "/DE/" + currentDate + "/" );
+        Assert.assertEquals( config.getDownloadDirPath().toString(), "/test/" + currentDate + "/DE/" + currentDate  );
     }
 
 }

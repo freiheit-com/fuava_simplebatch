@@ -18,9 +18,9 @@ package com.freiheit.fuava.simplebatch.processor;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import com.freiheit.fuava.simplebatch.result.Result;
+import com.google.common.base.Preconditions;
 
 /**
  * @param <Input>
@@ -30,7 +30,7 @@ class ControlFilePersistence<Input> extends
         AbstractSingleItemProcessor<Input, FilePersistenceOutputInfo, ControlFilePersistenceOutputInfo> {
 
     public interface Configuration {
-        String getDownloadDirPath();
+        Path getDownloadDirPath();
 
         String getControlFileEnding();
 
@@ -38,9 +38,11 @@ class ControlFilePersistence<Input> extends
     }
 
     private final Configuration config;
-
+    private final Path downloadDirPath;
+    
     public ControlFilePersistence( final Configuration config ) {
         this.config = config;
+        this.downloadDirPath = Preconditions.checkNotNull( config.getDownloadDirPath() );
     }
 
     @Override
@@ -50,16 +52,18 @@ class ControlFilePersistence<Input> extends
         }
         final Input input = r.getInput();
         try {
-            final File f = r.getOutput().getDataFile();
+            final Path dataFile = r.getOutput().getDataFile();
 
-            Path ctlFile = Paths.get( f.toString() + config.getControlFileEnding() );
-            ControlFileWriter.write( ctlFile, "DOWNLOAD_SUCCESSFUL", f.getName(), f.getName() + config.getLogFileEnding() );
+            final Path ctlFile = FileUtil.getControlFilePath( dataFile, config.getControlFileEnding() );
+            final Path logFile = FileUtil.getLogFilePath( dataFile, config.getLogFileEnding() );
+            
+            ControlFileWriter.write( ctlFile, "DOWNLOAD_SUCCESSFUL", downloadDirPath, dataFile , logFile );
 
-            File ctl = ctlFile.toFile();
+            final File ctl = ctlFile.toFile();
             if ( !ctl.exists() ) {
                 return Result.failed( input, "Control file does not exist after write: " + ctl );
             }
-            return Result.success( input, new ControlFilePersistenceOutputInfo( ctl ) );
+            return Result.success( input, new ControlFilePersistenceOutputInfo( ctlFile ) );
 
         } catch ( final Throwable t ) {
             return Result.failed( input, t );

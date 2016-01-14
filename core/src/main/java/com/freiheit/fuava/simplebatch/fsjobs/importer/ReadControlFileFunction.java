@@ -22,47 +22,57 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 /**
  * @author tim.lessner@freiheit.com
  */
-public class ReadControlFileFunction implements Function<File, ControlFile> {
+public class ReadControlFileFunction implements Function<Path, ControlFile> {
 
-    private final String baseDir;
+    private final Path baseDir;
 
-    public ReadControlFileFunction( final String baseDir ) {
+    public ReadControlFileFunction( final Path baseDir ) {
         this.baseDir = baseDir;
     }
 
-    private ControlFile parseNewFormat( File file, BufferedReader br ) throws IOException {
-        Properties prop = new Properties();
+    private ControlFile parseNewFormat( final Path path, final BufferedReader br ) throws IOException {
+        final Properties prop = new Properties();
         prop.load( br );
-        String controlledFileName = prop.getProperty( "file" );
-        String logFileName = prop.getProperty( "log" );
-        String status = prop.getProperty( "status" );
-        boolean downloadFailed = "DOWNLOAD_FAILED".equals( status );
-        return new ControlFile( this.baseDir, controlledFileName, logFileName, file, downloadFailed );
+        final String controlledFileName = prop.getProperty( "file" );
+        final String logFileName = Preconditions.checkNotNull(prop.getProperty( "log" ), "Log file property is mandatory" );
+        final String status = prop.getProperty( "status" );
+        final boolean downloadFailed = "DOWNLOAD_FAILED".equals( status );
+        return new ControlFile( 
+                this.baseDir, 
+                Strings.isNullOrEmpty( controlledFileName ) ? Paths.get( "" ) : Paths.get( controlledFileName ) , 
+                Paths.get( logFileName ), 
+                path, 
+                downloadFailed 
+            );
     }
 
     @Override
-    public ControlFile apply( final File file ) {
+    public ControlFile apply( final Path path ) {
         try {
+            final File file = path.toFile();
             final Reader in = new InputStreamReader( new FileInputStream( file ), Charsets.UTF_8 );
             try ( BufferedReader br = new BufferedReader( in ) ) {
                 final String firstLine = br.readLine();
                 if ( Strings.isNullOrEmpty( firstLine ) ) {
                     throw new IllegalArgumentException( "The Control-File " + file + " has no content" );
                 } else if ( firstLine.startsWith( "#!VERSION=1" ) ) {
-                    return parseNewFormat( file, br );
+                    return parseNewFormat( path, br );
                 } else {
-                    final String controlledFileName = firstLine;
-                    final String logFileName = controlledFileName + ".log";
-                    return new ControlFile( this.baseDir, controlledFileName, logFileName, file );
+                    final Path controlledFileName = Paths.get( firstLine );
+                    final Path logFileName = Paths.get( controlledFileName + ".log" );
+                    return new ControlFile( this.baseDir, controlledFileName, logFileName, path );
                 }
             }
         } catch ( final IOException e ) {

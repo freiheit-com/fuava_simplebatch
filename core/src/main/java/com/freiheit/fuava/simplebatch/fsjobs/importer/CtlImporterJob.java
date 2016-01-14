@@ -18,6 +18,8 @@ package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,59 +56,75 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
     public interface Configuration {
         String getControlFileEnding();
 
-        String getDownloadDirPath();
+        Path getDownloadDirPath();
 
-        String getArchivedDirPath();
+        Path getArchivedDirPath();
 
-        String getProcessingDirPath();
+        Path getProcessingDirPath();
 
-        String getFailedDirPath();
+        Path getFailedDirPath();
     }
 
     public static final class ConfigurationImpl implements Configuration {
 
-        private String downloadDirPath = CtlDownloaderJob.DEFAULT_CONFIG_DOWNLOAD_DIR_PATH;
-        private String archivedDirPath = "/tmp/archive";
-        private String processingDirPath = "/tmp/processing/";
-        private String failedDirPath = "/tmp/failed";
+        private Path downloadDirPath = Paths.get( CtlDownloaderJob.DEFAULT_CONFIG_DOWNLOAD_DIR_PATH );
+        private Path archivedDirPath = Paths.get( "/tmp/archive" );
+        private Path processingDirPath = Paths.get( "/tmp/processing/" );
+        private Path failedDirPath = Paths.get( "/tmp/failed" );
         private String controlFileEnding = CtlDownloaderJob.DEFAULT_CONFIG_CONTROL_FILE_ENDING;
 
         @Override
-        public String getDownloadDirPath() {
+        public Path getDownloadDirPath() {
             return downloadDirPath;
         }
 
         public ConfigurationImpl setDownloadDirPath( final String downloadDirPath ) {
+            return setDownloadDirPath( Paths.get( downloadDirPath ) );
+        }
+        
+        public ConfigurationImpl setDownloadDirPath( final Path downloadDirPath ) {
             this.downloadDirPath = downloadDirPath;
             return this;
         }
 
         @Override
-        public String getArchivedDirPath() {
+        public Path getArchivedDirPath() {
             return archivedDirPath;
         }
 
         public ConfigurationImpl setArchivedDirPath( final String archivedDirPath ) {
+            return setArchivedDirPath( Paths.get( archivedDirPath ) );
+        }
+        
+        public ConfigurationImpl setArchivedDirPath( final Path archivedDirPath ) {
             this.archivedDirPath = archivedDirPath;
             return this;
         }
 
         @Override
-        public String getFailedDirPath() {
+        public Path getFailedDirPath() {
             return failedDirPath;
         }
 
         public ConfigurationImpl setFailedDirPath( final String failedDirPath ) {
+            return setFailedDirPath( Paths.get( failedDirPath ) );
+        }
+
+        public ConfigurationImpl setFailedDirPath( final Path failedDirPath ) {
             this.failedDirPath = failedDirPath;
             return this;
         }
-
+        
         @Override
-        public String getProcessingDirPath() {
+        public Path getProcessingDirPath() {
             return processingDirPath;
         }
 
         public ConfigurationImpl setProcessingDirPath( final String processingDirPath ) {
+            return setProcessingDirPath( Paths.get( processingDirPath ) );
+        }
+
+        public ConfigurationImpl setProcessingDirPath( final Path processingDirPath ) {
             this.processingDirPath = processingDirPath;
             return this;
         }
@@ -125,50 +143,50 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
 
     public static final class ConfigurationWithPlaceholderImpl implements Configuration {
 
-        private String downloadDirPath = CtlDownloaderJob.DEFAULT_CONFIG_DOWNLOAD_DIR_PATH;
+        private Path downloadDirPath = Paths.get( CtlDownloaderJob.DEFAULT_CONFIG_DOWNLOAD_DIR_PATH );
 
-        private String archivedDirPath = FileUtils.substitutePlaceholder( "/tmp/archive/" + FileUtils.PLACEHOLDER_DATE );
-        private String processingDirPath = "/tmp/processing/";
-        private String failedDirPath = FileUtils.substitutePlaceholder( "/tmp/failed/" + FileUtils.PLACEHOLDER_DATE );
+        private Path archivedDirPath = Paths.get( FileUtils.substitutePlaceholder( "/tmp/archive/" + FileUtils.PLACEHOLDER_DATE ) );
+        private Path processingDirPath = Paths.get( "/tmp/processing/" );
+        private Path failedDirPath = Paths.get( FileUtils.substitutePlaceholder( "/tmp/failed/" + FileUtils.PLACEHOLDER_DATE ) );
         private String controlFileEnding = CtlDownloaderJob.DEFAULT_CONFIG_CONTROL_FILE_ENDING;
 
         @Override
-        public String getDownloadDirPath() {
+        public Path getDownloadDirPath() {
             return downloadDirPath;
         }
 
         public ConfigurationWithPlaceholderImpl setDownloadDirPath( final String downloadDirPath ) {
-            this.downloadDirPath = FileUtils.substitutePlaceholder( downloadDirPath );
+            this.downloadDirPath = Paths.get( FileUtils.substitutePlaceholder( downloadDirPath ) );
             return this;
         }
 
         @Override
-        public String getArchivedDirPath() {
+        public Path getArchivedDirPath() {
             return archivedDirPath;
         }
 
         public ConfigurationWithPlaceholderImpl setArchivedDirPath( final String archivedDirPath ) {
-            this.archivedDirPath = FileUtils.substitutePlaceholder( archivedDirPath );
+            this.archivedDirPath = Paths.get( FileUtils.substitutePlaceholder( archivedDirPath ) );
             return this;
         }
 
         @Override
-        public String getFailedDirPath() {
+        public Path getFailedDirPath() {
             return failedDirPath;
         }
 
         public ConfigurationWithPlaceholderImpl setFailedDirPath( final String failedDirPath ) {
-            this.failedDirPath = FileUtils.substitutePlaceholder( failedDirPath );
+            this.failedDirPath = Paths.get( FileUtils.substitutePlaceholder( failedDirPath ) );
             return this;
         }
 
         @Override
-        public String getProcessingDirPath() {
+        public Path getProcessingDirPath() {
             return processingDirPath;
         }
 
         public ConfigurationWithPlaceholderImpl setProcessingDirPath( final String processingDirPath ) {
-            this.processingDirPath = FileUtils.substitutePlaceholder( processingDirPath );
+            this.processingDirPath = Paths.get( FileUtils.substitutePlaceholder( processingDirPath ) );
             return this;
         }
 
@@ -257,11 +275,8 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
          * {@link #setFileProcessor(Processor)}.
          * </p>
          * 
-         * @deprecated Use
-         *             {@link #setFetchedItemsFileInputStreamReader(Function)}
-         *             instead
+         * @link You should probably use {@link #setFetchedItemsFileInputStreamReader(Function)} instead
          */
-        @Deprecated
         public Builder<Data> setFileInputStreamReader( final Function<InputStream, Iterable<Data>> documentReader ) {
             final Function<File, Iterable<Result<FetchedItem<Data>, Data>>> fileProcessorFunction =
                     new FileToInputStreamFunction<>( is -> new IterableFetcherWrapper<Data>( documentReader.apply( is ) ) );
@@ -409,19 +424,23 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                     new ImportContentJsonLoggingListenerFactory<Data>( Builder.this.configuration.getProcessingDirPath() ) );
 
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor =
-                    Processors.<FetchedItem<ControlFile>> controlledFileMover( configuration.getProcessingDirPath() )
+                    Processors.toProcessingMover( 
+                            configuration.getDownloadDirPath(), 
+                            configuration.getProcessingDirPath(), 
+                            configuration.getFailedDirPath() 
+                    )
                     .then( fileReader )
                     .then( Processors.runBatchJobProcessor(
-                            item -> item.getValue().getControlledFileName(), 
+                            item -> item.getValue().getControlledFileRelPath().getFileName().toString(), 
                             processingBatchSize, 
                             parallelContent,
                             TimeLoggingProcessor.wrap( "Content", contentProcessor ),
                             contentProcessingListenerFactories 
                         ))
-                    .then( new FileMovingPersistence<ResultStatistics>(
-                            new File( configuration.getProcessingDirPath() ),
-                            new File( configuration.getArchivedDirPath() ),
-                            new File( configuration.getFailedDirPath() ) ) );
+                    .then( Processors.<ResultStatistics> toArchiveMover(
+                            configuration.getProcessingDirPath(),
+                            configuration.getArchivedDirPath(),
+                            configuration.getFailedDirPath() ) );
 
             return new CtlImporterJob<Data>(
                     description,
