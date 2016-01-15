@@ -17,17 +17,21 @@
 package com.freiheit.fuava.simplebatch.processor;
 
 import java.io.IOException;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import com.freiheit.fuava.simplebatch.fsjobs.importer.ControlFile;
 import com.freiheit.fuava.simplebatch.fsjobs.importer.FailedToMoveFileException;
+import com.freiheit.fuava.simplebatch.util.Sysprops;
 
 /**
  * @author tim.lessner@freiheit.com
  */
 public class ControlFileMover {
-
+    private static final CopyOption[] MOVE_OPTIONS = Sysprops.ATOMIC_MOVE ? new CopyOption[] { StandardCopyOption.ATOMIC_MOVE } : new CopyOption[0];
+    
     public static void move( final ControlFile source, final ControlFile target ) throws FailedToMoveFileException {
         if ( source == null ) {
             throw new FailedToMoveFileException( "Cannot Move null control file." );
@@ -54,7 +58,8 @@ public class ControlFileMover {
             // for whom an enforcement of atomic moves would be a breaking change.
             final Path targetDir = target.getParent();
             Files.createDirectories( targetDir);
-            return Files.move( source, target /*,StandardCopyOption.ATOMIC_MOVE*/ );
+            
+            return Files.move( source, target, MOVE_OPTIONS );
         } catch ( final IOException e ) {
             throw new FailedToMoveFileException( source, target, e );
         }

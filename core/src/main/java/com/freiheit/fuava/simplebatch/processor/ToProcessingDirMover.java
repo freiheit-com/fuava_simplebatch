@@ -46,16 +46,23 @@ public final class ToProcessingDirMover extends AbstractSingleItemProcessor<Fetc
             // we need to update the contents of the control file to reflect the new name before we proceed 
             ControlFileWriter.write( targetControlFile );
 
+            final Path controlledFile = targetControlFile.getControlledFile();
             if ( r.isFailed() ) {
                 return result
                         // We need to create a new fetched item due to the new location of the control file
                         .withInput( input.withValue( targetControlFile ) )
                         .failed();
+            } else if (controlledFile == null) {
+                return result
+                        // We need to create a new fetched item due to the new location of the control file
+                        .withInput( input.withValue( targetControlFile ) )
+                        .withFailureMessage( "No controlled file" )
+                        .failed();
             } else {
                 return result
                         // We need to create a new fetched item due to the new location of the control file
                         .withInput( input.withValue( targetControlFile ) )
-                        .withOutput( targetControlFile.getControlledFile().toFile() )
+                        .withOutput( controlledFile.toFile() )
                         .success();
             }
 

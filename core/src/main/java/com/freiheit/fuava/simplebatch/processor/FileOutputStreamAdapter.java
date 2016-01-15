@@ -19,9 +19,9 @@ package com.freiheit.fuava.simplebatch.processor;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import com.freiheit.fuava.simplebatch.result.Result;
+import com.freiheit.fuava.simplebatch.util.Sysprops;
 
 public interface FileOutputStreamAdapter<Input, Output> {
     String getFileName( Result<Input, Output> result );
@@ -32,7 +32,11 @@ public interface FileOutputStreamAdapter<Input, Output> {
      * @return a path - relative to the download directory. This may be directly a filename, or a file in a subdir 
      */
     default Path getRelativeFilePath( final Result<Input, Output> result ) {
-        return Paths.get( getFileName(result) );
+        return prependSubdirs( getFileName(result) );
+    }
+
+    default Path prependSubdirs( final String filename ) {
+        return Sysprops.SUBDIR_STRATEGY.prependSubdir( filename );
     }
 
     void writeToStream( OutputStream outputStream, Output data ) throws IOException;

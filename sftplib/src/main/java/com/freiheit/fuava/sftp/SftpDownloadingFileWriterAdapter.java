@@ -19,12 +19,14 @@ package com.freiheit.fuava.sftp;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.freiheit.fuava.sftp.util.ConvertUtil;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.processor.FileOutputStreamAdapter;
 import com.freiheit.fuava.simplebatch.result.Result;
+import com.freiheit.fuava.simplebatch.util.Sysprops;
 
 /**
  * The file writer adapter streams data and writes it to the predefined downloading directory.
@@ -37,8 +39,13 @@ public class SftpDownloadingFileWriterAdapter implements FileOutputStreamAdapter
 
     private final RemoteClient remoteClient;
     
-    public SftpDownloadingFileWriterAdapter(RemoteClient remoteClient) {
+    public SftpDownloadingFileWriterAdapter(final RemoteClient remoteClient) {
         this.remoteClient = remoteClient;
+    }
+
+    @Override
+    public Path prependSubdirs( final String filename ) {
+        return Sysprops.SFTP_SUBDIR_STRATEGY.prependSubdir( filename );
     }
 
     @Override
@@ -60,9 +67,9 @@ public class SftpDownloadingFileWriterAdapter implements FileOutputStreamAdapter
         final InputStream inputStream;
         try {
             inputStream = remoteClient.downloadRemoteFile( file.getRemoteFullPath() );
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new IllegalStateException(e);
         }
         try {

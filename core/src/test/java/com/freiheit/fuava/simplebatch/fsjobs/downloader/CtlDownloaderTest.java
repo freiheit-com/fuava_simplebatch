@@ -23,6 +23,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -103,10 +104,15 @@ public class CtlDownloaderTest {
                         final String string = Joiner.on( '\n' ).join( data );
                         writer.write( string );
                     }
-                    
+
+                    @Override
+                    public Path prependSubdirs(final String filename) {
+                        return Paths.get( subdirpath + "/" + filename );
+                    }
+
                     @Override
                     public String getFileName( final Result<List<FetchedItem<Integer>>, List<String>> result ) {
-                        return subdirpath + "/" + prefix + counter.incrementAndGet();
+                        return prefix + counter.incrementAndGet();
                     }
                 } 
             ).build();
@@ -197,6 +203,11 @@ public class CtlDownloaderTest {
                         writer.write( string );
                     }
                     
+                    @Override
+                    public Path prependSubdirs(final String filename) {
+                        return Paths.get( filename );
+                    }
+
                     @Override
                     public String getFileName( final Result<List<FetchedItem<Integer>>, List<String>> result ) {
                         return prefix + counter.incrementAndGet();

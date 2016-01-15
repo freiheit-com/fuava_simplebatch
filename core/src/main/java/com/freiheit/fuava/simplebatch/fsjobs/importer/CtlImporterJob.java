@@ -41,6 +41,7 @@ import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
+import com.freiheit.fuava.simplebatch.util.Sysprops;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
@@ -54,7 +55,7 @@ import com.google.common.collect.ImmutableList;
  * @param <ProcessedData>
  */
 public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics> {
-    public static final String DEFAULT_INSTANCE_ID = "inst_01";
+    public static final String DEFAULT_INSTANCE_ID = Sysprops.INSTANCE_NAME;
 
     public interface Configuration {
 
@@ -247,8 +248,8 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                 new ArrayList<>();
         private Processor<FetchedItem<Data>, Data, Data> contentProcessor;
         private String description;
-        private boolean parallelFiles = false;
-        private boolean parallelContent = false;
+        private boolean parallelFiles = Sysprops.FILE_PROCESSING_PARALLEL;
+        private boolean parallelContent = Sysprops.CONTENT_PROCESSING_PARALLEL;
         private Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<Data>, Data>>> fileReader;
 
         public Builder() {

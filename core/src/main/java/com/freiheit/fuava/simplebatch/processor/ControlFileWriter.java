@@ -33,11 +33,11 @@ public class ControlFileWriter {
     
     private static void write( final Path controlFile, final String status, final Path controlledFileName, final Path logFileName, final String originalFileName ) {
         Preconditions.checkArgument( controlFile.isAbsolute(), "Expected an absolute Path for control file" );
-        Preconditions.checkArgument( !controlledFileName.isAbsolute(), "Expected a relative Path for controlled file" );
+        Preconditions.checkArgument( controlledFileName == null || !controlledFileName.isAbsolute(), "Expected a relative Path for controlled file" );
         Preconditions.checkArgument( !logFileName.isAbsolute(), "Expected a relative Path for control file" );
         final String failCtlContent = "#!VERSION=1\n" +
                 "status=" + status + "\n" +
-                "file=" + controlledFileName.toString() + "\n" +
+                "file=" + ( controlledFileName == null ? "" : controlledFileName.toString() ) + "\n" +
                 "originalFileName=" + originalFileName + "\n" +
                 "log=" + logFileName.toString();
         try {

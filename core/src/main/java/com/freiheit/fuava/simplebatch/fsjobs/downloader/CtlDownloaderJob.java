@@ -33,6 +33,7 @@ import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.processor.TimeLoggingProcessor;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
+import com.freiheit.fuava.simplebatch.util.Sysprops;
 import com.google.common.base.Preconditions;
 
 /**
@@ -345,7 +346,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         private Configuration configuration;
 
         public AbstractBuilder() {
-
+            builder.setParallel( Sysprops.FILE_PROCESSING_PARALLEL );
         }
 
         public AbstractBuilder<Id, Data, ProcessingResult> setConfiguration( final Configuration configuration ) {

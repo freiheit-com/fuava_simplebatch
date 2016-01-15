@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 
+import subdirs.StandardSubdirStrategies;
+
 @Test
 public class CtlImporterTest {
 
@@ -76,6 +79,12 @@ public class CtlImporterTest {
                 .setDownloader( new MapBasedBatchDownloader<Integer, String>( data ) )
                 .setFileWriterAdapter(
                     new StringFileWriterAdapter<FetchedItem<Integer>>() {
+                        
+                        @Override
+                        public Path prependSubdirs( final String filename ) {
+                            return StandardSubdirStrategies.NONE.prependSubdir( filename );
+                        }
+
                         @Override
                         public String getFileName( final Result<FetchedItem<Integer>, String> result ) {
                             return counter.incrementAndGet() + ".tmp";
@@ -306,10 +315,17 @@ public class CtlImporterTest {
                 .setIdsFetcher( Fetchers.iterable( data.keySet() ) )
                 .setDownloader( new MapBasedBatchDownloader<Integer, String>( data ) )
                 .setFileWriterAdapter( new StringFileWriterAdapter<FetchedItem<Integer>>() {
+                    
+                    @Override
+                    public Path getRelativeFilePath( final Result<FetchedItem<Integer>,String> result ) {
+                        final FetchedItem<Integer> input = result.getInput();
+                        return Paths.get( "my/sub/" + (input.getNum() % 2 == 0 ? "dir" : "path") + "/" + getFileName(result) );
+                    }
+                    
                     @Override
                     public String getFileName(final Result<FetchedItem<Integer>,String> result) {
                         final FetchedItem<Integer> input = result.getInput();
-                        return "my/sub/" + (input.getNum() % 2 == 0 ? "dir" : "path") + "/" + input.getValue();
+                        return Integer.toString( input.getValue() );
                     };
                 } )
                 .build()

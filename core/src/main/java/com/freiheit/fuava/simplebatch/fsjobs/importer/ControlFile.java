@@ -50,7 +50,7 @@ public class ControlFile {
             @Nullable final String status 
     ) {
         this.originalControlledFileName = originalControlledFileName;
-        Preconditions.checkArgument( !controlledFileRelPath.isAbsolute(), "Controlled File Path must not be absolute" );
+        Preconditions.checkArgument( controlledFileRelPath == null || !controlledFileRelPath.isAbsolute(), "Controlled File Path must not be absolute" );
         Preconditions.checkArgument( !logFileRelPath.isAbsolute(), "Log File Path must not be absolute" );
         Preconditions.checkArgument( !controlFileRelPath.isAbsolute(), "Control File Path must not be absolute" );
         Preconditions.checkArgument( baseDir.isAbsolute(), "Base Dir Path must be absolute" );
