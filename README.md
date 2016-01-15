@@ -276,6 +276,10 @@ client.disconnect();
 
 ## Changes
 
+### 0.6.3 (2016-01-15)
+ - Implemented better restart behaviour: Files belonging to the same "instanceId" will be picked up from processing dir when a CtlImporter Job starts
+ - Added some strategies for subdir creation
+ - Introduced System Properties to control some aspects of simplebatch (atomic file moves, instanceId, subdir strategy, parallel processing)
 
 ### 0.6.0 - 0.6.2 (2016-01-14)
  - TimeLogging will be used by default for CtlDownloader, CtlImporter and SftpDownloader, improved logging information
