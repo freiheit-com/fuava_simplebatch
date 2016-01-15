@@ -59,6 +59,14 @@ public class FetchedItem<T> {
     public static <T> FetchedItem<T> of( final T value, final int rowNum, @Nullable final String rowIdentifier ) {
         return new FetchedItem<T>( value, rowNum, rowIdentifier );
     }
+    
+    /**
+     * Creates a new FetchedItem from this one, associating a different Value with it
+     * @param <T2> The type of the value for the new FetchedItem instance.
+     */
+    public <T2> FetchedItem<T2> withValue( final T2 value ) {
+        return new FetchedItem<T2>( value, this.num, this.rowIdentifier );
+    }
 
     /**
      * The number of the item within the fetcher run.

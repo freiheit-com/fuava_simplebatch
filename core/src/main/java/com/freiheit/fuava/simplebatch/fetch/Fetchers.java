@@ -27,7 +27,6 @@ import com.freiheit.fuava.simplebatch.http.HttpFetcherImpl;
 import com.freiheit.fuava.simplebatch.http.HttpPagingFetcher;
 import com.freiheit.fuava.simplebatch.http.PagingRequestSettings;
 import com.google.common.base.Function;
-import com.google.common.base.Functions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Ordering;
@@ -110,37 +109,21 @@ public class Fetchers {
 
     }
 
+
     /**
-     * Iterates over all files in the given directory that end with the
+     * Iterates over all files in the given directories that end with the
      * specified fileEnding and converts them with the given function.
      */
-    public static <T> Fetcher<T> folderFetcher( final Path dirName, final String fileEnding, final Function<Path, T> fileFunction ) {
-        return folderFetcher( dirName, fileEnding, fileFunction, DirectoryFileFetcher.ORDERING_FILE_BY_PATH );
+    public static <T> Fetcher<T> folderFetcher( final Function<Path, T> fileFunction, final DownloadDir dir, final DownloadDir... moreDirs ) {
+        return new DirectoryFileFetcher<T>( fileFunction, DirectoryFileFetcher.ORDERING_FILE_BY_PATH, dir, moreDirs );
     }
 
     /**
-     * Iterates over all files in the given directory that end with the
-     * specified fileEnding.
-     */
-    public static Fetcher<Path> folderFetcher( final Path dirName, final String fileEnding ) {
-        return folderFetcher( dirName, fileEnding, DirectoryFileFetcher.ORDERING_FILE_BY_PATH );
-    }
-
-    /**
-     * Iterates over all files in the given directory that end with the
+     * Iterates over all files in the given directories that end with the
      * specified fileEnding and converts them with the given function.
      */
-    public static <T> Fetcher<T> folderFetcher( final Path dirName, final String fileEnding, final Function<Path, T> fileFunction,
-            final Ordering<Path> fileOrdering ) {
-        return new DirectoryFileFetcher<T>( dirName, fileEnding, fileFunction, fileOrdering );
-    }
-
-    /**
-     * Iterates over all files in the given directory that end with the
-     * specified fileEnding.
-     */
-    public static Fetcher<Path> folderFetcher( final Path dirName, final String fileEnding, final Ordering<Path> fileOrdering ) {
-        return new DirectoryFileFetcher<Path>( dirName, fileEnding, Functions.<Path> identity(), fileOrdering );
+    public static <T> Fetcher<T> folderFetcher( final Function<Path, T> fileFunction, final Ordering<Path> fileOrdering, final DownloadDir dir, final DownloadDir... moreDirs ) {
+        return new DirectoryFileFetcher<T>( fileFunction, fileOrdering, dir, moreDirs );
     }
 
 }

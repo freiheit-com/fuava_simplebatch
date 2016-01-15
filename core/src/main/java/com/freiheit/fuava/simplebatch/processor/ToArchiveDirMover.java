@@ -4,10 +4,10 @@ import java.nio.file.Path;
 
 import com.freiheit.fuava.simplebatch.fsjobs.importer.ControlFile;
 
-public final class ToArchiveMover<Data> extends AbstractControlledFileMovingProcessor<Data, Data> {
+public final class ToArchiveDirMover<Data> extends AbstractControlledFileMovingProcessor<Data, Data> {
     
-    public ToArchiveMover( final Path processingDir, final Path archivedDir, final Path failedDir ) {
-        super( processingDir, archivedDir, failedDir );
+    public ToArchiveDirMover( final Path archivedDir, final Path failedDir ) {
+        super( archivedDir, failedDir );
     }
 
     @Override

@@ -24,37 +24,52 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 
 /**
  * @author tim.lessner@freiheit.com
  */
 public class ReadControlFileFunction implements Function<Path, ControlFile> {
 
-    private final Path baseDir;
+    private final List<Path> baseDirs;
 
-    public ReadControlFileFunction( final Path baseDir ) {
-        this.baseDir = baseDir;
+    public ReadControlFileFunction( final Path baseDir, final Path... alternativeBaseDirs ) {
+        this.baseDirs = ImmutableList.<Path>builder().add(baseDir).addAll( Arrays.asList( alternativeBaseDirs ) ).build();
     }
 
+    private Path getBaseDir( final Path path ) {
+        for ( final Path p: baseDirs ) {
+            if ( path.startsWith( p ) ) {
+                return p;
+            }
+        }
+        throw new IllegalStateException( "Not in one of the known base dirs: " + path + ". Known dirs: " + baseDirs );
+    }
+    
     private ControlFile parseNewFormat( final Path path, final BufferedReader br ) throws IOException {
         final Properties prop = new Properties();
         prop.load( br );
         final String controlledFileName = prop.getProperty( "file" );
+        final String originalFileName = prop.getProperty( "originalFileName" );
         final String logFileName = Preconditions.checkNotNull(prop.getProperty( "log" ), "Log file property is mandatory" );
         final String status = prop.getProperty( "status" );
-        final boolean downloadFailed = "DOWNLOAD_FAILED".equals( status );
+        
+        final Path baseDir = getBaseDir( path );
         return new ControlFile( 
-                this.baseDir, 
+                baseDir, 
                 Strings.isNullOrEmpty( controlledFileName ) ? Paths.get( "" ) : Paths.get( controlledFileName ) , 
                 Paths.get( logFileName ), 
-                path, 
-                downloadFailed 
+                baseDir.relativize( path ), 
+                originalFileName,
+                status
             );
     }
 
@@ -72,7 +87,8 @@ public class ReadControlFileFunction implements Function<Path, ControlFile> {
                 } else {
                     final Path controlledFileName = Paths.get( firstLine );
                     final Path logFileName = Paths.get( controlledFileName + ".log" );
-                    return new ControlFile( this.baseDir, controlledFileName, logFileName, path );
+                    final Path baseDir = getBaseDir( path );
+                    return new ControlFile( baseDir, controlledFileName, logFileName, baseDir.relativize( path ) );
                 }
             }
         } catch ( final IOException e ) {

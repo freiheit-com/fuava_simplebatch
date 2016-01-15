@@ -19,6 +19,7 @@ package com.freiheit.fuava.simplebatch.fsjobs.importer;
 import java.nio.file.Path;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -32,39 +33,88 @@ public class ControlFile {
     private final Path relLogFile;
     private final Path relControlFile;
     private final boolean downloadFailed;
+    private final Path baseDir;
+    private final String status;
+    private final String originalControlledFileName;
 
-    public ControlFile( final Path downloadsDir, final Path controlledFileRelPath, final Path logFileRelPath, final Path controlFile ) {
-        this( downloadsDir, controlledFileRelPath, logFileRelPath, controlFile, false );
+    public ControlFile( final Path downloadsDir, final Path controlledFileRelPath, final Path logFileRelPath, final Path controlFileRelPath ) {
+        this( downloadsDir, controlledFileRelPath, logFileRelPath, controlFileRelPath, controlledFileRelPath.toString(), null );
     }
 
-    public ControlFile( final Path downloadsDir, final Path controlledFileRelPath, final Path logFileRelPath, final Path controlFile,
-            final boolean downloadFailed ) {
+    public ControlFile( 
+            final Path baseDir, 
+            final Path controlledFileRelPath, 
+            final Path logFileRelPath, 
+            final Path controlFileRelPath,
+            final String originalControlledFileName,
+            @Nullable final String status 
+    ) {
+        this.originalControlledFileName = originalControlledFileName;
         Preconditions.checkArgument( !controlledFileRelPath.isAbsolute(), "Controlled File Path must not be absolute" );
         Preconditions.checkArgument( !logFileRelPath.isAbsolute(), "Log File Path must not be absolute" );
-        Preconditions.checkArgument( downloadsDir.isAbsolute(), "Base Dir Path must be absolute" );
-        Preconditions.checkArgument( controlFile.isAbsolute(), "Control File Path must be absolute" );
-        Preconditions.checkArgument( controlFile.startsWith( downloadsDir ), "Control File Path must begin with the base dir" );
+        Preconditions.checkArgument( !controlFileRelPath.isAbsolute(), "Control File Path must not be absolute" );
+        Preconditions.checkArgument( baseDir.isAbsolute(), "Base Dir Path must be absolute" );
         
+        this.status = status;
+        this.downloadFailed = "DOWNLOAD_FAILED".equals( status );;
+        this.baseDir = baseDir;
         this.relControlledFile = downloadFailed ? null : controlledFileRelPath;
         this.relLogFile = logFileRelPath;
-        this.relControlFile = downloadsDir.relativize( controlFile );
-        this.downloadFailed = downloadFailed;
+        this.relControlFile = controlFileRelPath;
     }
 
+    public ControlFile withBaseDir( final Path baseDir ) {
+        return new ControlFile( baseDir, relControlledFile, relLogFile, relControlFile, this.originalControlledFileName, status );
+    }
+
+    public ControlFile withFilePrefix( final String prefix ) {
+        return new ControlFile( baseDir, prefix( prefix, relControlledFile ), prefix( prefix, relLogFile ), prefix( prefix, relControlFile ), this.originalControlledFileName, status );
+    }
+
+    private Path prefix( final String prefix, final Path relPath ) {
+        if ( relPath == null ) {
+            return relPath;
+        }
+        final String newName = prefix + relPath.getFileName().toString();
+        return relPath.resolveSibling( newName );
+    }
+
+    public String getOriginalControlledFileName() {
+        return originalControlledFileName;
+    }
     
     public Path getControlFileRelPath() {
         return relControlFile;
     }
+    public Path getControlFile() {
+        return getFullPath( relControlFile );
+    }
+    
+    public String getStatus() {
+        return status;
+    }
+    
     
     @CheckForNull
     public Path getControlledFileRelPath() {
         return relControlledFile;
     }
+
+    @CheckForNull
+    public Path getControlledFile() {
+        return getFullPath( relControlledFile );
+    }
     
     public Path getLogFileRelPath() {
         return relLogFile;
     }
+    public Path getLogFile() {
+        return getFullPath( relLogFile );
+    }
     
+    private Path getFullPath( final Path relPath ) { 
+        return relPath == null ? null : baseDir.resolve( relPath );
+    }
 
     public boolean hasDownloadFailed() {
         return downloadFailed;

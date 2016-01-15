@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
+import com.freiheit.fuava.simplebatch.fetch.DownloadDir;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.fetch.Fetchers;
@@ -35,6 +36,7 @@ import com.freiheit.fuava.simplebatch.logging.ItemProgressLoggingListener;
 import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.processor.TimeLoggingProcessor;
+import com.freiheit.fuava.simplebatch.processor.ToProcessingDirMover;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
@@ -52,10 +54,15 @@ import com.google.common.collect.ImmutableList;
  * @param <ProcessedData>
  */
 public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics> {
+    public static final String DEFAULT_INSTANCE_ID = "inst_01";
 
     public interface Configuration {
+
         String getControlFileEnding();
 
+        default String getInstanceId() {
+            return DEFAULT_INSTANCE_ID;
+        }
         Path getDownloadDirPath();
 
         Path getArchivedDirPath();
@@ -73,6 +80,18 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         private Path failedDirPath = Paths.get( "/tmp/failed" );
         private String controlFileEnding = CtlDownloaderJob.DEFAULT_CONFIG_CONTROL_FILE_ENDING;
 
+        private String instanceId = DEFAULT_INSTANCE_ID;
+        
+        @Override
+        public String getInstanceId() {
+            return instanceId;
+        }
+        
+        public ConfigurationImpl setInstanceId( final String instanceId ) {
+            this.instanceId = instanceId;
+            return this;
+        }
+        
         @Override
         public Path getDownloadDirPath() {
             return downloadDirPath;
@@ -150,6 +169,18 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         private Path failedDirPath = Paths.get( FileUtils.substitutePlaceholder( "/tmp/failed/" + FileUtils.PLACEHOLDER_DATE ) );
         private String controlFileEnding = CtlDownloaderJob.DEFAULT_CONFIG_CONTROL_FILE_ENDING;
 
+        private String instanceId = DEFAULT_INSTANCE_ID;
+        
+        @Override
+        public String getInstanceId() {
+            return instanceId;
+        }
+        
+        public ConfigurationWithPlaceholderImpl setInstanceId( final String instanceId ) {
+            this.instanceId = instanceId;
+            return this;
+        }
+        
         @Override
         public Path getDownloadDirPath() {
             return downloadDirPath;
@@ -424,10 +455,9 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                     new ImportContentJsonLoggingListenerFactory<Data>( Builder.this.configuration.getProcessingDirPath() ) );
 
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor =
-                    Processors.toProcessingMover( 
-                            configuration.getDownloadDirPath(), 
-                            configuration.getProcessingDirPath(), 
-                            configuration.getFailedDirPath() 
+                    Processors.toProcessingDirMover( 
+                            configuration.getProcessingDirPath(),
+                            configuration.getInstanceId()
                     )
                     .then( fileReader )
                     .then( Processors.runBatchJobProcessor(
@@ -437,8 +467,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                             TimeLoggingProcessor.wrap( "Content", contentProcessor ),
                             contentProcessingListenerFactories 
                         ))
-                    .then( Processors.<ResultStatistics> toArchiveMover(
-                            configuration.getProcessingDirPath(),
+                    .then( Processors.<ResultStatistics> toArchiveDirMover(
                             configuration.getArchivedDirPath(),
                             configuration.getFailedDirPath() ) );
 
@@ -446,8 +475,16 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                     description,
                     1 /* process one file at a time, no use for batching */,
                     parallelFiles,
-                    Fetchers.folderFetcher( this.configuration.getDownloadDirPath(), this.configuration.getControlFileEnding(),
-                            new ReadControlFileFunction( this.configuration.getDownloadDirPath() ) ),
+                    Fetchers.folderFetcher( 
+                            new ReadControlFileFunction( this.configuration.getDownloadDirPath(), this.configuration.getProcessingDirPath() ),
+                            // First: process old data from processing for the same instance which was left over when the job got killed
+                            new DownloadDir( 
+                                    this.configuration.getProcessingDirPath(), 
+                                    ToProcessingDirMover.createInstanceIdPrefix( this.configuration.getInstanceId() ) , 
+                                    this.configuration.getControlFileEnding() 
+                            ),
+                            new DownloadDir( this.configuration.getDownloadDirPath(), null, this.configuration.getControlFileEnding() )
+                            ),
                     TimeLoggingProcessor.wrap( "File", processor ),
                     fileProcessingListeners );
         }

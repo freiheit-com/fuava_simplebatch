@@ -304,16 +304,16 @@ public class Processors {
      *
      *
      */
-    public static <Data> Processor<FetchedItem<ControlFile>, Data, Data> toArchiveMover( final Path sourceDir, final Path targetDir, final Path failedDir ) {
-        return new ToArchiveMover<Data>( sourceDir, targetDir, failedDir );
+    public static <Data> Processor<FetchedItem<ControlFile>, Data, Data> toArchiveDirMover( final Path targetDir, final Path failedDir ) {
+        return new ToArchiveDirMover<Data>( targetDir, failedDir );
     }
 
     /**
      * A Processor which reads control files and moves them (and the file
      * referenced by the control file) to the targetDir. Returns the moved file.
      */
-    public static Processor<FetchedItem<ControlFile>, ControlFile, File> toProcessingMover( final Path sourceDir, final Path targetDir, final Path failedDir ) {
-        return new ToProcessingMover( sourceDir, targetDir, failedDir );
+    public static Processor<FetchedItem<ControlFile>, ControlFile, File> toProcessingDirMover( final Path processingDir, final String instanceId ) {
+        return new ToProcessingDirMover( processingDir, instanceId );
     }
 
     /**

@@ -26,7 +26,10 @@ import java.util.stream.Stream;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
 /**
@@ -37,11 +40,11 @@ class DirectoryFileFetcher<T> implements Fetcher<T> {
     private static final class FetchFile<T> implements java.util.function.Function<Path, Result<FetchedItem<T>, T>> {
         private final Function<Path, T> func;
         private int counter = FetchedItem.FIRST_ROW;
-        
+
         public FetchFile( final Function<Path, T> func ) {
             this.func = func;
         }
-        
+
         @Override
         public Result<FetchedItem<T>, T> apply( final Path path ) {
             final int rownum = counter;
@@ -58,37 +61,70 @@ class DirectoryFileFetcher<T> implements Fetcher<T> {
     }
 
     public static final Ordering<Path> ORDERING_FILE_BY_PATH = Ordering.natural().onResultOf( path -> path.getFileName().toString() );
-    private final String filter;
-    private final Path uri;
+    private final List<DownloadDir> dirs;
     private final Function<Path, T> func;
     private final Ordering<Path> fileOrdering;
 
     public DirectoryFileFetcher( final Path uri, final String filter, final Function<Path, T> func ) {
-        this( uri, filter, func, ORDERING_FILE_BY_PATH );
+        this( func, ORDERING_FILE_BY_PATH, new DownloadDir( uri, null, filter ) );
     }
 
-    public DirectoryFileFetcher( final Path uri, final String filter, final Function<Path, T> func,
-            final Ordering<Path> fileOrdering ) {
+    public DirectoryFileFetcher( 
+            final Function<Path, T> func,
+            final Ordering<Path> fileOrdering, 
+            final DownloadDir dir,
+            final DownloadDir... dirs ) {
+        this( func, fileOrdering, ImmutableList.<DownloadDir>builder().add( dir ).addAll( ImmutableList.copyOf( dirs ) ).build() );
+    }
+
+    public DirectoryFileFetcher( 
+            final Function<Path, T> func,
+            final Ordering<Path> fileOrdering, 
+            final List<DownloadDir> dirs ) {
         this.fileOrdering = Preconditions.checkNotNull( fileOrdering );
-        this.uri = Preconditions.checkNotNull( uri );
-        this.filter = Preconditions.checkNotNull( filter );
+        this.dirs = dirs;
         this.func = Preconditions.checkNotNull( func );
     }
 
+
     @Override
     public Iterable<Result<FetchedItem<T>, T>> fetchAll() {
-        try {
-        try (final Stream<Path> files = Files.walk( uri )) {
+        final FetchFile<T> resultCreator = new FetchFile<>( func );
+        return Iterables.concat( Lists.<DownloadDir, Iterable<Result<FetchedItem<T>, T>>>transform( 
+                dirs, 
+                dir -> {
+                    try {
+                        if ( !Files.exists( dir.getPath() ) ) {
+                            return ImmutableList.of();
+                        }
+                        return fetchFromDirectory( dir.getPath(), resultCreator, dir.getPrefix(), dir.getSuffix() );
+                    } catch ( final IOException e ) {
+                        return ImmutableList.of( Result.failed( FetchedItem.of( null, 0, dirs.toString() ), "Could not traverse download directory") );
+                    }
+                }
+                ) );
+
+    }
+
+    private Iterable<Result<FetchedItem<T>, T>> fetchFromDirectory(
+            final Path dir,
+            final java.util.function.Function<Path, Result<FetchedItem<T>, T>> resultCreator,
+            final String prefix,
+            final String suffix
+    ) throws IOException {
+        try ( final Stream<Path> files = Files.walk( dir ) ) {
             final List<Result<FetchedItem<T>, T>> result = files
-                .filter( path -> path.getFileName().toString().endsWith( filter ) )
-                .sorted( fileOrdering )
-                .map( new FetchFile<T>( this.func ) )
-                .collect( Collectors.toList() );
+                    .filter( path -> {
+                        final String name = path.getFileName().toString();
+                        if ( !Strings.isNullOrEmpty( prefix ) && !name.startsWith( prefix ) ) {
+                            return false;
+                        }
+                        return name.endsWith( suffix ); 
+                    } )
+                    .sorted( fileOrdering )
+                    .map( resultCreator )
+                    .collect( Collectors.toList() );
             return result;
         }
-        } catch ( final IOException e ) {
-            return ImmutableList.of( Result.failed( FetchedItem.of( null, 0, uri.toString() ), "Could not traverse download directory") );
-        }
-        
     }
 }

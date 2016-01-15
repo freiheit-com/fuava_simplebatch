@@ -28,28 +28,24 @@ import com.freiheit.fuava.simplebatch.fsjobs.importer.FailedToMoveFileException;
  */
 public class ControlFileMover {
 
-    public static void move( final ControlFile input, final Path sourceDir, final Path targetDir ) throws FailedToMoveFileException {
-        if ( input == null ) {
+    public static void move( final ControlFile source, final ControlFile target ) throws FailedToMoveFileException {
+        if ( source == null ) {
             throw new FailedToMoveFileException( "Cannot Move null control file." );
         }
         
-        final Path controlFile = sourceDir.resolve( input.getControlFileRelPath() );
+        final Path controlFile = source.getControlFile();
         
-        moveFile( controlFile, targetDir.resolve( input.getControlFileRelPath() ) );
+        moveFile( controlFile, target.getControlFile() );
         
-        final Path logFile = resolve( sourceDir, input.getLogFileRelPath() );
+        final Path logFile =  source.getLogFile();
         if ( logFile != null && Files.exists( logFile ) ) {
-            moveFile( logFile, targetDir.resolve( input.getLogFileRelPath() ) );
+            moveFile( logFile, target.getLogFile() );
         }
         
-        final Path controlledFile = resolve( sourceDir, input.getControlledFileRelPath() );
+        final Path controlledFile = source.getControlledFile();
         if ( controlledFile != null && Files.exists( controlledFile ) ) {
-            moveFile( controlledFile, targetDir.resolve( input.getControlledFileRelPath() ) );
+            moveFile( controlledFile, target.getControlledFile() );
         }
-    }
-
-    private static Path resolve( final Path sourceDir, final Path rel ) {
-        return rel == null ? null : sourceDir.resolve( rel );
     }
 
     private static Path moveFile( final Path source, final Path target ) throws FailedToMoveFileException {

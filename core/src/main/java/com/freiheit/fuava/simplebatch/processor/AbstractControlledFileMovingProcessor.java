@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fsjobs.importer.ControlFile;
 import com.freiheit.fuava.simplebatch.result.Result;
+import com.freiheit.fuava.simplebatch.result.Result.Builder;
 
 /**
  * Moves the Controlled File (together with its control file and its processing log file) 
@@ -31,36 +32,38 @@ import com.freiheit.fuava.simplebatch.result.Result;
  * @param <Input>
  */
 public abstract class AbstractControlledFileMovingProcessor<Input, Output> extends AbstractSingleItemProcessor<FetchedItem<ControlFile>, Input, Output> {
-
-    private final Path sourceDir;
     private final Path archivedDir;
     private final Path failedDir;
 
 
-    public AbstractControlledFileMovingProcessor( final Path sourceDir, final Path archivedDir, final Path failedDir ) {
+    public AbstractControlledFileMovingProcessor( final Path archivedDir, final Path failedDir ) {
         super();
-        this.sourceDir = sourceDir;
         this.archivedDir = archivedDir;
         this.failedDir = failedDir;
     }
 
     @Override
     public Result<FetchedItem<ControlFile>, Output> processItem( final Result<FetchedItem<ControlFile>, Input> r ) {
-        final FetchedItem<ControlFile> input = r.getInput();
-        final ControlFile controlFile = input.getValue();
+        final Builder<FetchedItem<ControlFile>, Output> result = Result.<FetchedItem<ControlFile>, Output> builder( r );
         try {
+            final FetchedItem<ControlFile> input = r.getInput();
+            final ControlFile controlFile = input == null ? null : input.getValue();
+            if ( controlFile == null ) {
+                return result.withFailureMessage( "Cannot move entry with null Control File" ).failed();
+            }
+            
+            final ControlFile targetControlFile = r.isFailed() ? controlFile.withBaseDir( failedDir ) : controlFile.withBaseDir( archivedDir );
+            ControlFileMover.move( controlFile, targetControlFile );
+            
             if ( r.isFailed() ) {
-                ControlFileMover.move( controlFile, this.sourceDir, failedDir );
                 // even though this operation was successful, we must not say success if the original item failed!
-                return Result.<FetchedItem<ControlFile>, Output> builder( r ).failed();
-
+                return result.failed();
             } else {
-                ControlFileMover.move( controlFile, this.sourceDir, archivedDir );
                 return Result.success( input, getOutput(controlFile, r.getOutput()) );
             }
 
         } catch ( final Throwable e ) {
-            return Result.<FetchedItem<ControlFile>, Output> builder( r ).failed( e );
+            return result.failed( e );
         }
     }
 

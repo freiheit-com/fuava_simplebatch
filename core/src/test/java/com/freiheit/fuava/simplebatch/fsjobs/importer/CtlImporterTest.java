@@ -42,6 +42,7 @@ import com.freiheit.fuava.simplebatch.logging.JsonLogEntry;
 import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.processor.RetryingProcessor;
 import com.freiheit.fuava.simplebatch.processor.StringFileWriterAdapter;
+import com.freiheit.fuava.simplebatch.processor.ToProcessingDirMover;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.google.common.base.Charsets;
@@ -128,14 +129,17 @@ public class CtlImporterTest {
         Assert.assertEquals( ImmutableSet.copyOf( importedLines ), ImmutableSet.copyOf( data.values() ) );
         Assert.assertTrue( importedLines.size() == 4 );
 
+        // test the contents of a control  file
+        assertControlFileConsistent( tmp.getArchiveDir(), "3.tmp" );
+
         // test the contents of one file
-        final Path file3 = tmp.getArchiveDir().resolve( "3.tmp" );
-        final List<String> contentLines = Files.readAllLines( file3 );
+        final Path resultDataFile3 = getResultFilePath( tmp , "3.tmp");
+        final List<String> contentLines = Files.readAllLines( resultDataFile3 );
         Assert.assertEquals( contentLines.size(), 1 );
         Assert.assertEquals( contentLines.get( 0 ), "drei" );
 
         // test the log contents of one file
-        final Path log1 = tmp.getArchiveDir().resolve( "1.tmp.log" );
+        final Path log1 = getResultFilePath( tmp , "1.tmp.log" );
         final List<String> logLines = Files.readAllLines( log1 );
 
         Assert.assertEquals( logLines.size(), 4 );
@@ -166,6 +170,29 @@ public class CtlImporterTest {
         Assert.assertNotNull( importEnd.getTime() );
 
         tmp.cleanup();
+    }
+
+    private void assertControlFileConsistent(final Path directoryToReadFrom, final String baseFileName) {
+        
+        final Path dataFilePath = getResultFilePath( directoryToReadFrom, baseFileName );
+        final Path logFilePath = getResultFilePath( directoryToReadFrom, baseFileName + ".log" );
+        final Path controlFilePath = getResultFilePath( directoryToReadFrom, baseFileName + ".ctl" );
+        
+        final ControlFile controlFile = new ReadControlFileFunction( directoryToReadFrom ).apply( controlFilePath );
+        
+        Assert.assertEquals( controlFile.getControlFile(), controlFilePath );
+        Assert.assertEquals( controlFile.getControlledFile(), dataFilePath );
+        Assert.assertEquals( controlFile.getLogFile(), logFilePath );
+        Assert.assertEquals( controlFile.getOriginalControlledFileName(), baseFileName );
+    }
+
+    private Path getResultFilePath( final BatchTestDirectory tmp, final String baseFileName) {
+        return getResultFilePath( tmp.getArchiveDir(), baseFileName );
+    }
+    
+    private Path getResultFilePath( final Path dir, final String baseFileName) {
+        // The processing should have created a new file name
+        return dir.resolve( ToProcessingDirMover.createInstanceIdPrefix( CtlImporterJob.DEFAULT_INSTANCE_ID ) + baseFileName );
     }
 
     @Test
