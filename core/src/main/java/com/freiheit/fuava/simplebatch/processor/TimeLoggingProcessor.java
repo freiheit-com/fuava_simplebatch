@@ -378,8 +378,8 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         final StringBuilder sb = new StringBuilder();
         final Counts prepare = counts.getOrDefault( stageIdPrepare, Counts.NOTHING );
         final Counts total = counts.getOrDefault( stageIdTotal, Counts.NOTHING );
-        sb.append( renderCounts( stageIdPrepare, prepare, "" ) ).append( "\n" );
         sb.append( renderCounts( stageIdTotal, total, "" ) ).append( "\n" );
+        sb.append( renderCounts( stageIdPrepare, prepare, "" ) ).append( "\n" );
 
         for ( int i = 0; i < stages.size(); i++ ) {
             final Stage stage = stages.get( i );
