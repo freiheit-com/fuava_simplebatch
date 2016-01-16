@@ -1,5 +1,6 @@
 package com.freiheit.fuava.simplebatch.processor;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -8,19 +9,21 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Strings;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 
 public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Processor<OriginalItem, Input, Output> {
     public static final Logger JOB_PERFORMANCE_LOGGER = LoggerFactory.getLogger( "Job Performance Logger" );
     private static final String STAGE_ID_TOTAL = "Total   ";
     private static final String STAGE_ID_PREPARE = "Prepare ";
-    private static final long NOT_INITIALIZED_NANOS = -1;
+    
 
     private static final class Stage {
         private final String id;
@@ -100,18 +103,23 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
 
     public static final class Counts {
         public static final int NUM_ITEMS_UNKNOWN = -1;
-        public static final Counts NOTHING = new Counts( 0, 0 );
+        public static final long NOT_INITIALIZED_NANOS = -1;
+        public static final Counts NOTHING = new Counts( 0, Counts.NUM_ITEMS_UNKNOWN, Counts.NUM_ITEMS_UNKNOWN, 0 );
 
         private final int items;
         private final long durationNanos;
+        private final int numSuccess;
+        private final int numFailed;
 
-        private Counts( final int items, final long durationNanos ) {
+        private Counts( final int items, final int numSuccess, final int numFailed, final long durationNanos ) {
             this.items = items;
+            this.numSuccess = numSuccess;
+            this.numFailed = numFailed;
             this.durationNanos = durationNanos;
         }
 
-        public static Counts of( final int items, final long durationNanos ) {
-            return new Counts( items, durationNanos );
+        public static Counts of( final int items, final int numSuccess, final int numFailed, final long durationNanos ) {
+            return new Counts( items, numSuccess, numFailed, durationNanos );
         }
 
         public int getItems() {
@@ -122,13 +130,31 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
             return durationNanos;
         }
 
-        public Counts plus( final int items, final long durationNanos ) {
+        public Counts plus( final int items, final int numSuccess, final int numFailed, final long durationNanos) {
             if ( this.items == NUM_ITEMS_UNKNOWN && items != NUM_ITEMS_UNKNOWN ) {
                 throw new IllegalStateException( "Cannot add items to a counts instance with unknown items" );
             }
-            return new Counts( items != NUM_ITEMS_UNKNOWN
-                ? this.items + items
-                : NUM_ITEMS_UNKNOWN, this.durationNanos + durationNanos );
+            return new Counts( 
+                    addIfKnown( this.items, items ),
+                    addIfKnown( this.numSuccess, numSuccess ),
+                    addIfKnown( this.numFailed, numFailed ),
+                    addDurationIfInitialized( this.durationNanos, durationNanos ) );
+        }
+
+        private int addIfKnown( final int oldNum, final int num ) {
+            return num != NUM_ITEMS_UNKNOWN ? ( oldNum == NUM_ITEMS_UNKNOWN ? num : oldNum + num) : oldNum;
+        }
+        
+        private long addDurationIfInitialized( final long oldNum, final long num ) {
+            return num != NOT_INITIALIZED_NANOS ? ( oldNum == NOT_INITIALIZED_NANOS ? num : oldNum + num) : oldNum;
+        }
+
+        public int getNumSuccess() {
+            return numSuccess;
+        }
+
+        public int getNumFailed() {
+            return numFailed;
         }
     }
 
@@ -141,8 +167,10 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
     private final String stageIdTotal;
     private final String stageIdPrepare;
     private final long initializationNanos;
-    private final AtomicLong processingStartNanos = new AtomicLong( NOT_INITIALIZED_NANOS );
+    private final AtomicLong processingStartNanos = new AtomicLong( Counts.NOT_INITIALIZED_NANOS );
     private final AtomicInteger totalCounter = new AtomicInteger( 0 );
+    private final AtomicInteger totalSuccessCounter = new AtomicInteger( 0 );
+    private final AtomicInteger totalFailCounter = new AtomicInteger( 0 );
 
     private TimeLoggingProcessor( final String prefix, final Processor<OriginalItem, Input, Output> processor ) {
         this.initializationNanos = System.nanoTime();
@@ -225,25 +253,39 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
      */
     @SuppressWarnings( { "unchecked", "rawtypes" } )
     private Iterable<Result<OriginalItem, Output>> doProcess( final Iterable<Result<OriginalItem, Input>> input ) {
-        Iterable values = input;
+        Iterable outputValues = input;
         final long processingBatchStartNanos = System.nanoTime();
         /* remember the time of very first call */
         final long processingStartNanos = this.processingStartNanos.get();
-        if (processingStartNanos == NOT_INITIALIZED_NANOS) {
-            if ( this.processingStartNanos.compareAndSet( NOT_INITIALIZED_NANOS, processingBatchStartNanos ) ) {
-                replaceCounts( stageIdPrepare, Counts.NUM_ITEMS_UNKNOWN, processingBatchStartNanos - this.initializationNanos );
+        if (processingStartNanos == Counts.NOT_INITIALIZED_NANOS) {
+            if ( this.processingStartNanos.compareAndSet( Counts.NOT_INITIALIZED_NANOS, processingBatchStartNanos ) ) {
+                addCounts( stageIdPrepare, Counts.NUM_ITEMS_UNKNOWN, Counts.NUM_ITEMS_UNKNOWN, Counts.NUM_ITEMS_UNKNOWN, processingBatchStartNanos - this.initializationNanos );
             }
         }
         int numItemsMax = 0;
+        int numSuccessMin = Counts.NUM_ITEMS_UNKNOWN;
+        int numFailedMax = 0;
 
         for ( final Stage stage : stages ) {
-            final CountingIterable countingIterable = new CountingIterable<>( values );
+            final Iterable inputValues = prepareInputIterable( outputValues );
             final long start = System.nanoTime();
-            values = stage.apply( countingIterable );
+            
+            outputValues = stage.apply( inputValues );
+            
             final long stop = System.nanoTime();
-            final int numItems = countingIterable.getMaxCount();
-            numItemsMax = Math.max( numItemsMax, numItems );
-            addCounts( stage.getId(), numItems, stop - start );
+            final int numTotal = getNumTotalItems( inputValues, outputValues );
+            final int numSuccess = getNumFiltered( outputValues, Result::isSuccess );
+            final int numFailed = getNumFiltered( outputValues, Result::isFailed );
+            numItemsMax = Math.max( numItemsMax, numTotal );
+            numSuccessMin = numSuccessMin == Counts.NUM_ITEMS_UNKNOWN ? numSuccess : Math.min( numSuccessMin, numSuccess );
+            numFailedMax = Math.max( numFailedMax, numFailed );
+            addCounts( 
+                    stage.getId(), 
+                    numTotal, 
+                    numSuccess, 
+                    numFailed, 
+                    stop - start 
+            );
         }
 
         final long processingBatchStopNanos = System.nanoTime();
@@ -255,9 +297,53 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
          * doing things in parallel.
          */
         final int totalItems = this.totalCounter.addAndGet( numItemsMax );
-        replaceCounts( stageIdTotal, totalItems, processingBatchStopNanos - this.processingStartNanos.get() );
+        final int totalSuccessItems = this.totalSuccessCounter.addAndGet( numSuccessMin );
+        final int totalFailedItems = this.totalFailCounter.addAndGet( numFailedMax );
+        replaceCounts( stageIdTotal, totalItems, totalSuccessItems, totalFailedItems, processingBatchStopNanos - this.processingStartNanos.get() );
 
-        return values;
+        return outputValues;
+    }
+
+    @SuppressWarnings( "rawtypes" ) 
+    private int getNumTotalItems( final Iterable inputValues, final Iterable outputValues ) {
+        if ( outputValues instanceof Collection ) {
+            // the best option: count how many Items were produced by the stage
+            return ( ( Collection<?> ) outputValues ).size();
+        }
+        // Fallback: If the outputValues cannot be safely counted without side effects, return the input counts
+        if ( inputValues instanceof Collection ) {
+            return ( ( Collection<?> ) inputValues ).size();
+        }
+        // during prepareInputIterable there has been a CountingIterable created if it is not a collection 
+        return ( ( CountingIterable<?> ) inputValues ).getMaxCount(); 
+    }
+
+    @SuppressWarnings( "rawtypes" ) 
+    private int getNumFiltered( final Iterable outputValues, final Predicate<Result<?, ?>> filter ) {
+        if ( outputValues instanceof Collection ) {
+            // the best option: count how many success Items were produced by the stage
+            // We assume here that collections will not have bad side effects, but are prepared for 
+            // pure Iterables to be non-safe for multiple iterations
+            return FluentIterable
+                    .from( ( Collection<?> ) outputValues )
+                    .filter( o -> {
+                        final Result<?, ?> ri = (Result<?, ?>)o;
+                        return filter.test( ri );
+                    } )
+                    .size();
+        }
+        return Counts.NUM_ITEMS_UNKNOWN;
+    }
+
+    @SuppressWarnings( { "rawtypes", "unchecked" } )
+    private Iterable prepareInputIterable( final Iterable values ) {
+        // if it is a collection, we do not need to do anything and simply return the collection
+        if ( values instanceof Collection ) {
+            return values;
+        }
+        // if it is not, we wrap it with some code that at least counts how many Items are processed
+        // while iterating.
+        return new CountingIterable<>( values );
     }
 
     private void logCounts( final List<Stage> stages, final ConcurrentHashMap<String, Counts> counts ) {
@@ -267,19 +353,29 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         JOB_PERFORMANCE_LOGGER.info( "\n" + renderCounts( stages, counts ) );
     }
 
+    private String renderCounts( final String id, final Counts counts, final String displayName ) {
+        return renderCounts( 
+                id,  
+                counts.getItems(), 
+                counts.getNumSuccess(), 
+                counts.getNumFailed(), 
+                counts.getDurationNanos(),
+                displayName
+        );
+    }
     String renderCounts( final List<Stage> stages, final ConcurrentHashMap<String, Counts> counts ) {
         final StringBuilder sb = new StringBuilder();
         final Counts prepare = counts.getOrDefault( stageIdPrepare, Counts.NOTHING );
         final Counts total = counts.getOrDefault( stageIdTotal, Counts.NOTHING );
-        sb.append( renderCounts( stageIdPrepare, prepare.items, prepare.durationNanos, "" ) ).append( "\n" );
-        sb.append( renderCounts( stageIdTotal, total.items, total.durationNanos, "" ) ).append( "\n" );
+        sb.append( renderCounts( stageIdPrepare, prepare, "" ) ).append( "\n" );
+        sb.append( renderCounts( stageIdTotal, total, "" ) ).append( "\n" );
 
         for ( int i = 0; i < stages.size(); i++ ) {
             final Stage stage = stages.get( i );
             final String stageId = stage.getId();
             final Counts stageCounts = counts.getOrDefault( stageId, Counts.NOTHING );
             sb.append(
-                    renderCounts( stageId, stageCounts.items, stageCounts.durationNanos, stage.getDisplayName() ) ).append(
+                    renderCounts( stageId, stageCounts, stage.getDisplayName() ) ).append(
                             "\n" );
         }
         return sb.toString();
@@ -295,7 +391,14 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         return java.util.Collections.unmodifiableMap( counts );
     }
 
-    static String renderCounts( final String name, final int items, final long durationNanos, final String desc ) {
+    static String renderCounts( 
+            final String name, 
+            final int items, 
+            final int numSuccess, 
+            final int numFailed, 
+            final long durationNanos, 
+            final String desc 
+    ) {
         
         // Total Items, Total Duration, Durchschnitt Dauer pro Item
         final long secondsAll = TimeUnit.NANOSECONDS.toSeconds( durationNanos );
@@ -314,12 +417,11 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         final double itemsPerHour = ( durationNanos == 0 || items == Counts.NUM_ITEMS_UNKNOWN )
             ? 0.0
             : items / durationHours;
-
-        return String.format( "%s:\t %8d total | %2d h %2d min %2d sec | %2d sec %3d ms | %10.0f items / hour | %s ",
+        final String countsString = renderCountsString( items, numSuccess, numFailed ); 
+        
+        return String.format( "%s:\t %s | %2d h %2d min %2d sec | %2d sec %3d ms | %10.0f items / hour | %s ",
                  name, 
-                items == Counts.NUM_ITEMS_UNKNOWN
-                    ? 0
-                    : items,
+                 countsString,
                  hoursAll, minutes, seconds,
                 secondsPerItemAll, millisPerItem,
                 itemsPerHour,
@@ -327,14 +429,26 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
          
     }
 
-    private Counts replaceCounts( final String stageId, final int numItems, final long nanos ) {
-        return counts.put( stageId, new Counts( numItems, nanos ) );
+    private static String renderCountsString( final int items, final int numSuccess, final int numFailed ) {
+        if ( items == Counts.NUM_ITEMS_UNKNOWN ) {
+            return "                    ";
+        }
+        if ( ( numSuccess == Counts.NUM_ITEMS_UNKNOWN && numFailed == Counts.NUM_ITEMS_UNKNOWN )
+                || numFailed == 0 && numSuccess == items
+        ) {
+            return String.format( "%8d total |         ", items );
+        }
+        return String.format( "%8d total | %4d err", items , numFailed);
     }
 
-    private Counts addCounts( final String stageId, final int numItems, final long durationNanos ) {
+    private Counts replaceCounts( final String stageId, final int numItems, final int numSuccess, final int numFailed, final long nanos ) {
+        return counts.put( stageId, new Counts( numItems, numSuccess, numFailed, nanos ) );
+    }
+
+    private Counts addCounts( final String stageId, final int numItems, final int numSuccess, final int numFailed, final long durationNanos ) {
         return counts.compute( stageId, ( key, oldValue ) -> ( oldValue == null
             ? Counts.NOTHING
-            : oldValue ).plus( numItems, durationNanos ) );
+            : oldValue ).plus( numItems, numSuccess, numFailed, durationNanos ) );
     }
 
     public String getStageIdTotal() {
@@ -343,6 +457,14 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
 
     public String getStageIdPrepare() {
         return stageIdPrepare;
+    }
+
+
+    /**
+     * Must be called before processing start
+     */
+    public void addNumPreparedItems( final int numPreparedItems, final int numSuccess, final int numFailed ) {
+        addCounts( stageIdPrepare, numPreparedItems, numSuccess, numFailed, Counts.NOT_INITIALIZED_NANOS );
     }
 
 }

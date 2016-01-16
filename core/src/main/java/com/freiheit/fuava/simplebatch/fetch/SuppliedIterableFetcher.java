@@ -30,7 +30,8 @@ public final class SuppliedIterableFetcher<T> implements Fetcher<T> {
     @Override
     public Iterable<Result<FetchedItem<T>, T>> fetchAll() {
         try {
-            return new IterableFetcherWrapper<T>( this.supplier.get() );
+            final Iterable<T> originalIterable = this.supplier.get();
+            return IterableFetcherWrapper.wrap( originalIterable );
         } catch ( final Throwable t ) {
             return ImmutableList.of( Result.failed( null, t ) );
         }

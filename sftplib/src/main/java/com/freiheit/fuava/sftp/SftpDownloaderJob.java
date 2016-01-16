@@ -121,7 +121,7 @@ public class SftpDownloaderJob {
                 .addListener( new ItemProgressLoggingListener<>( CtlDownloaderJob.LOG_NAME_ITEM ) )
                 .setProcessor(
                         // downloader
-                        TimeLoggingProcessor.wrap( "File", Processors.controlledFileWriter( 
+                        TimeLoggingProcessor.wrap( "File Download", Processors.controlledFileWriter( 
                                 config.getDownloadDirPath(), 
                                 config.getControlFileEnding(),
                                 config.getLogFileEnding(),

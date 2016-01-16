@@ -435,7 +435,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
                     this.configuration == null
                         ? new ConfigurationImpl()
                         : this.configuration,
-                    TimeLoggingProcessor.wrap( "File", downloader.then( fileWriter ) ),
+                    TimeLoggingProcessor.wrap( "File Download", downloader.then( fileWriter ) ),
                     builder.getListeners() );
         }
 

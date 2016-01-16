@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.freiheit.fuava.simplebatch.result.Result;
+import com.freiheit.fuava.simplebatch.util.EagernessUtil;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -90,7 +91,10 @@ class DirectoryFileFetcher<T> implements Fetcher<T> {
     @Override
     public Iterable<Result<FetchedItem<T>, T>> fetchAll() {
         final FetchFile<T> resultCreator = new FetchFile<>( func );
-        return Iterables.concat( Lists.<DownloadDir, Iterable<Result<FetchedItem<T>, T>>>transform( 
+        // the directories are all read eagerly, so we copy the concatenated iterable into a list
+        // The caller (BatchJob) may iterate over Collections to collect statistics, but it will not 
+        // iterate over Iterables to not break lazily loaded data
+        return EagernessUtil.preserveEagerness( Iterables.concat( Lists.<DownloadDir, Iterable<Result<FetchedItem<T>, T>>>transform( 
                 dirs, 
                 dir -> {
                     try {
@@ -102,7 +106,8 @@ class DirectoryFileFetcher<T> implements Fetcher<T> {
                         return ImmutableList.of( Result.failed( FetchedItem.of( null, 0, dirs.toString() ), "Could not traverse download directory") );
                     }
                 }
-                ) );
+                ) ) 
+                );
 
     }
 

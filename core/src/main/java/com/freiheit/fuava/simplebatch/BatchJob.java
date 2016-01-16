@@ -30,10 +30,12 @@ import org.slf4j.LoggerFactory;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.processor.Processor;
+import com.freiheit.fuava.simplebatch.processor.TimeLoggingProcessor;
 import com.freiheit.fuava.simplebatch.result.DelegatingProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
@@ -208,6 +210,16 @@ public class BatchJob<Input, Output> {
 
         final Iterable<Result<FetchedItem<Input>, Input>> sourceIterable = fetcher.fetchAll();
 
+        if ( sourceIterable instanceof Collection && this.persistence instanceof TimeLoggingProcessor ) {
+            // Iterables could be lazy, but if it is a collection it should not be lazy so we can
+            // count and report the result of the prepare stage.
+            final Collection<?> collection = ( Collection<?> ) sourceIterable;
+            ( ( TimeLoggingProcessor<?,?,?> ) this.persistence ).addNumPreparedItems( 
+                    collection.size(), 
+                    FluentIterable.from( collection ).filter( o -> ( ( Result<?, ?> ) o ).isSuccess() ).size(),
+                    FluentIterable.from( collection ).filter( o -> ( ( Result<?, ?> ) o ).isFailed() ).size()
+            );
+        }
         final Iterable<List<Result<FetchedItem<Input>, Input>>> partitions = Iterables.partition( sourceIterable, processingBatchSize );
         
         StreamSupport.stream( partitions.spliterator(), parallel ).forEach( new CallProcessor( listeners ) );
@@ -215,6 +227,9 @@ public class BatchJob<Input, Output> {
         listeners.onAfterRun();
         resultBuilder.setListenerDelegationFailures( listeners.hasDelegationFailures() );
 
+        if ( this.persistence instanceof TimeLoggingProcessor ) {
+            ( ( TimeLoggingProcessor<?,?,?> ) this.persistence ).logFinalCounts();
+        }
         // TODO: persist the state of the downloader (offset or downloader), so it can be
         //       provided the next time
         //idsDownloader.getWriteableState();

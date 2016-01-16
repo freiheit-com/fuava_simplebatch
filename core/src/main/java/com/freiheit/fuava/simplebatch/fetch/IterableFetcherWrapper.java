@@ -19,13 +19,18 @@ package com.freiheit.fuava.simplebatch.fetch;
 import java.util.Iterator;
 
 import com.freiheit.fuava.simplebatch.result.Result;
+import com.freiheit.fuava.simplebatch.util.EagernessUtil;
 import com.google.common.collect.Iterators;
 
 public final class IterableFetcherWrapper<T> implements Iterable<Result<FetchedItem<T>, T>> {
     private final Iterable<T> iterable;
 
-    public IterableFetcherWrapper( final Iterable<T> iterable ) {
+    private IterableFetcherWrapper( final Iterable<T> iterable ) {
         this.iterable = iterable;
+    }
+
+    public static <T> Iterable<Result<FetchedItem<T>, T>> wrap (final Iterable<T> originalIterable) {
+        return EagernessUtil.preserveEagerness( originalIterable, new IterableFetcherWrapper<T>( originalIterable ) );
     }
 
     @Override

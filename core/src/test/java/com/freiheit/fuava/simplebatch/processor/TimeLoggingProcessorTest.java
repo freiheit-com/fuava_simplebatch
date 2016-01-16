@@ -17,22 +17,28 @@ public class TimeLoggingProcessorTest {
     @DataProvider
     public Object[][] durationAsStringsTestData() {
         return new Object[][] {
-                { "All", "", 0, 0, "All:\t        0 total |  0 h  0 min  0 sec |  0 sec   0 ms |          0 items / hour |  " },
-                { "All", "", 1, TimeUnit.SECONDS.toNanos( 1 ),
-                        "All:\t        1 total |  0 h  0 min  1 sec |  1 sec   0 ms |       3600 items / hour |  " },
-                { "All", "", 1, TimeUnit.MINUTES.toNanos( 1 ),
-                        "All:\t        1 total |  0 h  1 min  0 sec | 60 sec   0 ms |         60 items / hour |  " },
-                { "All", "", 60, TimeUnit.HOURS.toNanos( 1 ),
-                        "All:\t       60 total |  1 h  0 min  0 sec | 60 sec   0 ms |         60 items / hour |  " },
-                { "All", "", 1, TimeUnit.SECONDS.toNanos( 25 ) + TimeUnit.MINUTES.toNanos( 23 ) + TimeUnit.HOURS.toNanos( 2 ),
-                        "All:\t        1 total |  2 h 23 min 25 sec | 8605 sec   0 ms |          0 items / hour |  " }
+                { "All", "", 0, 0, 0, 0, "All:\t        0 total |          |  0 h  0 min  0 sec |  0 sec   0 ms |          0 items / hour |  " },
+                { "All", "", 1, 1, 0, TimeUnit.SECONDS.toNanos( 1 ),
+                        "All:\t        1 total |          |  0 h  0 min  1 sec |  1 sec   0 ms |       3600 items / hour |  " },
+                { "All", "", 1, 0, 1, TimeUnit.MINUTES.toNanos( 1 ),
+                        "All:\t        1 total |    1 err |  0 h  1 min  0 sec | 60 sec   0 ms |         60 items / hour |  " },
+                { "All", "", 60, 59, 1, TimeUnit.HOURS.toNanos( 1 ),
+                        "All:\t       60 total |    1 err |  1 h  0 min  0 sec | 60 sec   0 ms |         60 items / hour |  " },
+                { "All", "", 1, 1, 0, TimeUnit.SECONDS.toNanos( 25 ) + TimeUnit.MINUTES.toNanos( 23 ) + TimeUnit.HOURS.toNanos( 2 ),
+                        "All:\t        1 total |          |  2 h 23 min 25 sec | 8605 sec   0 ms |          0 items / hour |  " }
         };
     }
 
     @Test( dataProvider = "durationAsStringsTestData" )
-    public void testDurationAsStrings( final String id, final String name, final int items, final long nanos,
+    public void testDurationAsStrings( 
+            final String id, 
+            final String name, 
+            final int items, 
+            final int numSuccess, 
+            final int numFailed, 
+            final long nanos,
             final String expected ) {
-        final String result = TimeLoggingProcessor.renderCounts( id, items, nanos, name );
+        final String result = TimeLoggingProcessor.renderCounts( id, items, numSuccess, numFailed, nanos, name );
         Assert.assertEquals( result, expected );
     }
 

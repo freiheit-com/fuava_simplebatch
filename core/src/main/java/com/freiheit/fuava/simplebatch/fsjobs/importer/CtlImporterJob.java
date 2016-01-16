@@ -311,7 +311,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
          */
         public Builder<Data> setFileInputStreamReader( final Function<InputStream, Iterable<Data>> documentReader ) {
             final Function<File, Iterable<Result<FetchedItem<Data>, Data>>> fileProcessorFunction =
-                    new FileToInputStreamFunction<>( is -> new IterableFetcherWrapper<Data>( documentReader.apply( is ) ) );
+                    new FileToInputStreamFunction<>( is -> IterableFetcherWrapper.wrap( documentReader.apply( is ) ) );
             fileReader = Processors.singleItemFunction( fileProcessorFunction );
             //Result<FetchedItem<Data>, Data>
             return this;
@@ -376,7 +376,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                         if ( r.isSuccess() ) {
                             b.add( builder.withOutput( output == null
                                 ? null
-                                : new IterableFetcherWrapper<Data>( output ) ).success() );
+                                : IterableFetcherWrapper.wrap( output ) ).success() );
                         } else {
                             b.add( builder.failed() );
                         }
@@ -465,7 +465,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                             item -> item.getValue().getControlledFileRelPath().getFileName().toString(), 
                             processingBatchSize, 
                             parallelContent,
-                            TimeLoggingProcessor.wrap( "Content", contentProcessor ),
+                            TimeLoggingProcessor.wrap( "Content Import", contentProcessor ),
                             contentProcessingListenerFactories 
                         ))
                     .then( Processors.<ResultStatistics> toArchiveDirMover(
@@ -486,7 +486,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                             ),
                             new DownloadDir( this.configuration.getDownloadDirPath(), null, this.configuration.getControlFileEnding() )
                             ),
-                    TimeLoggingProcessor.wrap( "File", processor ),
+                    TimeLoggingProcessor.wrap( "File Import", processor ),
                     fileProcessingListeners );
         }
     }
