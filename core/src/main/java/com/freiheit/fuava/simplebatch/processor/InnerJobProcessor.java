@@ -58,6 +58,7 @@ final class InnerJobProcessor<Input, Data>
         final BatchJob.Builder<Data, Data> builder =
                 BatchJob.<Data, Data> builder()
                 .setProcessingBatchSize( processingBatchSize )
+                .setPrintFinalTimeMeasures( false )
                 .setParallel( parallelContent )
                 .setProcessor( contentProcessor );
 

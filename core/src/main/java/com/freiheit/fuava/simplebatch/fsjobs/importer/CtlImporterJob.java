@@ -56,6 +56,7 @@ import com.google.common.collect.ImmutableList;
  */
 public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics> {
     public static final String DEFAULT_INSTANCE_ID = Sysprops.INSTANCE_NAME;
+    private final TimeLoggingProcessor<FetchedItem<Data>, Data, Data> timeLoggedContentProcessor;
 
     public interface Configuration {
 
@@ -455,6 +456,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
             contentProcessingListenerFactories.add(
                     new ImportContentJsonLoggingListenerFactory<Data>( Builder.this.configuration.getProcessingDirPath() ) );
 
+            final TimeLoggingProcessor<FetchedItem<Data>, Data, Data> timeLoggedContentProcessor = TimeLoggingProcessor.wrap( "Content Import", contentProcessor );
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor =
                     Processors.toProcessingDirMover( 
                             configuration.getProcessingDirPath(),
@@ -465,7 +467,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                             item -> item.getValue().getControlledFileRelPath().getFileName().toString(), 
                             processingBatchSize, 
                             parallelContent,
-                            TimeLoggingProcessor.wrap( "Content Import", contentProcessor ),
+                            timeLoggedContentProcessor,
                             contentProcessingListenerFactories 
                         ))
                     .then( Processors.<ResultStatistics> toArchiveDirMover(
@@ -486,6 +488,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                             ),
                             new DownloadDir( this.configuration.getDownloadDirPath(), null, this.configuration.getControlFileEnding() )
                             ),
+                    timeLoggedContentProcessor,
                     TimeLoggingProcessor.wrap( "File Import", processor ),
                     fileProcessingListeners );
         }
@@ -496,9 +499,19 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
             final int processingBatchSize,
             final boolean parallel,
             final Fetcher<ControlFile> fetcher,
+            final TimeLoggingProcessor<FetchedItem<Data>, Data, Data> timeLoggedContentProcessor,
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor,
             final List<ProcessingResultListener<ControlFile, ResultStatistics>> listeners ) {
-        super( description, processingBatchSize, parallel, fetcher, processor, listeners );
+        super( description, processingBatchSize, parallel, fetcher, processor, true, listeners );
+        this.timeLoggedContentProcessor = timeLoggedContentProcessor;
+    }
+
+    @Override
+    public ResultStatistics run() {
+        final ResultStatistics stats = super.run();
+        // make sure the content counts are logged as well.
+        timeLoggedContentProcessor.logFinalCounts();
+        return stats;
     }
 
 }

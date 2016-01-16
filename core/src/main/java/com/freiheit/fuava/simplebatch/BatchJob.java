@@ -84,6 +84,7 @@ public class BatchJob<Input, Output> {
     public static class Builder<Input, Output> {
         private int processingBatchSize = 1000;
         private boolean parallel = false;
+        private boolean printFinalTimeMeasures = true;
         private Fetcher<Input> fetcher;
         private Processor<FetchedItem<Input>, Input, Output> processor;
 
@@ -104,6 +105,15 @@ public class BatchJob<Input, Output> {
 
         public Builder<Input, Output> setParallel( final boolean parallel ) {
             this.parallel = parallel;
+            return this;
+        }
+        
+        public boolean isPrintFinalTimeMeasures() {
+            return printFinalTimeMeasures;
+        }
+        
+        public Builder<Input, Output>  setPrintFinalTimeMeasures( final boolean printFinalTimeMeasures ) {
+            this.printFinalTimeMeasures = printFinalTimeMeasures;
             return this;
         }
 
@@ -160,7 +170,7 @@ public class BatchJob<Input, Output> {
         }
 
         public BatchJob<Input, Output> build() {
-            return new BatchJob<Input, Output>( description, processingBatchSize, parallel, fetcher, processor, listeners );
+            return new BatchJob<Input, Output>( description, processingBatchSize, parallel, fetcher, processor, printFinalTimeMeasures, listeners );
         }
 
         public String getDescription() {
@@ -176,6 +186,7 @@ public class BatchJob<Input, Output> {
 
     private final List<ProcessingResultListener<Input, Output>> listeners;
     private final String description;
+    private final boolean printFinalTimeMeasures;
 
     protected BatchJob(
             final String description,
@@ -183,12 +194,14 @@ public class BatchJob<Input, Output> {
             final boolean parallel,
             final Fetcher<Input> fetcher,
             final Processor<FetchedItem<Input>, Input, Output> persistence,
+            final boolean printFinalTimeMeasures,
             final List<ProcessingResultListener<Input, Output>> listeners ) {
         this.description = description;
         this.processingBatchSize = processingBatchSize;
         this.parallel = parallel;
         this.fetcher = fetcher;
         this.persistence = persistence;
+        this.printFinalTimeMeasures = printFinalTimeMeasures;
         this.listeners = ImmutableList.copyOf( listeners );
     }
 
@@ -197,7 +210,7 @@ public class BatchJob<Input, Output> {
     }
 
     @CheckReturnValue
-    public final ResultStatistics run() {
+    public ResultStatistics run() {
         final ResultStatistics.Builder<Input, Output> resultBuilder = ResultStatistics.builder();
 
         final DelegatingProcessingResultListener<Input, Output> listeners =
@@ -229,13 +242,10 @@ public class BatchJob<Input, Output> {
 
         final ResultStatistics statistics = resultBuilder.build();
         
-        if ( this.persistence instanceof TimeLoggingProcessor ) {
-            // only log the final counts if there has been anything done - avoid spamming the logs
+        if ( this.printFinalTimeMeasures && this.persistence instanceof TimeLoggingProcessor ) {
             ( ( TimeLoggingProcessor<?,?,?> ) this.persistence ).logFinalCounts();
         }
-        // TODO: persist the state of the downloader (offset or downloader), so it can be
-        //       provided the next time
-        //idsDownloader.getWriteableState();
+        
         return statistics;
     }
 }

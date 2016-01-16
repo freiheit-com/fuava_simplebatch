@@ -68,6 +68,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
     public static final String DEFAULT_CONFIG_DOWNLOAD_DIR_PATH = "/tmp/downloading";
     public static final String DEFAULT_CONFIG_CONTROL_FILE_ENDING = ".ctl";
     public static final String DEFAULT_CONFIG_LOG_FILE_ENDING = ".log";
+    private final Processor<FetchedItem<Id>, Id, Data> processor;
 
     public static final class ConfigurationImpl implements Configuration {
 
@@ -449,7 +450,9 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             final Configuration configuration,
             final Processor<FetchedItem<Id>, Id, Data> persistence,
             final List<ProcessingResultListener<Id, Data>> listeners ) {
-        super( description, processingBatchSize, parallel, fetcher, persistence, listeners );
+        super( description, processingBatchSize, parallel, fetcher, persistence, true, listeners );
+        this.processor = persistence;
     }
+    
 
 }
