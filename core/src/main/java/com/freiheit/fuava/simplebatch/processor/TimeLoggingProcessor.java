@@ -222,7 +222,7 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
             final ChainedProcessor chained = (ChainedProcessor) processor;
             return toStages( chained.f );
         } else {
-            return ImmutableList.of( new Stage( "", processor.getClass().getSimpleName(), processor ) );
+            return ImmutableList.of( new Stage( "", processor.getStageName(), processor ) );
         }
     }
 

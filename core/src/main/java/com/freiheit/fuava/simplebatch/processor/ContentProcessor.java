@@ -25,7 +25,7 @@ import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.google.common.base.Function;
 
-final class InnerJobProcessor<Input, Data>
+final class ContentProcessor<Input, Data>
         extends AbstractSingleItemProcessor<Input, Iterable<Result<FetchedItem<Data>, Data>>, ResultStatistics> {
     private final Function<Input, String> jobDescriptionFunc;
     private final int processingBatchSize;
@@ -33,7 +33,7 @@ final class InnerJobProcessor<Input, Data>
     private final List<Function<? super Input, ProcessingResultListener<Data, Data>>> contentProcessingListeners;
     private final boolean parallelContent;
 
-    public InnerJobProcessor(
+    public ContentProcessor(
             final Function<Input, String> jobDescriptionFunc,
             final int processingBatchSize,
             final boolean parallelContent,
@@ -78,5 +78,6 @@ final class InnerJobProcessor<Input, Data>
 
         return Result.success( i, statistics );
     }
+   
 
 }

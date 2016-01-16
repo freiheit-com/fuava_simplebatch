@@ -41,5 +41,10 @@ final class ComposedProcessor<OriginalItem, Input, Intermediate, Output> impleme
         final Iterable<Result<OriginalItem, Output>> gResults = this.g.process( fResults );
         return gResults;
     }
+    
+    @Override
+    public String getStageName() {
+        return this.f.getStageName() + ", " + this.g.getStageName();
+    }
 
 }

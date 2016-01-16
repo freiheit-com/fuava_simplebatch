@@ -272,7 +272,7 @@ public class Processors {
             final boolean parallelContent,
             final Processor<FetchedItem<InnerInput>, InnerInput, InnerInput> contentProcessor,
             final List<Function<? super OriginalItem, ProcessingResultListener<InnerInput, InnerInput>>> contentProcessingListeners ) {
-        return new InnerJobProcessor<OriginalItem, InnerInput>( jobDescriptionFunc, processingBatchSize, parallelContent,
+        return new ContentProcessor<OriginalItem, InnerInput>( jobDescriptionFunc, processingBatchSize, parallelContent,
                 contentProcessor,
                 contentProcessingListeners );
     }

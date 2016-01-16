@@ -67,4 +67,8 @@ class RetryingFunctionProcessor<OriginalItem, Input, Output> extends RetryingPro
         return _func.apply( input );
     }
 
+    @Override
+    public String getStageName() {
+        return _func.getClass().getSimpleName();
+    }
 }

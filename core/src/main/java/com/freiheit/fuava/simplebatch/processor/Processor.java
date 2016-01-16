@@ -43,4 +43,8 @@ public interface Processor<OriginalItem, Input, Output> {
     default <D> ChainedProcessor<OriginalItem, Input, D> then( final Processor<OriginalItem, Output, D> g ) {
         return new ChainedProcessor<OriginalItem, Input, D>( this, g );
     }
+    
+    default String getStageName() {
+        return getClass().getSimpleName();
+    }
 }

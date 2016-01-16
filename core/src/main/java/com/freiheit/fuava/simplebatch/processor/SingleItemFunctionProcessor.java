@@ -32,4 +32,9 @@ public class SingleItemFunctionProcessor<OriginalItem, Input, Output> extends
         return _func.apply( input );
     }
 
+    @Override
+    public String getStageName() {
+        return _func.getClass().getSimpleName();
+    }
+    
 }

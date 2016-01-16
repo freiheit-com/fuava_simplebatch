@@ -60,4 +60,14 @@ final class BatchedSuccessesProcessor<Input, Output, P> implements Processor<Inp
         }
         return resultBuilder.build();
     }
+    
+    @Override
+    public String getStageName() {
+        return delegee.getStageName();
+    }
+    
+    @Override
+    public String toString() {
+        return delegee.toString();
+    }
 }

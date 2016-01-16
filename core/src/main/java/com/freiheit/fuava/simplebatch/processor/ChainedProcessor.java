@@ -33,6 +33,11 @@ public final class ChainedProcessor<A, B, D> implements Processor<A, B, D> {
     }
 
     @Override
+    public String getStageName() {
+        return this.f.getStageName();
+    }
+    
+    @Override
     public String toString() {
         return name;
     }
