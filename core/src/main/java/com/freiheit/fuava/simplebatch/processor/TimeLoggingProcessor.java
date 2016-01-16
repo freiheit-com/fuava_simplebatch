@@ -243,8 +243,19 @@ public class TimeLoggingProcessor<OriginalItem, Input, Output> implements Proces
         return values;
     }
 
-    public void logFinalCounts() {
-        logCounts( stages, counts );
+    /**
+     * Log the counts, but only if logging is enabled and total is greater than zero.
+     * @return true if the final counts were logged
+     */
+    public boolean logFinalCounts() {
+        if ( !JOB_PERFORMANCE_LOGGER.isInfoEnabled() ) {
+            return false;
+        }
+        if ( counts.getOrDefault( stageIdTotal, Counts.NOTHING ).getItems() == 0 ) {
+            return false;
+        }
+        JOB_PERFORMANCE_LOGGER.info( "\n******************************\n Final Job Performance Report \n******************************\n" + renderCounts( stages, counts ) );
+        return true;
     }
 
     /**

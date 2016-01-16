@@ -227,12 +227,15 @@ public class BatchJob<Input, Output> {
         listeners.onAfterRun();
         resultBuilder.setListenerDelegationFailures( listeners.hasDelegationFailures() );
 
+        final ResultStatistics statistics = resultBuilder.build();
+        
         if ( this.persistence instanceof TimeLoggingProcessor ) {
+            // only log the final counts if there has been anything done - avoid spamming the logs
             ( ( TimeLoggingProcessor<?,?,?> ) this.persistence ).logFinalCounts();
         }
         // TODO: persist the state of the downloader (offset or downloader), so it can be
         //       provided the next time
         //idsDownloader.getWriteableState();
-        return resultBuilder.build();
+        return statistics;
     }
 }
