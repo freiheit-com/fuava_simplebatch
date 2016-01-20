@@ -104,7 +104,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
         
         public ConfigurationImpl setDownloadDirPath( final Path downloadDirPath ) {
-            this.downloadDirPath = downloadDirPath;
+            this.downloadDirPath = downloadDirPath == null ? null : downloadDirPath.toAbsolutePath();
             return this;
         }
 
@@ -118,7 +118,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
         
         public ConfigurationImpl setArchivedDirPath( final Path archivedDirPath ) {
-            this.archivedDirPath = archivedDirPath;
+            this.archivedDirPath = archivedDirPath == null ? null : archivedDirPath.toAbsolutePath();
             return this;
         }
 
@@ -132,7 +132,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
         public ConfigurationImpl setFailedDirPath( final Path failedDirPath ) {
-            this.failedDirPath = failedDirPath;
+            this.failedDirPath = failedDirPath == null ? null : failedDirPath.toAbsolutePath();
             return this;
         }
         
@@ -146,7 +146,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
         public ConfigurationImpl setProcessingDirPath( final Path processingDirPath ) {
-            this.processingDirPath = processingDirPath;
+            this.processingDirPath = processingDirPath == null ? null : processingDirPath.toAbsolutePath();
             return this;
         }
 
@@ -189,7 +189,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
         public ConfigurationWithPlaceholderImpl setDownloadDirPath( final String downloadDirPath ) {
-            this.downloadDirPath = Paths.get( FileUtils.substitutePlaceholder( downloadDirPath ) );
+            this.downloadDirPath = Paths.get( FileUtils.substitutePlaceholder( downloadDirPath ) ).toAbsolutePath();
             return this;
         }
 
@@ -199,7 +199,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
         public ConfigurationWithPlaceholderImpl setArchivedDirPath( final String archivedDirPath ) {
-            this.archivedDirPath = Paths.get( FileUtils.substitutePlaceholder( archivedDirPath ) );
+            this.archivedDirPath = Paths.get( FileUtils.substitutePlaceholder( archivedDirPath ) ).toAbsolutePath();
             return this;
         }
 
@@ -209,7 +209,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
         public ConfigurationWithPlaceholderImpl setFailedDirPath( final String failedDirPath ) {
-            this.failedDirPath = Paths.get( FileUtils.substitutePlaceholder( failedDirPath ) );
+            this.failedDirPath = Paths.get( FileUtils.substitutePlaceholder( failedDirPath ) ).toAbsolutePath();
             return this;
         }
 
@@ -219,7 +219,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         }
 
         public ConfigurationWithPlaceholderImpl setProcessingDirPath( final String processingDirPath ) {
-            this.processingDirPath = Paths.get( FileUtils.substitutePlaceholder( processingDirPath ) );
+            this.processingDirPath = Paths.get( FileUtils.substitutePlaceholder( processingDirPath ) ).toAbsolutePath();
             return this;
         }
 

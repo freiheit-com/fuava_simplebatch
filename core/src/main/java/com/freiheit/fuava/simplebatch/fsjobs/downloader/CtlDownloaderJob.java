@@ -82,12 +82,12 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         }
 
         public ConfigurationImpl setDownloadDirPath( final Path path ) {
-            this.downloadDirPath = path;
+            this.downloadDirPath = path == null ? null : path.toAbsolutePath();
             return this;
         }
 
         public ConfigurationImpl setDownloadDirPath( final String path ) {
-            this.downloadDirPath = Paths.get( path );
+            setDownloadDirPath(Paths.get( path ));
             return this;
         }
 
@@ -124,7 +124,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
         }
 
         public ConfigurationWithPlaceholderImpl setDownloadDirPath( final String path ) {
-            this.downloadDirPath = Paths.get( FileUtils.substitutePlaceholder( path ) );
+            this.downloadDirPath = Paths.get( FileUtils.substitutePlaceholder( path ) ).toAbsolutePath();
             return this;
         }
 
