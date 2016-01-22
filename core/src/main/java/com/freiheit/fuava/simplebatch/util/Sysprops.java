@@ -88,6 +88,29 @@ public class Sysprops {
             return getOrDefault( v -> v, defaultValue );
         }
     }
+    public static final class IntegerProp extends Prop<Integer> {
+        
+        private final Integer defaultValue;
+        
+        public IntegerProp( final String name, final Integer defaultValue ) {
+            super( name );
+            this.defaultValue = defaultValue;
+        }
+        
+        @Override
+        public List<String> getPossibleStringValues() {
+            return ImmutableList.of("1, 2, 3, ... ");
+        }
+        
+        @Override
+        public String getDefaultValueString() {
+            return defaultValue == null ? "<not set>" : defaultValue.toString();
+        }
+        
+        public Integer get() {
+            return getOrDefault( v -> Integer.parseInt( v ), defaultValue );
+        }
+    }
 
     public static final class SubdirStrategyProp extends Prop<SubdirStrategy> {
 
@@ -116,6 +139,8 @@ public class Sysprops {
     public static final boolean ATOMIC_MOVE = new BooleanProp( "fsjobs.atomicmove", false ).is();
     public static final boolean FILE_PROCESSING_PARALLEL = new BooleanProp( "fsjobs.files.parallel", false ).is();
     public static final boolean CONTENT_PROCESSING_PARALLEL = new BooleanProp( "fsjobs.content.parallel", false ).is();
+    public static final Integer FILE_PROCESSING_NUM_THREADS = new IntegerProp( "fsjobs.files.threads", null ).get();
+    public static final Integer CONTENT_PROCESSING_NUM_THREADS = new IntegerProp( "fsjobs.content.threads", null ).get();
     public static final String INSTANCE_NAME = new StringProp( "fsjobs.instance", "inst_01" ).get();
     public static final SubdirStrategy SUBDIR_STRATEGY = new SubdirStrategyProp( "fsjobs.files.subdirstrategy", StandardSubdirStrategies.MD5_ONE_LETTER_TWO_DIRS ).get();
     public static final SubdirStrategy SFTP_SUBDIR_STRATEGY = new SubdirStrategyProp( "sftp.files.subdirstrategy", StandardSubdirStrategies.NONE ).get();

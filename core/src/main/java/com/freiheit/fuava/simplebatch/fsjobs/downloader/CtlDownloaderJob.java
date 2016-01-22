@@ -68,7 +68,6 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
     public static final String DEFAULT_CONFIG_DOWNLOAD_DIR_PATH = "/tmp/downloading";
     public static final String DEFAULT_CONFIG_CONTROL_FILE_ENDING = ".ctl";
     public static final String DEFAULT_CONFIG_LOG_FILE_ENDING = ".log";
-    private final Processor<FetchedItem<Id>, Id, Data> processor;
 
     public static final class ConfigurationImpl implements Configuration {
 
@@ -348,6 +347,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
         public AbstractBuilder() {
             builder.setParallel( Sysprops.FILE_PROCESSING_PARALLEL );
+            builder.setNumParallelThreads( Sysprops.FILE_PROCESSING_NUM_THREADS );
         }
 
         public AbstractBuilder<Id, Data, ProcessingResult> setConfiguration( final Configuration configuration ) {
@@ -366,6 +366,11 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
 
         public AbstractBuilder<Id, Data, ProcessingResult> setParallelFiles( final boolean parallel ) {
             builder.setParallel( parallel );
+            return this;
+        }
+        
+        public AbstractBuilder<Id, Data, ProcessingResult> setNumParallelThreads( final Integer numParallelThreads ) {
+            builder.setNumParallelThreads( numParallelThreads );
             return this;
         }
 
@@ -432,6 +437,7 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
                     builder.getDescription(),
                     builder.getProcessingBatchSize(),
                     builder.isParallel(),
+                    builder.getNumParallelThreads(),
                     fetcher,
                     this.configuration == null
                         ? new ConfigurationImpl()
@@ -446,12 +452,12 @@ public class CtlDownloaderJob<Id, Data> extends BatchJob<Id, Data> {
             final String description,
             final int processingBatchSize,
             final boolean parallel,
+            final Integer numParallelThreads,
             final Fetcher<Id> fetcher,
             final Configuration configuration,
             final Processor<FetchedItem<Id>, Id, Data> persistence,
             final List<ProcessingResultListener<Id, Data>> listeners ) {
-        super( description, processingBatchSize, parallel, fetcher, persistence, true, listeners );
-        this.processor = persistence;
+        super( description, processingBatchSize, parallel, numParallelThreads, fetcher, persistence, true, listeners );
     }
     
 

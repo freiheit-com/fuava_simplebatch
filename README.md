@@ -276,6 +276,11 @@ client.disconnect();
 
 ## Changes
 
+### 0.6.8 (2016-01-22)
+ - Improved Logging of Job Performance
+ - Bugfix: Relative Paths did not work
+ - Number of threads can be controlled for parallel processing
+
 ### 0.6.3 (2016-01-15)
  - Implemented better restart behaviour: Files belonging to the same "instanceId" will be picked up from processing dir when a CtlImporter Job starts
  - Added some strategies for subdir creation

@@ -251,6 +251,9 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
         private String description;
         private boolean parallelFiles = Sysprops.FILE_PROCESSING_PARALLEL;
         private boolean parallelContent = Sysprops.CONTENT_PROCESSING_PARALLEL;
+        private Integer numParallelThreadsFiles = Sysprops.FILE_PROCESSING_NUM_THREADS;
+        private Integer numParallelThreadsContent = Sysprops.CONTENT_PROCESSING_NUM_THREADS;
+        
         private Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<Data>, Data>>> fileReader;
 
         public Builder() {
@@ -278,7 +281,34 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
             this.parallelContent = parallelContent;
             return this;
         }
-
+        /**
+         * The number of threads to use for parallel processing of files. 
+         * If set to null and parallel is set to true, Java 8 parallel streaming will be used.
+         * @return this for method chaining
+         */
+        public Builder<Data> setNumParallelThreadsFiles( final Integer numParallelThreads ) {
+            this.numParallelThreadsFiles = numParallelThreads;
+            return this;
+        }
+        
+        public Integer getNumParallelThreadsFiles() {
+            return numParallelThreadsFiles;
+        }
+       
+        /**
+         * The number of threads to use for parallel processing of content. 
+         * If set to null and parallel is set to true, Java 8 parallel streaming will be used.
+         * @return this for method chaining
+         */
+        public Builder<Data> setNumParallelThreadsContent( final Integer numParallelThreads ) {
+            this.numParallelThreadsContent = numParallelThreads;
+            return this;
+        }
+        
+        public Integer getNumParallelThreadsContent() {
+            return numParallelThreadsContent;
+        }
+        
         /**
          * Controls the number of Data items which will be passed to the content
          * processing stage in one list.
@@ -467,6 +497,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                             item -> item.getValue().getControlledFileRelPath().getFileName().toString(), 
                             processingBatchSize, 
                             parallelContent,
+                            numParallelThreadsContent,
                             timeLoggedContentProcessor,
                             contentProcessingListenerFactories 
                         ))
@@ -478,6 +509,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
                     description,
                     1 /* process one file at a time, no use for batching */,
                     parallelFiles,
+                    numParallelThreadsFiles,
                     Fetchers.folderFetcher( 
                             new ReadControlFileFunction( this.configuration.getDownloadDirPath(), this.configuration.getProcessingDirPath() ),
                             // First: process old data from processing for the same instance which was left over when the job got killed
@@ -498,11 +530,12 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
             final String description,
             final int processingBatchSize,
             final boolean parallel,
+            final Integer numParallelThreads,
             final Fetcher<ControlFile> fetcher,
             final TimeLoggingProcessor<FetchedItem<Data>, Data, Data> timeLoggedContentProcessor,
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor,
             final List<ProcessingResultListener<ControlFile, ResultStatistics>> listeners ) {
-        super( description, processingBatchSize, parallel, fetcher, processor, true, listeners );
+        super( description, processingBatchSize, parallel, numParallelThreads, fetcher, processor, true, listeners );
         this.timeLoggedContentProcessor = timeLoggedContentProcessor;
     }
 
