@@ -254,7 +254,8 @@ public class Processors {
             final List<Function<? super OriginalItem, ProcessingResultListener<InnerInput, InnerInput>>> contentProcessingListeners ) {
         return runBatchJobProcessor( jobDescriptionFunc, processingBatchSize,
                 false /* not parallel */,
-                null /* not parallel */, 
+                null /* not parallel */,
+                0 /* do not wait*/,
                 contentProcessor, contentProcessingListeners );
     }
 
@@ -274,10 +275,12 @@ public class Processors {
             final Function<OriginalItem, String> jobDescriptionFunc, final int processingBatchSize,
             final boolean parallelContent,
             final Integer numParallelThreadsContent,
+            final int parallelTerminationTimeoutHours,
             final Processor<FetchedItem<InnerInput>, InnerInput, InnerInput> contentProcessor,
             final List<Function<? super OriginalItem, ProcessingResultListener<InnerInput, InnerInput>>> contentProcessingListeners ) {
         return new ContentProcessor<OriginalItem, InnerInput>( jobDescriptionFunc, processingBatchSize, parallelContent,
                 numParallelThreadsContent,
+                parallelTerminationTimeoutHours,
                 contentProcessor,
                 contentProcessingListeners );
     }

@@ -33,18 +33,21 @@ final class ContentProcessor<Input, Data>
     private final List<Function<? super Input, ProcessingResultListener<Data, Data>>> contentProcessingListeners;
     private final boolean parallelContent;
     private final Integer numParallelThreadsContent;
+    private final int parallelTerminationTimeoutHours;
 
     public ContentProcessor(
             final Function<Input, String> jobDescriptionFunc,
             final int processingBatchSize,
             final boolean parallelContent,
             final Integer numParallelThreadsContent,
+            final int parallelTerminationTimeoutHours,
             final Processor<FetchedItem<Data>, Data, Data> contentProcessor,
             final List<Function<? super Input, ProcessingResultListener<Data, Data>>> contentProcessingListeners ) {
         this.jobDescriptionFunc = jobDescriptionFunc;
         this.processingBatchSize = processingBatchSize;
         this.parallelContent = parallelContent;
         this.numParallelThreadsContent = numParallelThreadsContent;
+        this.parallelTerminationTimeoutHours = parallelTerminationTimeoutHours;
         this.contentProcessor = contentProcessor;
         this.contentProcessingListeners = contentProcessingListeners;
     }
@@ -63,6 +66,7 @@ final class ContentProcessor<Input, Data>
                 .setProcessingBatchSize( processingBatchSize )
                 .setPrintFinalTimeMeasures( false )
                 .setParallel( parallelContent )
+                .setParallelTerminationTimeoutHours( parallelTerminationTimeoutHours )
                 .setNumParallelThreads( numParallelThreadsContent )
                 .setProcessor( contentProcessor );
 

@@ -254,6 +254,9 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
         private Integer numParallelThreadsFiles = Sysprops.FILE_PROCESSING_NUM_THREADS;
         private Integer numParallelThreadsContent = Sysprops.CONTENT_PROCESSING_NUM_THREADS;
         
+        private int parallelTerminationTimeoutHoursContent;
+        private int parallelTerminationTimeoutHoursFiles;
+        
         private Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>> fileReader;
 
         public Builder() {
@@ -308,6 +311,25 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
         public Integer getNumParallelThreadsContent() {
             return numParallelThreadsContent;
         }
+       
+        public Builder<ContentOriginalInput> setParallelTerminationTimeoutHoursFiles( final int parallelTerminationTimeoutHoursFiles ) {
+            this.parallelTerminationTimeoutHoursFiles = parallelTerminationTimeoutHoursFiles;
+            return this;
+        }
+        
+        public int getParallelTerminationTimeoutHoursFiles() {
+            return parallelTerminationTimeoutHoursFiles;
+        }
+        
+        public Builder<ContentOriginalInput> setParallelTerminationTimeoutHoursContent( final int parallelTerminationTimeoutHoursContent ) {
+            this.parallelTerminationTimeoutHoursContent = parallelTerminationTimeoutHoursContent;
+            return this;
+        }
+        
+        public int getParallelTerminationTimeoutHoursContent() {
+            return parallelTerminationTimeoutHoursContent;
+        }
+        
         
         /**
          * Controls the number of Data items which will be passed to the content
@@ -498,6 +520,7 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
                             processingBatchSize, 
                             parallelContent,
                             numParallelThreadsContent,
+                            parallelTerminationTimeoutHoursContent,
                             timeLoggedContentProcessor,
                             contentProcessingListenerFactories 
                         ))
@@ -510,6 +533,7 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
                     1 /* process one file at a time, no use for batching */,
                     parallelFiles,
                     numParallelThreadsFiles,
+                    parallelTerminationTimeoutHoursFiles,
                     Fetchers.folderFetcher( 
                             new ReadControlFileFunction( this.configuration.getDownloadDirPath(), this.configuration.getProcessingDirPath() ),
                             // First: process old data from processing for the same instance which was left over when the job got killed
@@ -531,11 +555,12 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
             final int processingBatchSize,
             final boolean parallel,
             final Integer numParallelThreads,
+            final int parallelTerminationTimeoutHours,
             final Fetcher<ControlFile> fetcher,
             final TimeLoggingProcessor<FetchedItem<ContentOriginalInput>, ContentOriginalInput, ContentOriginalInput> timeLoggedContentProcessor,
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor,
             final List<ProcessingResultListener<ControlFile, ResultStatistics>> listeners ) {
-        super( description, processingBatchSize, parallel, numParallelThreads, fetcher, processor, true, listeners );
+        super( description, processingBatchSize, parallel, numParallelThreads, parallelTerminationTimeoutHours, fetcher, processor, true, listeners );
         this.timeLoggedContentProcessor = timeLoggedContentProcessor;
     }
 

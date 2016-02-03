@@ -65,7 +65,7 @@ import com.google.common.collect.Iterables;
  */
 public class BatchJob<OriginalInput, Output> {
     static final Logger LOG = LoggerFactory.getLogger( BatchJob.class );
-    private static final long TERMINATION_TIMEOUT_HOURS = 1;
+    private static final int TERMINATION_TIMEOUT_HOURS = 96;
 
     private final class CallProcessor implements Consumer<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> {
         private final DelegatingProcessingResultListener<OriginalInput, Output> listeners;
@@ -89,6 +89,7 @@ public class BatchJob<OriginalInput, Output> {
         private int processingBatchSize = 1000;
         private boolean parallel = false;
         private Integer numParallelThreads = null;
+        private int parallelTerminationTimeoutHours = TERMINATION_TIMEOUT_HOURS;
         private boolean printFinalTimeMeasures = true;
         private Fetcher<OriginalInput> fetcher;
         private Processor<FetchedItem<OriginalInput>, OriginalInput, Output> processor;
@@ -115,6 +116,22 @@ public class BatchJob<OriginalInput, Output> {
         public Builder<OriginalInput, Output> setParallel( final boolean parallel ) {
             this.parallel = parallel;
             return this;
+        }
+        
+
+        /**
+        * Set the number of hours this jobs waits for the spawned chunks to be processed. 
+        * Applies only if you use {@link #setNumParallelThreads(Integer)}.
+        * 
+        * @return this for method chaining
+        */
+        public Builder<OriginalInput, Output> setParallelTerminationTimeoutHours( final int parallelTerminationTimeoutHours ) {
+            this.parallelTerminationTimeoutHours = parallelTerminationTimeoutHours;
+            return this;
+        }
+        
+        public int getParallelTerminationTimeoutHours() {
+            return parallelTerminationTimeoutHours;
         }
         
         /**
@@ -221,7 +238,7 @@ public class BatchJob<OriginalInput, Output> {
         }
 
         public BatchJob<OriginalInput, Output> build() {
-            return new BatchJob<OriginalInput, Output>( description, processingBatchSize, parallel, numParallelThreads, fetcher, processor, printFinalTimeMeasures, listeners );
+            return new BatchJob<OriginalInput, Output>( description, processingBatchSize, parallel, numParallelThreads, parallelTerminationTimeoutHours, fetcher, processor, printFinalTimeMeasures, listeners );
         }
 
         public String getDescription() {
@@ -239,6 +256,7 @@ public class BatchJob<OriginalInput, Output> {
     private final List<ProcessingResultListener<OriginalInput, Output>> listeners;
     private final String description;
     private final boolean printFinalTimeMeasures;
+    private final int parallelTerminationTimeoutHours;
 
     /**
      * @param description The Description of the job
@@ -255,6 +273,7 @@ public class BatchJob<OriginalInput, Output> {
             final int processingBatchSize,
             final boolean parallel,
             final Integer numParallelThreads,
+            final int parallelTerminationTimeoutHours,
             final Fetcher<OriginalInput> fetcher,
             final Processor<FetchedItem<OriginalInput>, OriginalInput, Output> processor,
             final boolean printFinalTimeMeasures,
@@ -263,6 +282,7 @@ public class BatchJob<OriginalInput, Output> {
         this.processingBatchSize = processingBatchSize;
         this.parallel = parallel;
         this.numParallelThreads = numParallelThreads;
+        this.parallelTerminationTimeoutHours = parallelTerminationTimeoutHours;
         this.fetcher = fetcher;
         this.persistence = processor;
         this.printFinalTimeMeasures = printFinalTimeMeasures;
@@ -345,9 +365,9 @@ public class BatchJob<OriginalInput, Output> {
         } finally {
             LOG.info( "Shutting down Executor" );
             executorService.shutdown();
-            LOG.info( "Waiting for termination of submitted jobs (up to " + TERMINATION_TIMEOUT_HOURS + " hours)." );
+            LOG.info( "Waiting for termination of submitted jobs (up to " + parallelTerminationTimeoutHours + " hours)." );
             try {
-                executorService.awaitTermination( TERMINATION_TIMEOUT_HOURS, TimeUnit.HOURS );
+                executorService.awaitTermination( parallelTerminationTimeoutHours, TimeUnit.HOURS );
             } catch ( final InterruptedException e ) {
                 throw new IllegalStateException( "Executor Service did not terminate normally", e );
             }

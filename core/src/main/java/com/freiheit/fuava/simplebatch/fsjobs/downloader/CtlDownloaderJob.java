@@ -373,6 +373,11 @@ public class CtlDownloaderJob<OriginalInput, Output> extends BatchJob<OriginalIn
             builder.setNumParallelThreads( numParallelThreads );
             return this;
         }
+        
+        public AbstractBuilder<OriginalInput, Input, Output> setParallelTerminationTimeoutHours( final int num ) {
+            builder.setParallelTerminationTimeoutHours( num );
+            return this;
+        }
 
         /**
          * The amount of items from the fetch stage that are put together in a
@@ -438,6 +443,7 @@ public class CtlDownloaderJob<OriginalInput, Output> extends BatchJob<OriginalIn
                     builder.getProcessingBatchSize(),
                     builder.isParallel(),
                     builder.getNumParallelThreads(),
+                    builder.getParallelTerminationTimeoutHours(),
                     fetcher,
                     this.configuration == null
                         ? new ConfigurationImpl()
@@ -453,11 +459,12 @@ public class CtlDownloaderJob<OriginalInput, Output> extends BatchJob<OriginalIn
             final int processingBatchSize,
             final boolean parallel,
             final Integer numParallelThreads,
+            final int parallelTerminationTimeoutHours,
             final Fetcher<OriginalInput> fetcher,
             final Configuration configuration,
             final Processor<FetchedItem<OriginalInput>, OriginalInput, Output> persistence,
             final List<ProcessingResultListener<OriginalInput, Output>> listeners ) {
-        super( description, processingBatchSize, parallel, numParallelThreads, fetcher, persistence, true, listeners );
+        super( description, processingBatchSize, parallel, numParallelThreads, parallelTerminationTimeoutHours, fetcher, persistence, true, listeners );
     }
     
 
