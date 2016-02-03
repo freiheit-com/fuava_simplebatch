@@ -18,7 +18,7 @@ package com.freiheit.fuava.simplebatch.fetch;
 
 import com.freiheit.fuava.simplebatch.result.Result;
 
-public interface Fetcher<T> {
+public interface Fetcher<OriginalInput> {
 
     /**
      * Fetch the input for the processing stage.
@@ -29,5 +29,5 @@ public interface Fetcher<T> {
      * @return an Iterable over the input, possibliy containing failed input
      *         results.
      */
-    public Iterable<Result<FetchedItem<T>, T>> fetchAll();
+    public Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> fetchAll();
 }

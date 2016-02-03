@@ -58,43 +58,43 @@ import com.google.common.collect.Iterables;
  *
  * @author Klas Kalass <klas.kalass@freiheit.com>
  *
- * @param <Input>
+ * @param <OriginalInput>
  *            The data fetched in stage one
  * @param <Output>
  *            The data fetched instage two
  */
-public class BatchJob<Input, Output> {
+public class BatchJob<OriginalInput, Output> {
     static final Logger LOG = LoggerFactory.getLogger( BatchJob.class );
     private static final long TERMINATION_TIMEOUT_HOURS = 1;
 
-    private final class CallProcessor implements Consumer<List<Result<FetchedItem<Input>, Input>>> {
-        private final DelegatingProcessingResultListener<Input, Output> listeners;
+    private final class CallProcessor implements Consumer<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> {
+        private final DelegatingProcessingResultListener<OriginalInput, Output> listeners;
 
-        private CallProcessor( final DelegatingProcessingResultListener<Input, Output> listeners ) {
+        private CallProcessor( final DelegatingProcessingResultListener<OriginalInput, Output> listeners ) {
             this.listeners = listeners;
         }
 
         @Override
-        public void accept( final List<Result<FetchedItem<Input>, Input>> sourceResults ) {
+        public void accept( final List<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceResults ) {
 
             listeners.onFetchResults( sourceResults );
 
-            final Iterable<? extends Result<FetchedItem<Input>, Output>> processingResults = persistence.process( sourceResults );
+            final Iterable<? extends Result<FetchedItem<OriginalInput>, Output>> processingResults = persistence.process( sourceResults );
 
             listeners.onProcessingResults( processingResults );
         }
     }
 
-    public static class Builder<Input, Output> {
+    public static class Builder<OriginalInput, Output> {
         private int processingBatchSize = 1000;
         private boolean parallel = false;
         private Integer numParallelThreads = null;
         private boolean printFinalTimeMeasures = true;
-        private Fetcher<Input> fetcher;
-        private Processor<FetchedItem<Input>, Input, Output> processor;
+        private Fetcher<OriginalInput> fetcher;
+        private Processor<FetchedItem<OriginalInput>, OriginalInput, Output> processor;
 
-        private final ArrayList<ProcessingResultListener<Input, Output>> listeners =
-                new ArrayList<ProcessingResultListener<Input, Output>>();
+        private final ArrayList<ProcessingResultListener<OriginalInput, Output>> listeners =
+                new ArrayList<ProcessingResultListener<OriginalInput, Output>>();
         private String description;
 
         public Builder() {
@@ -112,7 +112,7 @@ public class BatchJob<Input, Output> {
         * Set to false to process in current thread. Set true to use multiple Threads for processing (each chunk is thread confined though).
         * @return this for method chaining
         */
-        public Builder<Input, Output> setParallel( final boolean parallel ) {
+        public Builder<OriginalInput, Output> setParallel( final boolean parallel ) {
             this.parallel = parallel;
             return this;
         }
@@ -121,7 +121,7 @@ public class BatchJob<Input, Output> {
          * The number of threads to use for parallel processing. If set to null and parallel is set to true, Java 8 parallel streaming will be used.
          * @return this for method chaining
          */
-        public Builder<Input, Output> setNumParallelThreads( final Integer numParallelThreads ) {
+        public Builder<OriginalInput, Output> setNumParallelThreads( final Integer numParallelThreads ) {
             this.numParallelThreads = numParallelThreads;
             return this;
         }
@@ -139,7 +139,7 @@ public class BatchJob<Input, Output> {
         * Whether or not the final performance measures should be printed after run has finished
         * @return this for method chaining
         */
-        public Builder<Input, Output>  setPrintFinalTimeMeasures( final boolean printFinalTimeMeasures ) {
+        public Builder<OriginalInput, Output>  setPrintFinalTimeMeasures( final boolean printFinalTimeMeasures ) {
             this.printFinalTimeMeasures = printFinalTimeMeasures;
             return this;
         }
@@ -148,7 +148,7 @@ public class BatchJob<Input, Output> {
         * How many items from the fetcher are put together in one chunk and processed together
         * @return this for method chaining
         */
-        public Builder<Input, Output> setProcessingBatchSize( final int processingBatchSize ) {
+        public Builder<OriginalInput, Output> setProcessingBatchSize( final int processingBatchSize ) {
             this.processingBatchSize = processingBatchSize;
             return this;
         }
@@ -157,12 +157,12 @@ public class BatchJob<Input, Output> {
         * The fetcher that produces the items to process. Should be fast
         * @return this for method chaining
         */
-        public Builder<Input, Output> setFetcher( final Fetcher<Input> idsFetcher ) {
+        public Builder<OriginalInput, Output> setFetcher( final Fetcher<OriginalInput> idsFetcher ) {
             this.fetcher = idsFetcher;
             return this;
         }
 
-        public Fetcher<Input> getFetcher() {
+        public Fetcher<OriginalInput> getFetcher() {
             return fetcher;
         }
 
@@ -170,12 +170,12 @@ public class BatchJob<Input, Output> {
         * The processor for processing chunks of items which were produced by the fetcher. May be slow.
         * @return this for method chaining
         */
-        public Builder<Input, Output> setProcessor( final Processor<FetchedItem<Input>, Input, Output> writer ) {
+        public Builder<OriginalInput, Output> setProcessor( final Processor<FetchedItem<OriginalInput>, OriginalInput, Output> writer ) {
             this.processor = writer;
             return this;
         }
 
-        public Processor<FetchedItem<Input>, Input, Output> getProcessor() {
+        public Processor<FetchedItem<OriginalInput>, OriginalInput, Output> getProcessor() {
             return processor;
         }
 
@@ -183,7 +183,7 @@ public class BatchJob<Input, Output> {
         * Add a listener to call when processing events happen
         * @return this for method chaining
         */
-        public Builder<Input, Output> addListener( final ProcessingResultListener<Input, Output> listener ) {
+        public Builder<OriginalInput, Output> addListener( final ProcessingResultListener<OriginalInput, Output> listener ) {
             this.listeners.add( listener );
             return this;
         }
@@ -192,22 +192,22 @@ public class BatchJob<Input, Output> {
         * Add listeners to call when processing events happen
         * @return this for method chaining
         */
-        public Builder<Input, Output> addListeners( final Collection<ProcessingResultListener<Input, Output>> listeners ) {
+        public Builder<OriginalInput, Output> addListeners( final Collection<ProcessingResultListener<OriginalInput, Output>> listeners ) {
             this.listeners.addAll( listeners );
             return this;
         }
 
-        public Builder<Input, Output> removeListener( final ProcessingResultListener<Input, Output> listener ) {
+        public Builder<OriginalInput, Output> removeListener( final ProcessingResultListener<OriginalInput, Output> listener ) {
             this.listeners.remove( listener );
             return this;
         }
 
-        public Builder<Input, Output> removeListeners( final Collection<ProcessingResultListener<Input, Output>> listeners ) {
+        public Builder<OriginalInput, Output> removeListeners( final Collection<ProcessingResultListener<OriginalInput, Output>> listeners ) {
             this.listeners.removeAll( listeners );
             return this;
         }
 
-        public ArrayList<ProcessingResultListener<Input, Output>> getListeners() {
+        public ArrayList<ProcessingResultListener<OriginalInput, Output>> getListeners() {
             return listeners;
         }
 
@@ -215,13 +215,13 @@ public class BatchJob<Input, Output> {
         * The Description of the job
         * @return this for method chaining
         */
-        public Builder<Input, Output> setDescription( final String desc ) {
+        public Builder<OriginalInput, Output> setDescription( final String desc ) {
             this.description = desc;
             return this;
         }
 
-        public BatchJob<Input, Output> build() {
-            return new BatchJob<Input, Output>( description, processingBatchSize, parallel, numParallelThreads, fetcher, processor, printFinalTimeMeasures, listeners );
+        public BatchJob<OriginalInput, Output> build() {
+            return new BatchJob<OriginalInput, Output>( description, processingBatchSize, parallel, numParallelThreads, fetcher, processor, printFinalTimeMeasures, listeners );
         }
 
         public String getDescription() {
@@ -233,10 +233,10 @@ public class BatchJob<Input, Output> {
     private final int processingBatchSize;
     private final boolean parallel;
     private final Integer numParallelThreads;
-    private final Fetcher<Input> fetcher;
-    private final Processor<FetchedItem<Input>, Input, Output> persistence;
+    private final Fetcher<OriginalInput> fetcher;
+    private final Processor<FetchedItem<OriginalInput>, OriginalInput, Output> persistence;
 
-    private final List<ProcessingResultListener<Input, Output>> listeners;
+    private final List<ProcessingResultListener<OriginalInput, Output>> listeners;
     private final String description;
     private final boolean printFinalTimeMeasures;
 
@@ -255,10 +255,10 @@ public class BatchJob<Input, Output> {
             final int processingBatchSize,
             final boolean parallel,
             final Integer numParallelThreads,
-            final Fetcher<Input> fetcher,
-            final Processor<FetchedItem<Input>, Input, Output> processor,
+            final Fetcher<OriginalInput> fetcher,
+            final Processor<FetchedItem<OriginalInput>, OriginalInput, Output> processor,
             final boolean printFinalTimeMeasures,
-            final List<ProcessingResultListener<Input, Output>> listeners ) {
+            final List<ProcessingResultListener<OriginalInput, Output>> listeners ) {
         this.description = description;
         this.processingBatchSize = processingBatchSize;
         this.parallel = parallel;
@@ -275,17 +275,17 @@ public class BatchJob<Input, Output> {
 
     @CheckReturnValue
     public ResultStatistics run() {
-        final ResultStatistics.Builder<Input, Output> resultBuilder = ResultStatistics.builder();
+        final ResultStatistics.Builder<OriginalInput, Output> resultBuilder = ResultStatistics.builder();
 
-        final DelegatingProcessingResultListener<Input, Output> listeners =
-                new DelegatingProcessingResultListener<Input, Output>(
-                        ImmutableList.<ProcessingResultListener<Input, Output>> builder().add( resultBuilder ).addAll(
+        final DelegatingProcessingResultListener<OriginalInput, Output> listeners =
+                new DelegatingProcessingResultListener<OriginalInput, Output>(
+                        ImmutableList.<ProcessingResultListener<OriginalInput, Output>> builder().add( resultBuilder ).addAll(
                                 this.listeners ).build()
                 );
 
         listeners.onBeforeRun( this.description );
 
-        final Iterable<Result<FetchedItem<Input>, Input>> sourceIterable = fetcher.fetchAll();
+        final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceIterable = fetcher.fetchAll();
 
         if ( sourceIterable instanceof Collection && this.persistence instanceof TimeLoggingProcessor ) {
             // Iterables could be lazy, but if it is a collection it should not be lazy so we can
@@ -312,8 +312,8 @@ public class BatchJob<Input, Output> {
         return statistics;
     }
 
-    protected void process( final DelegatingProcessingResultListener<Input, Output> listeners,
-            final Iterable<Result<FetchedItem<Input>, Input>> sourceIterable ) {
+    protected void process( final DelegatingProcessingResultListener<OriginalInput, Output> listeners,
+            final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceIterable ) {
         if ( this.parallel && this.numParallelThreads != null && this.numParallelThreads.intValue() > 0 ) {
             processWithExecutor( listeners, this.numParallelThreads, sourceIterable );
         } else {
@@ -322,24 +322,24 @@ public class BatchJob<Input, Output> {
     }
 
     protected void processWithStreams( 
-            final DelegatingProcessingResultListener<Input, Output> listeners,
+            final DelegatingProcessingResultListener<OriginalInput, Output> listeners,
             final boolean useParallelStream,
-            final Iterable<Result<FetchedItem<Input>, Input>> sourceIterable ) {
+            final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceIterable ) {
         
-        final Iterable<List<Result<FetchedItem<Input>, Input>>> partitions = Iterables.partition( sourceIterable, processingBatchSize );
+        final Iterable<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> partitions = Iterables.partition( sourceIterable, processingBatchSize );
         
         StreamSupport.stream( partitions.spliterator(), parallel ).forEach( new CallProcessor( listeners ) );
     }
     
     protected void processWithExecutor( 
-            final DelegatingProcessingResultListener<Input, Output> listeners,
+            final DelegatingProcessingResultListener<OriginalInput, Output> listeners,
             final int numParallelThreads,
-            final Iterable<Result<FetchedItem<Input>, Input>> sourceIterable ) {
+            final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceIterable ) {
         final ExecutorService executorService = Executors.newFixedThreadPool( numParallelThreads );
         try {
             final CallProcessor callProcessor = new CallProcessor( listeners );
-            final Iterable<List<Result<FetchedItem<Input>, Input>>> partitions = Iterables.partition( sourceIterable, processingBatchSize );
-            for (final List<Result<FetchedItem<Input>, Input>> chunk: partitions) {
+            final Iterable<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> partitions = Iterables.partition( sourceIterable, processingBatchSize );
+            for (final List<Result<FetchedItem<OriginalInput>, OriginalInput>> chunk: partitions) {
                 executorService.submit( () -> callProcessor.accept( chunk ) );
             }
         } finally {

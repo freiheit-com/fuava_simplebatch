@@ -54,9 +54,9 @@ import com.google.common.collect.ImmutableList;
  *
  * @param <ProcessedData>
  */
-public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics> {
+public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultStatistics> {
     public static final String DEFAULT_INSTANCE_ID = Sysprops.INSTANCE_NAME;
-    private final TimeLoggingProcessor<FetchedItem<Data>, Data, Data> timeLoggedContentProcessor;
+    private final TimeLoggingProcessor<FetchedItem<ContentInput>, ContentInput, ContentInput> timeLoggedContentProcessor;
 
     public interface Configuration {
 
@@ -532,7 +532,7 @@ public class CtlImporterJob<Data> extends BatchJob<ControlFile, ResultStatistics
             final boolean parallel,
             final Integer numParallelThreads,
             final Fetcher<ControlFile> fetcher,
-            final TimeLoggingProcessor<FetchedItem<Data>, Data, Data> timeLoggedContentProcessor,
+            final TimeLoggingProcessor<FetchedItem<ContentInput>, ContentInput, ContentInput> timeLoggedContentProcessor,
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor,
             final List<ProcessingResultListener<ControlFile, ResultStatistics>> listeners ) {
         super( description, processingBatchSize, parallel, numParallelThreads, fetcher, processor, true, listeners );
