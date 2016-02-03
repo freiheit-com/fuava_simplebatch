@@ -38,7 +38,7 @@ public class BatchJobMain {
                 .append( '\n' );
     }
 
-    public static <Input, Output> int exec( final BatchJob<Input, Output> batchJob ) {
+    public static <OriginalInput, Output> int exec( final BatchJob<OriginalInput, Output> batchJob ) {
         final long startTimeMillis = System.currentTimeMillis();
         final ResultStatistics statistics = batchJob.run();
         final long endTimeMillis = System.currentTimeMillis();
@@ -50,7 +50,7 @@ public class BatchJobMain {
             : 0;
     }
 
-    private static <Input, Output> boolean printStatistics(
+    private static <OriginalInput, Output> boolean printStatistics(
             final long startTimeMillis,
             final ResultStatistics statistics, final long endTimeMillis ) {
         final Counts fetchCounts = statistics.getFetchCounts();

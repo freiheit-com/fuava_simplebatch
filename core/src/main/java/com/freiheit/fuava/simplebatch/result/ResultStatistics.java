@@ -20,7 +20,7 @@ import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 
 public class ResultStatistics {
 
-    public static final class Builder<Input, Output> implements ProcessingResultListener<Input, Output> {
+    public static final class Builder<OriginalInput, Output> implements ProcessingResultListener<OriginalInput, Output> {
 
         private final Counts.Builder fetch = Counts.builder();
         private final Counts.Builder processing = Counts.builder();
@@ -38,12 +38,12 @@ public class ResultStatistics {
         }
 
         @Override
-        public void onFetchResult( final Result<FetchedItem<Input>, Input> result ) {
+        public void onFetchResult( final Result<FetchedItem<OriginalInput>, OriginalInput> result ) {
             fetch.add( result );
         }
 
         @Override
-        public void onProcessingResult( final Result<FetchedItem<Input>, Output> result ) {
+        public void onProcessingResult( final Result<FetchedItem<OriginalInput>, Output> result ) {
             processing.add( result );
         }
 
@@ -91,7 +91,7 @@ public class ResultStatistics {
         return hasListenerDelegationFailures;
     }
 
-    public static final <Input, Output> Builder<Input, Output> builder() {
-        return new Builder<Input, Output>();
+    public static final <OriginalInput, Output> Builder<OriginalInput, Output> builder() {
+        return new Builder<OriginalInput, Output>();
     }
 }

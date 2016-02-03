@@ -29,16 +29,16 @@ import com.freiheit.fuava.simplebatch.util.StringUtils;
  * 
  * @author klas.kalass@freiheit.com
  *
- * @param <T>
+ * @param <OriginalInput>
  */
-public class FetchedItem<T> {
+public class FetchedItem<OriginalInput> {
     public static final int FIRST_ROW = 0;
     private final int num;
-    private final T value;
+    private final OriginalInput value;
     @Nullable
     private final String rowIdentifier;
 
-    protected FetchedItem( final T value, final int num, @Nullable final String rowIdentifier ) {
+    protected FetchedItem( final OriginalInput value, final int num, @Nullable final String rowIdentifier ) {
         this.value = value;
         this.num = num;
         this.rowIdentifier = rowIdentifier;
@@ -49,23 +49,23 @@ public class FetchedItem<T> {
      * creation function with a row identifier instead.
      */
     @Deprecated
-    public static <T> FetchedItem<T> of( final T value, final int rowNum ) {
+    public static <OriginalInput> FetchedItem<OriginalInput> of( final OriginalInput value, final int rowNum ) {
         return of( value, rowNum, null );
     }
 
     /**
      * Creates a fetched Item from a value, row num and a row identifier.
      */
-    public static <T> FetchedItem<T> of( final T value, final int rowNum, @Nullable final String rowIdentifier ) {
-        return new FetchedItem<T>( value, rowNum, rowIdentifier );
+    public static <OriginalInput> FetchedItem<OriginalInput> of( final OriginalInput value, final int rowNum, @Nullable final String rowIdentifier ) {
+        return new FetchedItem<OriginalInput>( value, rowNum, rowIdentifier );
     }
     
     /**
      * Creates a new FetchedItem from this one, associating a different Value with it
-     * @param <T2> The type of the value for the new FetchedItem instance.
+     * @param <OriginalInput2> The type of the value for the new FetchedItem instance.
      */
-    public <T2> FetchedItem<T2> withValue( final T2 value ) {
-        return new FetchedItem<T2>( value, this.num, this.rowIdentifier );
+    public <OriginalInput2> FetchedItem<OriginalInput2> withValue( final OriginalInput2 value ) {
+        return new FetchedItem<OriginalInput2>( value, this.num, this.rowIdentifier );
     }
 
     /**
@@ -75,7 +75,7 @@ public class FetchedItem<T> {
         return num;
     }
 
-    public T getValue() {
+    public OriginalInput getValue() {
         return value;
     }
 

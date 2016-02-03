@@ -22,10 +22,10 @@ import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.util.EagernessUtil;
 import com.google.common.collect.Iterators;
 
-public final class IterableFetcherWrapper<T> implements Iterable<Result<FetchedItem<T>, T>> {
-    private final Iterable<T> iterable;
+public final class IterableFetcherWrapper<OriginalInput> implements Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> {
+    private final Iterable<OriginalInput> iterable;
 
-    private IterableFetcherWrapper( final Iterable<T> iterable ) {
+    private IterableFetcherWrapper( final Iterable<OriginalInput> iterable ) {
         this.iterable = iterable;
     }
 
@@ -34,9 +34,9 @@ public final class IterableFetcherWrapper<T> implements Iterable<Result<FetchedI
     }
 
     @Override
-    public Iterator<Result<FetchedItem<T>, T>> iterator() {
+    public Iterator<Result<FetchedItem<OriginalInput>, OriginalInput>> iterator() {
         try {
-            return new FailsafeIterator<T>( iterable.iterator() );
+            return new FailsafeIterator<OriginalInput>( iterable.iterator() );
         } catch ( final Throwable t ) {
             return Iterators.singletonIterator( Result.failed( null, t ) );
         }

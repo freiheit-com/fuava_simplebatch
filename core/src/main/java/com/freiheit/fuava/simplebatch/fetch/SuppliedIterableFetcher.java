@@ -20,17 +20,17 @@ import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 
-public final class SuppliedIterableFetcher<T> implements Fetcher<T> {
-    private final Supplier<Iterable<T>> supplier;
+public final class SuppliedIterableFetcher<OriginalInput> implements Fetcher<OriginalInput> {
+    private final Supplier<Iterable<OriginalInput>> supplier;
 
-    public SuppliedIterableFetcher( final Supplier<Iterable<T>> supplier ) {
+    public SuppliedIterableFetcher( final Supplier<Iterable<OriginalInput>> supplier ) {
         this.supplier = supplier;
     }
 
     @Override
-    public Iterable<Result<FetchedItem<T>, T>> fetchAll() {
+    public Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> fetchAll() {
         try {
-            final Iterable<T> originalIterable = this.supplier.get();
+            final Iterable<OriginalInput> originalIterable = this.supplier.get();
             return IterableFetcherWrapper.wrap( originalIterable );
         } catch ( final Throwable t ) {
             return ImmutableList.of( Result.failed( null, t ) );

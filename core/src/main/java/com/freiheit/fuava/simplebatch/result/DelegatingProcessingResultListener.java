@@ -21,14 +21,14 @@ import org.slf4j.LoggerFactory;
 
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 
-public class DelegatingProcessingResultListener<Input, Output> implements ProcessingResultListener<Input, Output> {
+public class DelegatingProcessingResultListener<OriginalInput, Output> implements ProcessingResultListener<OriginalInput, Output> {
     static final Logger LOG = LoggerFactory.getLogger( DelegatingProcessingResultListener.class );
 
-    private final Iterable<ProcessingResultListener<Input, Output>> listeners;
+    private final Iterable<ProcessingResultListener<OriginalInput, Output>> listeners;
 
     private boolean hasDelegationFailures;
 
-    public DelegatingProcessingResultListener( final Iterable<ProcessingResultListener<Input, Output>> listeners ) {
+    public DelegatingProcessingResultListener( final Iterable<ProcessingResultListener<OriginalInput, Output>> listeners ) {
         this.listeners = listeners;
     }
 
@@ -36,14 +36,14 @@ public class DelegatingProcessingResultListener<Input, Output> implements Proces
         return hasDelegationFailures;
     }
 
-    protected void onListenerFailure( final ProcessingResultListener<Input, Output> l, final String fktName, final Throwable t ) {
+    protected void onListenerFailure( final ProcessingResultListener<OriginalInput, Output> l, final String fktName, final Throwable t ) {
         hasDelegationFailures = true;
         LOG.error( "Failed to call Listener " + l + " for " + fktName, t );
     }
 
     @Override
     public void onBeforeRun( final String description ) {
-        for ( final ProcessingResultListener<Input, Output> l : listeners ) {
+        for ( final ProcessingResultListener<OriginalInput, Output> l : listeners ) {
             try {
                 l.onBeforeRun( description );
             } catch ( final Throwable t ) {
@@ -54,7 +54,7 @@ public class DelegatingProcessingResultListener<Input, Output> implements Proces
 
     @Override
     public void onAfterRun() {
-        for ( final ProcessingResultListener<Input, Output> l : listeners ) {
+        for ( final ProcessingResultListener<OriginalInput, Output> l : listeners ) {
             try {
                 l.onAfterRun();
             } catch ( final Throwable t ) {
@@ -64,8 +64,8 @@ public class DelegatingProcessingResultListener<Input, Output> implements Proces
     }
 
     @Override
-    public void onFetchResult( final Result<FetchedItem<Input>, Input> result ) {
-        for ( final ProcessingResultListener<Input, Output> l : listeners ) {
+    public void onFetchResult( final Result<FetchedItem<OriginalInput>, OriginalInput> result ) {
+        for ( final ProcessingResultListener<OriginalInput, Output> l : listeners ) {
             try {
                 l.onFetchResult( result );
             } catch ( final Throwable t ) {
@@ -75,8 +75,8 @@ public class DelegatingProcessingResultListener<Input, Output> implements Proces
     }
 
     @Override
-    public void onFetchResults( final Iterable<Result<FetchedItem<Input>, Input>> results ) {
-        for ( final ProcessingResultListener<Input, Output> l : listeners ) {
+    public void onFetchResults( final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> results ) {
+        for ( final ProcessingResultListener<OriginalInput, Output> l : listeners ) {
             try {
                 l.onFetchResults( results );
             } catch ( final Throwable t ) {
@@ -86,8 +86,8 @@ public class DelegatingProcessingResultListener<Input, Output> implements Proces
     }
 
     @Override
-    public void onProcessingResult( final Result<FetchedItem<Input>, Output> result ) {
-        for ( final ProcessingResultListener<Input, Output> l : listeners ) {
+    public void onProcessingResult( final Result<FetchedItem<OriginalInput>, Output> result ) {
+        for ( final ProcessingResultListener<OriginalInput, Output> l : listeners ) {
             try {
                 l.onProcessingResult( result );
             } catch ( final Throwable t ) {
@@ -97,8 +97,8 @@ public class DelegatingProcessingResultListener<Input, Output> implements Proces
     }
 
     @Override
-    public void onProcessingResults( final Iterable<? extends Result<FetchedItem<Input>, Output>> results ) {
-        for ( final ProcessingResultListener<Input, Output> l : listeners ) {
+    public void onProcessingResults( final Iterable<? extends Result<FetchedItem<OriginalInput>, Output>> results ) {
+        for ( final ProcessingResultListener<OriginalInput, Output> l : listeners ) {
             try {
                 l.onProcessingResults( results );
             } catch ( final Throwable t ) {

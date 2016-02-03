@@ -27,7 +27,7 @@ import com.freiheit.fuava.simplebatch.BatchJobMain;
  */
 public class CtlImporterJobMain {
 
-    public static <Output> int exec( final CtlImporterJob<Output> batchJob ) {
+    public static <ContentOriginalInput> int exec( final CtlImporterJob<ContentOriginalInput> batchJob ) {
         return BatchJobMain.exec( batchJob );
     }
 

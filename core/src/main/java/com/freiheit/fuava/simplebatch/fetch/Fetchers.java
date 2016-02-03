@@ -37,8 +37,8 @@ public class Fetchers {
      * Uses the given iterable to provide the data that will be passed on to the
      * processing stage, treating each item as successful.
      */
-    public static final <T> Fetcher<T> iterable( final Iterable<T> iterable ) {
-        return new SuppliedIterableFetcher<T>( Suppliers.ofInstance( iterable ) );
+    public static final <OriginalInput> Fetcher<OriginalInput> iterable( final Iterable<OriginalInput> iterable ) {
+        return new SuppliedIterableFetcher<OriginalInput>( Suppliers.ofInstance( iterable ) );
     }
 
     /**
@@ -46,32 +46,32 @@ public class Fetchers {
      * will be passed on to the processing stage, treating each item as
      * successful.
      */
-    public static final <T> Fetcher<T> supplied( final Supplier<Iterable<T>> supplier ) {
-        return new SuppliedIterableFetcher<T>( supplier );
+    public static final <OriginalInput> Fetcher<OriginalInput> supplied( final Supplier<Iterable<OriginalInput>> supplier ) {
+        return new SuppliedIterableFetcher<OriginalInput>( supplier );
     }
 
     /**
      * A Fetcher that uses an http request to retrieve the data to process.
      */
-    public static <Item> Fetcher<Item> httpFetcher(
+    public static <OriginalInput> Fetcher<OriginalInput> httpFetcher(
             final HttpClient client,
             final String uri,
             final Map<String, String> headers,
-            final Function<InputStream, Iterable<Item>> converter
+            final Function<InputStream, Iterable<OriginalInput>> converter
             ) {
         return httpFetcher( new HttpFetcherImpl( client ), uri, headers, converter );
     }
 
-    public static <Item> Fetcher<Item> httpFetcher(
+    public static <OriginalInput> Fetcher<OriginalInput> httpFetcher(
             final HttpFetcher httpFetcher,
             final String uri,
             final Map<String, String> headers,
-            final Function<InputStream, Iterable<Item>> converter
+            final Function<InputStream, Iterable<OriginalInput>> converter
             ) {
-        return new SuppliedIterableFetcher<Item>( new Supplier<Iterable<Item>>() {
+        return new SuppliedIterableFetcher<OriginalInput>( new Supplier<Iterable<OriginalInput>>() {
 
             @Override
-            public Iterable<Item> get() {
+            public Iterable<OriginalInput> get() {
                 return httpFetcher.fetch( converter, uri, headers );
             }
         } );
@@ -82,10 +82,10 @@ public class Fetchers {
      * requesting a page of the data and transparently continuing to the next
      * page.
      */
-    public static <Item> Fetcher<Item> httpPagingFetcher(
+    public static <OriginalInput> Fetcher<OriginalInput> httpPagingFetcher(
             final HttpClient client,
-            final PagingRequestSettings<Iterable<Item>> settings,
-            final Function<? super InputStream, Iterable<Item>> converter,
+            final PagingRequestSettings<Iterable<OriginalInput>> settings,
+            final Function<? super InputStream, Iterable<OriginalInput>> converter,
             final int initialFrom,
             final int pageSize
             ) {
@@ -98,14 +98,14 @@ public class Fetchers {
      * requesting a page of the data and transparently continuing to the next
      * page.
      */
-    public static <Item> Fetcher<Item> httpPagingFetcher(
+    public static <OriginalInput> Fetcher<OriginalInput> httpPagingFetcher(
             final HttpFetcher fetcher,
-            final PagingRequestSettings<Iterable<Item>> settings,
-            final Function<? super InputStream, Iterable<Item>> converter,
+            final PagingRequestSettings<Iterable<OriginalInput>> settings,
+            final Function<? super InputStream, Iterable<OriginalInput>> converter,
             final int initialFrom,
             final int pageSize
             ) {
-        return new HttpPagingFetcher<Item>( fetcher, settings, converter, initialFrom, pageSize );
+        return new HttpPagingFetcher<OriginalInput>( fetcher, settings, converter, initialFrom, pageSize );
 
     }
 
@@ -114,16 +114,16 @@ public class Fetchers {
      * Iterates over all files in the given directories that end with the
      * specified fileEnding and converts them with the given function.
      */
-    public static <T> Fetcher<T> folderFetcher( final Function<Path, T> fileFunction, final DownloadDir dir, final DownloadDir... moreDirs ) {
-        return new DirectoryFileFetcher<T>( fileFunction, DirectoryFileFetcher.ORDERING_FILE_BY_PATH, dir, moreDirs );
+    public static <OriginalInput> Fetcher<OriginalInput> folderFetcher( final Function<Path, OriginalInput> fileFunction, final DownloadDir dir, final DownloadDir... moreDirs ) {
+        return new DirectoryFileFetcher<OriginalInput>( fileFunction, DirectoryFileFetcher.ORDERING_FILE_BY_PATH, dir, moreDirs );
     }
 
     /**
      * Iterates over all files in the given directories that end with the
      * specified fileEnding and converts them with the given function.
      */
-    public static <T> Fetcher<T> folderFetcher( final Function<Path, T> fileFunction, final Ordering<Path> fileOrdering, final DownloadDir dir, final DownloadDir... moreDirs ) {
-        return new DirectoryFileFetcher<T>( fileFunction, fileOrdering, dir, moreDirs );
+    public static <OriginalInput> Fetcher<OriginalInput> folderFetcher( final Function<Path, OriginalInput> fileFunction, final Ordering<Path> fileOrdering, final DownloadDir dir, final DownloadDir... moreDirs ) {
+        return new DirectoryFileFetcher<OriginalInput>( fileFunction, fileOrdering, dir, moreDirs );
     }
 
 }

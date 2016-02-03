@@ -59,9 +59,9 @@ import com.google.common.collect.Iterables;
  * @author Klas Kalass <klas.kalass@freiheit.com>
  *
  * @param <OriginalInput>
- *            The data fetched in stage one
+ *            The data fetched by the fetcher
  * @param <Output>
- *            The data fetched instage two
+ *            The result of the processor
  */
 public class BatchJob<OriginalInput, Output> {
     static final Logger LOG = LoggerFactory.getLogger( BatchJob.class );

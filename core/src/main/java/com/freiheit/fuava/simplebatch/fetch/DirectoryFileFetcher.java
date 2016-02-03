@@ -36,26 +36,26 @@ import com.google.common.collect.Ordering;
 /**
  * @author tim.lessner@freiheit.com
  */
-class DirectoryFileFetcher<T> implements Fetcher<T> {
+class DirectoryFileFetcher<OriginalInput> implements Fetcher<OriginalInput> {
 
-    private static final class FetchFile<T> implements java.util.function.Function<Path, Result<FetchedItem<T>, T>> {
-        private final Function<Path, T> func;
+    private static final class FetchFile<OriginalInput> implements java.util.function.Function<Path, Result<FetchedItem<OriginalInput>, OriginalInput>> {
+        private final Function<Path, OriginalInput> func;
         private int counter = FetchedItem.FIRST_ROW;
 
-        public FetchFile( final Function<Path, T> func ) {
+        public FetchFile( final Function<Path, OriginalInput> func ) {
             this.func = func;
         }
 
         @Override
-        public Result<FetchedItem<T>, T> apply( final Path path ) {
+        public Result<FetchedItem<OriginalInput>, OriginalInput> apply( final Path path ) {
             final int rownum = counter;
             counter++;
             try {
-                final T r = func.apply( path );
-                final FetchedItem<T> fetchedItem = FetchedItem.<T> of( r, rownum, path.toString() );
+                final OriginalInput r = func.apply( path );
+                final FetchedItem<OriginalInput> fetchedItem = FetchedItem.<OriginalInput> of( r, rownum, path.toString() );
                 return Result.success( fetchedItem, r );
             } catch ( final Throwable t ) {
-                final FetchedItem<T> fetchedItem = FetchedItem.<T> of( null, rownum, path.toString() );
+                final FetchedItem<OriginalInput> fetchedItem = FetchedItem.<OriginalInput> of( null, rownum, path.toString() );
                 return Result.failed( fetchedItem, "Failed to read from " + path, t );
             }
         }
@@ -63,15 +63,15 @@ class DirectoryFileFetcher<T> implements Fetcher<T> {
 
     public static final Ordering<Path> ORDERING_FILE_BY_PATH = Ordering.natural().onResultOf( path -> path.getFileName().toString() );
     private final List<DownloadDir> dirs;
-    private final Function<Path, T> func;
+    private final Function<Path, OriginalInput> func;
     private final Ordering<Path> fileOrdering;
 
-    public DirectoryFileFetcher( final Path uri, final String filter, final Function<Path, T> func ) {
+    public DirectoryFileFetcher( final Path uri, final String filter, final Function<Path, OriginalInput> func ) {
         this( func, ORDERING_FILE_BY_PATH, new DownloadDir( uri, null, filter ) );
     }
 
     public DirectoryFileFetcher( 
-            final Function<Path, T> func,
+            final Function<Path, OriginalInput> func,
             final Ordering<Path> fileOrdering, 
             final DownloadDir dir,
             final DownloadDir... dirs ) {
@@ -79,7 +79,7 @@ class DirectoryFileFetcher<T> implements Fetcher<T> {
     }
 
     public DirectoryFileFetcher( 
-            final Function<Path, T> func,
+            final Function<Path, OriginalInput> func,
             final Ordering<Path> fileOrdering, 
             final List<DownloadDir> dirs ) {
         this.fileOrdering = Preconditions.checkNotNull( fileOrdering );
@@ -89,12 +89,12 @@ class DirectoryFileFetcher<T> implements Fetcher<T> {
 
 
     @Override
-    public Iterable<Result<FetchedItem<T>, T>> fetchAll() {
-        final FetchFile<T> resultCreator = new FetchFile<>( func );
+    public Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> fetchAll() {
+        final FetchFile<OriginalInput> resultCreator = new FetchFile<>( func );
         // the directories are all read eagerly, so we copy the concatenated iterable into a list
         // The caller (BatchJob) may iterate over Collections to collect statistics, but it will not 
         // iterate over Iterables to not break lazily loaded data
-        return EagernessUtil.preserveEagerness( Iterables.concat( Lists.<DownloadDir, Iterable<Result<FetchedItem<T>, T>>>transform( 
+        return EagernessUtil.preserveEagerness( Iterables.concat( Lists.<DownloadDir, Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>>>transform( 
                 dirs, 
                 dir -> {
                     try {
@@ -111,14 +111,14 @@ class DirectoryFileFetcher<T> implements Fetcher<T> {
 
     }
 
-    private Iterable<Result<FetchedItem<T>, T>> fetchFromDirectory(
+    private Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> fetchFromDirectory(
             final Path dir,
-            final java.util.function.Function<Path, Result<FetchedItem<T>, T>> resultCreator,
+            final java.util.function.Function<Path, Result<FetchedItem<OriginalInput>, OriginalInput>> resultCreator,
             final String prefix,
             final String suffix
     ) throws IOException {
         try ( final Stream<Path> files = Files.walk( dir ) ) {
-            final List<Result<FetchedItem<T>, T>> result = files
+            final List<Result<FetchedItem<OriginalInput>, OriginalInput>> result = files
                     .filter( path -> {
                         final String name = path.getFileName().toString();
                         if ( !Strings.isNullOrEmpty( prefix ) && !name.startsWith( prefix ) ) {

@@ -52,11 +52,11 @@ import com.google.common.collect.ImmutableList;
  * 
  * @author klas
  *
- * @param <ProcessedData>
- */
-public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultStatistics> {
+ * @param <ContentOriginalInput> The type of the original input for the content processor
+ */ 
+public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, ResultStatistics> {
     public static final String DEFAULT_INSTANCE_ID = Sysprops.INSTANCE_NAME;
-    private final TimeLoggingProcessor<FetchedItem<ContentInput>, ContentInput, ContentInput> timeLoggedContentProcessor;
+    private final TimeLoggingProcessor<FetchedItem<ContentOriginalInput>, ContentOriginalInput, ContentOriginalInput> timeLoggedContentProcessor;
 
     public interface Configuration {
 
@@ -235,7 +235,7 @@ public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultSt
 
     }
 
-    public static final class Builder<Data> {
+    public static final class Builder<ContentOriginalInput> {
         private static final String LOG_NAME_FILE_PROCESSING_ITEM = "FILE";
         private static final String LOG_NAME_FILE_PROCESSING_BATCH = "PROCESSED FILES";
         private static final String LOG_NAME_CONTENT_PROCESSING_ITEM = "CONTENT";
@@ -245,16 +245,16 @@ public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultSt
 
         private final List<ProcessingResultListener<ControlFile, ResultStatistics>> fileProcessingListeners = new ArrayList<>();
 
-        private final List<Function<? super FetchedItem<ControlFile>, ProcessingResultListener<Data, Data>>> contentProcessingListenerFactories =
+        private final List<Function<? super FetchedItem<ControlFile>, ProcessingResultListener<ContentOriginalInput, ContentOriginalInput>>> contentProcessingListenerFactories =
                 new ArrayList<>();
-        private Processor<FetchedItem<Data>, Data, Data> contentProcessor;
+        private Processor<FetchedItem<ContentOriginalInput>, ContentOriginalInput, ContentOriginalInput> contentProcessor;
         private String description;
         private boolean parallelFiles = Sysprops.FILE_PROCESSING_PARALLEL;
         private boolean parallelContent = Sysprops.CONTENT_PROCESSING_PARALLEL;
         private Integer numParallelThreadsFiles = Sysprops.FILE_PROCESSING_NUM_THREADS;
         private Integer numParallelThreadsContent = Sysprops.CONTENT_PROCESSING_NUM_THREADS;
         
-        private Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<Data>, Data>>> fileReader;
+        private Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>> fileReader;
 
         public Builder() {
         }
@@ -262,22 +262,22 @@ public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultSt
         /**
          * Controls settings like download directory, processing directory etc.
          */
-        public Builder<Data> setConfiguration( final Configuration configuration ) {
+        public Builder<ContentOriginalInput> setConfiguration( final Configuration configuration ) {
             this.configuration = configuration;
             return this;
         }
 
-        public Builder<Data> setDescription( final String description ) {
+        public Builder<ContentOriginalInput> setDescription( final String description ) {
             this.description = description;
             return this;
         }
 
-        public Builder<Data> setParallelFiles( final boolean parallelFiles ) {
+        public Builder<ContentOriginalInput> setParallelFiles( final boolean parallelFiles ) {
             this.parallelFiles = parallelFiles;
             return this;
         }
 
-        public Builder<Data> setParallelContent( final boolean parallelContent ) {
+        public Builder<ContentOriginalInput> setParallelContent( final boolean parallelContent ) {
             this.parallelContent = parallelContent;
             return this;
         }
@@ -286,7 +286,7 @@ public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultSt
          * If set to null and parallel is set to true, Java 8 parallel streaming will be used.
          * @return this for method chaining
          */
-        public Builder<Data> setNumParallelThreadsFiles( final Integer numParallelThreads ) {
+        public Builder<ContentOriginalInput> setNumParallelThreadsFiles( final Integer numParallelThreads ) {
             this.numParallelThreadsFiles = numParallelThreads;
             return this;
         }
@@ -300,7 +300,7 @@ public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultSt
          * If set to null and parallel is set to true, Java 8 parallel streaming will be used.
          * @return this for method chaining
          */
-        public Builder<Data> setNumParallelThreadsContent( final Integer numParallelThreads ) {
+        public Builder<ContentOriginalInput> setNumParallelThreadsContent( final Integer numParallelThreads ) {
             this.numParallelThreadsContent = numParallelThreads;
             return this;
         }
@@ -317,7 +317,7 @@ public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultSt
          * lists is lazy.
          *
          */
-        public Builder<Data> setContentBatchSize( final int processingBatchSize ) {
+        public Builder<ContentOriginalInput> setContentBatchSize( final int processingBatchSize ) {
             this.processingBatchSize = processingBatchSize;
             return this;
         }
@@ -340,8 +340,8 @@ public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultSt
          * 
          * @link You should probably use {@link #setFetchedItemsFileInputStreamReader(Function)} instead
          */
-        public Builder<Data> setFileInputStreamReader( final Function<InputStream, Iterable<Data>> documentReader ) {
-            final Function<File, Iterable<Result<FetchedItem<Data>, Data>>> fileProcessorFunction =
+        public Builder<ContentOriginalInput> setFileInputStreamReader( final Function<InputStream, Iterable<ContentOriginalInput>> documentReader ) {
+            final Function<File, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>> fileProcessorFunction =
                     new FileToInputStreamFunction<>( is -> IterableFetcherWrapper.wrap( documentReader.apply( is ) ) );
             fileReader = Processors.singleItemFunction( fileProcessorFunction );
             //Result<FetchedItem<Data>, Data>
@@ -364,9 +364,9 @@ public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultSt
          * {@link #setFetchedItemsFileProcessor(Processor)}.
          * </p>
          */
-        public Builder<Data> setFetchedItemsFileInputStreamReader(
-                final Function<InputStream, Iterable<Result<FetchedItem<Data>, Data>>> documentReader ) {
-            final Function<File, Iterable<Result<FetchedItem<Data>, Data>>> fileProcessorFunction = new FileToInputStreamFunction<>( documentReader );
+        public Builder<ContentOriginalInput> setFetchedItemsFileInputStreamReader(
+                final Function<InputStream, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>> documentReader ) {
+            final Function<File, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>> fileProcessorFunction = new FileToInputStreamFunction<>( documentReader );
             fileReader = Processors.singleItemFunction( fileProcessorFunction );
             return this;
         }
@@ -391,18 +391,18 @@ public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultSt
          *             instead
          */
         @Deprecated
-        public Builder<Data> setFileProcessor( final Processor<FetchedItem<ControlFile>, File, Iterable<Data>> processor ) {
-            this.fileReader = new Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<Data>, Data>>>() {
+        public Builder<ContentOriginalInput> setFileProcessor( final Processor<FetchedItem<ControlFile>, File, Iterable<ContentOriginalInput>> processor ) {
+            this.fileReader = new Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>>() {
 
                 @Override
-                public Iterable<Result<FetchedItem<ControlFile>, Iterable<Result<FetchedItem<Data>, Data>>>> process(
+                public Iterable<Result<FetchedItem<ControlFile>, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>>> process(
                         final Iterable<Result<FetchedItem<ControlFile>, File>> iterable ) {
-                    final Iterable<Result<FetchedItem<ControlFile>, Iterable<Data>>> origResult = processor.process( iterable );
-                    final ImmutableList.Builder<Result<FetchedItem<ControlFile>, Iterable<Result<FetchedItem<Data>, Data>>>> b =
+                    final Iterable<Result<FetchedItem<ControlFile>, Iterable<ContentOriginalInput>>> origResult = processor.process( iterable );
+                    final ImmutableList.Builder<Result<FetchedItem<ControlFile>, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>>> b =
                             ImmutableList.builder();
-                    for ( final Result<FetchedItem<ControlFile>, Iterable<Data>> r : origResult ) {
-                        final Iterable<Data> output = r.getOutput();
-                        final Result.Builder<FetchedItem<ControlFile>, Iterable<Result<FetchedItem<Data>, Data>>> builder =
+                    for ( final Result<FetchedItem<ControlFile>, Iterable<ContentOriginalInput>> r : origResult ) {
+                        final Iterable<ContentOriginalInput> output = r.getOutput();
+                        final Result.Builder<FetchedItem<ControlFile>, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>> builder =
                                 Result.builder( r );
                         if ( r.isSuccess() ) {
                             b.add( builder.withOutput( output == null
@@ -435,8 +435,8 @@ public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultSt
          * </p>
          * 
          */
-        public Builder<Data> setFetchedItemsFileProcessor(
-                final Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<Data>, Data>>> processor ) {
+        public Builder<ContentOriginalInput> setFetchedItemsFileProcessor(
+                final Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>> processor ) {
             this.fileReader = processor;
             return this;
         }
@@ -448,28 +448,28 @@ public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultSt
          * The size of the list which is passed to this persistence is
          * controlled by {@link #setContentBatchSize(int)}
          */
-        public Builder<Data> setContentProcessor( final Processor<FetchedItem<Data>, Data, Data> persistence ) {
+        public Builder<ContentOriginalInput> setContentProcessor( final Processor<FetchedItem<ContentOriginalInput>, ContentOriginalInput, ContentOriginalInput> persistence ) {
             contentProcessor = persistence;
             return this;
         }
 
-        public Builder<Data> addFileProcessingListener( final ProcessingResultListener<ControlFile, ResultStatistics> listener ) {
+        public Builder<ContentOriginalInput> addFileProcessingListener( final ProcessingResultListener<ControlFile, ResultStatistics> listener ) {
             fileProcessingListeners.add( listener );
             return this;
         }
 
-        public Builder<Data> addContentProcessingListener( final ProcessingResultListener<Data, Data> listener ) {
-            contentProcessingListenerFactories.add( Functions.<ProcessingResultListener<Data, Data>> constant( listener ) );
+        public Builder<ContentOriginalInput> addContentProcessingListener( final ProcessingResultListener<ContentOriginalInput, ContentOriginalInput> listener ) {
+            contentProcessingListenerFactories.add( Functions.<ProcessingResultListener<ContentOriginalInput, ContentOriginalInput>> constant( listener ) );
             return this;
         }
 
-        public Builder<Data> addContentProcessingListenerFactory(
-                final Function<FetchedItem<ControlFile>, ProcessingResultListener<Data, Data>> listenerFactory ) {
+        public Builder<ContentOriginalInput> addContentProcessingListenerFactory(
+                final Function<FetchedItem<ControlFile>, ProcessingResultListener<ContentOriginalInput, ContentOriginalInput>> listenerFactory ) {
             contentProcessingListenerFactories.add( listenerFactory );
             return this;
         }
 
-        public CtlImporterJob<Data> build() {
+        public CtlImporterJob<ContentOriginalInput> build() {
             fileProcessingListeners.add( new BatchStatisticsLoggingListener<ControlFile, ResultStatistics>(
                     LOG_NAME_FILE_PROCESSING_BATCH ) );
             fileProcessingListeners.add( new ItemProgressLoggingListener<ControlFile, ResultStatistics>(
@@ -480,13 +480,13 @@ public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultSt
                     Builder.this.configuration.getFailedDirPath() ) );
 
             contentProcessingListenerFactories.add(
-                    Functions.constant( new BatchStatisticsLoggingListener<Data, Data>( LOG_NAME_CONTENT_PROCESSING_BATCH ) ) );
+                    Functions.constant( new BatchStatisticsLoggingListener<ContentOriginalInput, ContentOriginalInput>( LOG_NAME_CONTENT_PROCESSING_BATCH ) ) );
             contentProcessingListenerFactories.add(
-                    Functions.constant( new ItemProgressLoggingListener<Data, Data>( LOG_NAME_CONTENT_PROCESSING_ITEM ) ) );
+                    Functions.constant( new ItemProgressLoggingListener<ContentOriginalInput, ContentOriginalInput>( LOG_NAME_CONTENT_PROCESSING_ITEM ) ) );
             contentProcessingListenerFactories.add(
-                    new ImportContentJsonLoggingListenerFactory<Data>( Builder.this.configuration.getProcessingDirPath() ) );
+                    new ImportContentJsonLoggingListenerFactory<ContentOriginalInput>( Builder.this.configuration.getProcessingDirPath() ) );
 
-            final TimeLoggingProcessor<FetchedItem<Data>, Data, Data> timeLoggedContentProcessor = TimeLoggingProcessor.wrap( "Content Import", contentProcessor );
+            final TimeLoggingProcessor<FetchedItem<ContentOriginalInput>, ContentOriginalInput, ContentOriginalInput> timeLoggedContentProcessor = TimeLoggingProcessor.wrap( "Content Import", contentProcessor );
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor =
                     Processors.toProcessingDirMover( 
                             configuration.getProcessingDirPath(),
@@ -505,7 +505,7 @@ public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultSt
                             configuration.getArchivedDirPath(),
                             configuration.getFailedDirPath() ) );
 
-            return new CtlImporterJob<Data>(
+            return new CtlImporterJob<ContentOriginalInput>(
                     description,
                     1 /* process one file at a time, no use for batching */,
                     parallelFiles,
@@ -532,7 +532,7 @@ public class CtlImporterJob<ContentInput> extends BatchJob<ControlFile, ResultSt
             final boolean parallel,
             final Integer numParallelThreads,
             final Fetcher<ControlFile> fetcher,
-            final TimeLoggingProcessor<FetchedItem<ContentInput>, ContentInput, ContentInput> timeLoggedContentProcessor,
+            final TimeLoggingProcessor<FetchedItem<ContentOriginalInput>, ContentOriginalInput, ContentOriginalInput> timeLoggedContentProcessor,
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor,
             final List<ProcessingResultListener<ControlFile, ResultStatistics>> listeners ) {
         super( description, processingBatchSize, parallel, numParallelThreads, fetcher, processor, true, listeners );

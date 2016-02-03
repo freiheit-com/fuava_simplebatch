@@ -20,14 +20,14 @@ import java.util.Iterator;
 
 import com.freiheit.fuava.simplebatch.result.Result;
 
-public final class FailsafeIterator<T> implements Iterator<Result<FetchedItem<T>, T>> {
+public final class FailsafeIterator<OriginalInput> implements Iterator<Result<FetchedItem<OriginalInput>, OriginalInput>> {
 
-    private final Iterator<T> iterator;
-    private Result<FetchedItem<T>, T> forceNextElement;
+    private final Iterator<OriginalInput> iterator;
+    private Result<FetchedItem<OriginalInput>, OriginalInput> forceNextElement;
     private Boolean forceHasNext;
     private int num = FetchedItem.FIRST_ROW;
 
-    public FailsafeIterator( final Iterator<T> iterator ) {
+    public FailsafeIterator( final Iterator<OriginalInput> iterator ) {
         this.iterator = iterator;
     }
 
@@ -45,19 +45,19 @@ public final class FailsafeIterator<T> implements Iterator<Result<FetchedItem<T>
         }
     }
 
-    private FetchedItem<T> nextFetchedItem( final T value ) {
+    private FetchedItem<OriginalInput> nextFetchedItem( final OriginalInput value ) {
         return FetchedItem.of( value, num++ );
     }
 
     @Override
-    public Result<FetchedItem<T>, T> next() {
+    public Result<FetchedItem<OriginalInput>, OriginalInput> next() {
         if ( forceNextElement != null ) {
-            final Result<FetchedItem<T>, T> r = forceNextElement;
+            final Result<FetchedItem<OriginalInput>, OriginalInput> r = forceNextElement;
             forceHasNext = Boolean.FALSE;
             return r;
         }
         try {
-            final T value = iterator.next();
+            final OriginalInput value = iterator.next();
             if ( value == null ) {
                 return Result.failed( nextFetchedItem( null ), "Null is not a valid fetching result" );
             } else {

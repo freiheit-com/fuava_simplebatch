@@ -33,40 +33,40 @@ import com.google.common.collect.Iterables;
  * 
  * @author klas.kalass@freiheit.com
  *
- * @param <Input>
+ * @param <OriginalItem>
  *            The item which is considered the input for the fetching or
  *            processing step
  * @param <Output>
  *            The item which is the result of the fetching or processing step
  */
-public class Result<Input, Output> {
+public class Result<OriginalItem, Output> {
     private static final Logger LOG = LoggerFactory.getLogger( Result.class );
 
-    public static final class Builder<Input, Output> {
-        private Input input;
+    public static final class Builder<OriginalItem, Output> {
+        private OriginalItem input;
         private Output output;
         private List<String> failureMessages;
         private List<String> warningMessages;
         private List<Throwable> throwables;
 
-        public Builder<Input, Output> withInput( final Input input ) {
+        public Builder<OriginalItem, Output> withInput( final OriginalItem input ) {
             this.input = input;
             return this;
         }
 
-        public Builder<Input, Output> withOutput( final Output output ) {
+        public Builder<OriginalItem, Output> withOutput( final Output output ) {
             this.output = output;
             return this;
         }
 
-        public Builder<Input, Output> withWarningMessages( final Iterable<String> msgs ) {
+        public Builder<OriginalItem, Output> withWarningMessages( final Iterable<String> msgs ) {
             for ( final String msg : msgs ) {
                 withWarningMessage( msg );
             }
             return this;
         }
 
-        public Builder<Input, Output> withWarningMessage( final String msg ) {
+        public Builder<OriginalItem, Output> withWarningMessage( final String msg ) {
             if ( warningMessages == null ) {
                 warningMessages = new ArrayList<String>();
             }
@@ -74,7 +74,7 @@ public class Result<Input, Output> {
             return this;
         }
 
-        public Builder<Input, Output> withFailureMessage( final String msg ) {
+        public Builder<OriginalItem, Output> withFailureMessage( final String msg ) {
             if ( failureMessages == null ) {
                 failureMessages = new ArrayList<String>();
             }
@@ -83,14 +83,14 @@ public class Result<Input, Output> {
             return this;
         }
 
-        public Builder<Input, Output> withFailureMessages( final Iterable<String> msgs ) {
+        public Builder<OriginalItem, Output> withFailureMessages( final Iterable<String> msgs ) {
             for ( final String msg : msgs ) {
                 withFailureMessage( msg );
             }
             return this;
         }
 
-        private Builder<Input, Output> withThrowable( final Throwable t ) {
+        private Builder<OriginalItem, Output> withThrowable( final Throwable t ) {
             if ( throwables == null ) {
                 throwables = new ArrayList<Throwable>();
             }
@@ -100,22 +100,22 @@ public class Result<Input, Output> {
             return this;
         }
 
-        public Builder<Input, Output> withThrowables( final Iterable<Throwable> throwables ) {
+        public Builder<OriginalItem, Output> withThrowables( final Iterable<Throwable> throwables ) {
             for ( final Throwable t : throwables ) {
                 withThrowable( t );
             }
             return this;
         }
 
-        private Result<Input, Output> build( final boolean failed ) {
-            return new Result<Input, Output>( input, output, failed, warningMessages, failureMessages, throwables );
+        private Result<OriginalItem, Output> build( final boolean failed ) {
+            return new Result<OriginalItem, Output>( input, output, failed, warningMessages, failureMessages, throwables );
         }
 
-        public Result<Input, Output> failed() {
+        public Result<OriginalItem, Output> failed() {
             return build( true );
         }
 
-        public Result<Input, Output> failed( final Throwable t ) {
+        public Result<OriginalItem, Output> failed( final Throwable t ) {
             if ( t != null ) {
                 final String msg = input + " - " + ( failureMessages == null
                     ? ""
@@ -127,13 +127,13 @@ public class Result<Input, Output> {
             return build( true );
         }
 
-        public Result<Input, Output> success() {
+        public Result<OriginalItem, Output> success() {
             return build( false );
         }
 
     }
 
-    private final Input input;
+    private final OriginalItem input;
     private final Output output;
     private final boolean failed;
     private final List<String> failureMessages;
@@ -141,7 +141,7 @@ public class Result<Input, Output> {
     private final List<Throwable> throwables;
 
     private Result(
-            final Input input,
+            final OriginalItem input,
             final Output output,
             final boolean failed,
             final Iterable<String> warningMessages,
@@ -164,23 +164,23 @@ public class Result<Input, Output> {
             : ImmutableList.copyOf( ts );
     }
 
-    public static final <I, O> Builder<I, O> builder() {
-        return new Builder<I, O>();
+    public static final <OriginalItem, Output> Builder<OriginalItem, Output> builder() {
+        return new Builder<OriginalItem, Output>();
     }
 
-    public static final <I, O> Builder<I, O> builder( final Result<I, ?> orig ) {
+    public static final <OriginalItem, Output> Builder<OriginalItem, Output> builder( final Result<OriginalItem, ?> orig ) {
         return builder( orig, orig.getInput() );
     }
 
-    public static final <I, O> Builder<I, O> builder( final Result<?, ?> orig, final I input ) {
-        return new Builder<I, O>()
+    public static final <OriginalItem, Output> Builder<OriginalItem, Output> builder( final Result<?, ?> orig, final OriginalItem input ) {
+        return new Builder<OriginalItem, Output>()
                 .withInput( input )
                 .withThrowables( orig.getThrowables() )
                 .withWarningMessages( orig.getWarningMessages() )
                 .withFailureMessages( orig.getFailureMessages() );
     }
 
-    public Input getInput() {
+    public OriginalItem getInput() {
         return input;
     }
 
@@ -212,43 +212,43 @@ public class Result<Input, Output> {
         return ImmutableList.copyOf( Iterables.concat( getWarningMessages(), getFailureMessages() ) );
     }
 
-    public static <I, O> Result<I, O> success( final I input, final O output ) {
+    public static <OriginalItem, Output> Result<OriginalItem, Output> success( final OriginalItem input, final Output output ) {
         return success( input, output, ImmutableList.of() );
     }
 
-    public static <I, O> Result<I, O> success( final I input, final O output, final Iterable<String> warnings ) {
-        return new Result<I, O>( input, output, false, warnings, ImmutableList.of(), null );
+    public static <OriginalItem, Output> Result<OriginalItem, Output> success( final OriginalItem input, final Output output, final Iterable<String> warnings ) {
+        return new Result<OriginalItem, Output>( input, output, false, warnings, ImmutableList.of(), null );
     }
 
-    public static <I, O> Result<I, O> failed( final I id, final Throwable t ) {
+    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem id, final Throwable t ) {
         return failed( id, ImmutableList.of(), t );
     }
 
-    public static <I, O> Result<I, O> failed( final I id, final String failureMessage, final Throwable t ) {
+    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem id, final String failureMessage, final Throwable t ) {
         return failed( id, failureMessage == null
             ? ImmutableList.<String> of()
             : ImmutableList.of( failureMessage ), t );
     }
 
-    public static <I, O> Result<I, O> failed( final I id, final String failureMessage ) {
+    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem id, final String failureMessage ) {
         return failed( id, failureMessage == null
             ? ImmutableList.<String> of()
             : ImmutableList.of( failureMessage ), null );
     }
 
-    public static <I, O> Result<I, O> failed( final I id, final Iterable<String> failureMessages, final Throwable t ) {
+    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem id, final Iterable<String> failureMessages, final Throwable t ) {
         if ( t != null ) {
             final String msg = id + " - " + ( failureMessages == null
                 ? ""
                 : Joiner.on( " | " ).join( failureMessages ) );
             LOG.error( msg, t );
         }
-        return new Result<I, O>( id, null, true, ImmutableList.of(), failureMessages, t == null
+        return new Result<OriginalItem, Output>( id, null, true, ImmutableList.of(), failureMessages, t == null
             ? ImmutableList.<Throwable> of()
             : ImmutableList.of( t ) );
     }
 
-    public static <I, O> Result<I, O> failed( final I id, final Iterable<String> failureMessages ) {
+    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem id, final Iterable<String> failureMessages ) {
         return failed( id, failureMessages, null );
     }
 
