@@ -25,6 +25,7 @@ import com.freiheit.fuava.simplebatch.http.HttpFetcher;
 import com.freiheit.fuava.simplebatch.http.HttpFetcherImpl;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 
 class HttpDownloader<Input, Id, T> extends AbstractSingleItemProcessor<Input, Id, T> {
 
@@ -34,6 +35,13 @@ class HttpDownloader<Input, Id, T> extends AbstractSingleItemProcessor<Input, Id
 
     public HttpDownloader(
             final HttpClient client,
+            final HttpDownloaderSettings<Id> settings,
+            final Function<InputStream, T> converter ) {
+        this( new HttpFetcherImpl( client ), settings, converter );
+    }
+    
+    public HttpDownloader(
+            final Supplier<HttpClient> client,
             final HttpDownloaderSettings<Id> settings,
             final Function<InputStream, T> converter ) {
         this( new HttpFetcherImpl( client ), settings, converter );

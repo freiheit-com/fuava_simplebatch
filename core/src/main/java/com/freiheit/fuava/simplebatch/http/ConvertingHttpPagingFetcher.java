@@ -28,6 +28,7 @@ import com.freiheit.fuava.simplebatch.fetch.PageFetcher;
 import com.freiheit.fuava.simplebatch.fetch.PageFetcher.PagingInput;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 import com.google.common.collect.Iterators;
 
 public class ConvertingHttpPagingFetcher<Raw, T> implements Fetcher<T> {
@@ -59,6 +60,16 @@ public class ConvertingHttpPagingFetcher<Raw, T> implements Fetcher<T> {
 
     public ConvertingHttpPagingFetcher(
             final HttpClient client,
+            final PagingRequestSettings<Iterable<Raw>> settings,
+            final Function<InputStream, Iterable<Raw>> converter,
+            final ResultTransformer<Raw, T> resultTransformer,
+            final int initialFrom,
+            final int pageSize ) {
+        this( new HttpFetcherImpl( client ), settings, converter, resultTransformer, initialFrom, pageSize );
+    }
+    
+    public ConvertingHttpPagingFetcher(
+            final Supplier<HttpClient> client,
             final PagingRequestSettings<Iterable<Raw>> settings,
             final Function<InputStream, Iterable<Raw>> converter,
             final ResultTransformer<Raw, T> resultTransformer,

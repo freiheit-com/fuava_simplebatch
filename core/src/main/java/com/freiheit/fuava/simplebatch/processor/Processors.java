@@ -35,6 +35,7 @@ import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.freiheit.fuava.simplebatch.util.IOStreamUtils;
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 
 public class Processors {
 
@@ -302,6 +303,26 @@ public class Processors {
         return new HttpDownloader<OriginalItem, Input, String>( client, settings, input -> IOStreamUtils.consumeAsString( input ) );
     }
 
+    /**
+     * A Processor that uses an apache HttpClient to download the required data,
+     * based on the input data that was provided by the fetcher.
+     */
+    public static <OriginalItem, Input, Output> Processor<OriginalItem, Input, Output> httpDownloader(
+            final Supplier<HttpClient> client,
+            final HttpDownloaderSettings<Input> settings,
+            final Function<InputStream, Output> converter ) {
+        return new HttpDownloader<OriginalItem, Input, Output>( client, settings, converter );
+    }
+
+    /**
+     * A Processor that uses an apache HttpClient to download the required data
+     * as string, based on the input data that was provided by the fetcher.
+     */
+    public static <OriginalItem, Input> Processor<OriginalItem, Input, String> httpDownloader(
+            final Supplier<HttpClient> client,
+            final HttpDownloaderSettings<Input> settings ) {
+        return new HttpDownloader<OriginalItem, Input, String>( client, settings, input -> IOStreamUtils.consumeAsString( input ) );
+    }
     /**
      * A Processor which reads control files and moves them (and the file
      * referenced by the control file) to the targetDir. 

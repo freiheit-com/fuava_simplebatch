@@ -62,19 +62,24 @@ public class Fetchers {
         return httpFetcher( new HttpFetcherImpl( client ), uri, headers, converter );
     }
 
+    /**
+     * A Fetcher that uses an http request to retrieve the data to process.
+     */
+    public static <OriginalInput> Fetcher<OriginalInput> httpFetcher(
+            final Supplier<HttpClient> clientSupplier,
+            final String uri,
+            final Map<String, String> headers,
+            final Function<InputStream, Iterable<OriginalInput>> converter
+            ) {
+        return httpFetcher( new HttpFetcherImpl( clientSupplier ), uri, headers, converter );
+    }
     public static <OriginalInput> Fetcher<OriginalInput> httpFetcher(
             final HttpFetcher httpFetcher,
             final String uri,
             final Map<String, String> headers,
             final Function<InputStream, Iterable<OriginalInput>> converter
             ) {
-        return new SuppliedIterableFetcher<OriginalInput>( new Supplier<Iterable<OriginalInput>>() {
-
-            @Override
-            public Iterable<OriginalInput> get() {
-                return httpFetcher.fetch( converter, uri, headers );
-            }
-        } );
+        return new SuppliedIterableFetcher<OriginalInput>( () -> httpFetcher.fetch( converter, uri, headers ) );
     }
 
     /**
@@ -91,6 +96,21 @@ public class Fetchers {
             ) {
         return httpPagingFetcher( new HttpFetcherImpl( client ), settings, converter, initialFrom, pageSize );
 
+    }
+    /**
+     * Creates a Fetcher which fetches the Items lazily via http, always
+     * requesting a page of the data and transparently continuing to the next
+     * page.
+     */
+    public static <OriginalInput> Fetcher<OriginalInput> httpPagingFetcher(
+            final Supplier<HttpClient> clientSupplier,
+            final PagingRequestSettings<Iterable<OriginalInput>> settings,
+            final Function<? super InputStream, Iterable<OriginalInput>> converter,
+                final int initialFrom,
+                final int pageSize
+            ) {
+        return httpPagingFetcher( new HttpFetcherImpl( clientSupplier ), settings, converter, initialFrom, pageSize );
+        
     }
 
     /**

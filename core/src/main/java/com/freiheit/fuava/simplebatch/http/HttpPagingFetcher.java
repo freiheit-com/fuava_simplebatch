@@ -25,19 +25,30 @@ import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.PageFetcher.PagingInput;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 import com.google.common.collect.Iterators;
 
 public class HttpPagingFetcher<T> extends ConvertingHttpPagingFetcher<T, T> {
 
+
+    public HttpPagingFetcher(
+            final Supplier<HttpClient> client,
+            final PagingRequestSettings<Iterable<T>> settings,
+            final Function<InputStream, Iterable<T>> converter,
+            final int initialFrom,
+            final int pageSize ) {
+        super( client, settings, converter, new SimpleResultTransformerImpl<>(), initialFrom, pageSize );
+    }
+    
     public HttpPagingFetcher(
             final HttpFetcher fetcher,
             final PagingRequestSettings<Iterable<T>> settings,
             final Function<? super InputStream, Iterable<T>> converter,
-            final int initialFrom,
-            final int pageSize ) {
+                final int initialFrom,
+                final int pageSize ) {
         super( fetcher, settings, converter, new SimpleResultTransformerImpl<>(), initialFrom, pageSize );
     }
-
+    
     public HttpPagingFetcher(
             final HttpClient client,
             final PagingRequestSettings<Iterable<T>> settings,

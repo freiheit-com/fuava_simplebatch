@@ -30,12 +30,17 @@ import com.freiheit.fuava.simplebatch.exceptions.AuthorizationException;
 import com.freiheit.fuava.simplebatch.exceptions.FetchFailedException;
 import com.freiheit.fuava.simplebatch.util.IOStreamUtils;
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 
 public class HttpFetcherImpl implements HttpFetcher {
     static final Logger LOG = LoggerFactory.getLogger( HttpFetcherImpl.class );
-    private final HttpClient _client;
+    private final Supplier<HttpClient> _client;
 
     public HttpFetcherImpl( final HttpClient client ) {
+        this(()->client);
+    }
+    
+    public HttpFetcherImpl( final Supplier<HttpClient> client ) {
         _client = client;
     }
 
@@ -51,7 +56,7 @@ public class HttpFetcherImpl implements HttpFetcher {
                 get.setHeader( e.getKey(), e.getValue() );
             }
 
-            final HttpResponse response = _client.execute( get );
+            final HttpResponse response = _client.get().execute( get );
 
             final int responseCode = response.getStatusLine().getStatusCode();
 
