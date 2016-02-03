@@ -49,8 +49,8 @@ public class Result<OriginalItem, Output> {
         private List<String> warningMessages;
         private List<Throwable> throwables;
 
-        public Builder<OriginalItem, Output> withInput( final OriginalItem input ) {
-            this.input = input;
+        public Builder<OriginalItem, Output> withInput( final OriginalItem originalItem ) {
+            this.input = originalItem;
             return this;
         }
 
@@ -212,44 +212,44 @@ public class Result<OriginalItem, Output> {
         return ImmutableList.copyOf( Iterables.concat( getWarningMessages(), getFailureMessages() ) );
     }
 
-    public static <OriginalItem, Output> Result<OriginalItem, Output> success( final OriginalItem input, final Output output ) {
-        return success( input, output, ImmutableList.of() );
+    public static <OriginalItem, Output> Result<OriginalItem, Output> success( final OriginalItem originalItem, final Output output ) {
+        return success( originalItem, output, ImmutableList.of() );
     }
 
-    public static <OriginalItem, Output> Result<OriginalItem, Output> success( final OriginalItem input, final Output output, final Iterable<String> warnings ) {
-        return new Result<OriginalItem, Output>( input, output, false, warnings, ImmutableList.of(), null );
+    public static <OriginalItem, Output> Result<OriginalItem, Output> success( final OriginalItem originalItem, final Output output, final Iterable<String> warnings ) {
+        return new Result<OriginalItem, Output>( originalItem, output, false, warnings, ImmutableList.of(), null );
     }
 
-    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem id, final Throwable t ) {
-        return failed( id, ImmutableList.of(), t );
+    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem originalItem, final Throwable t ) {
+        return failed( originalItem, ImmutableList.of(), t );
     }
 
-    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem id, final String failureMessage, final Throwable t ) {
-        return failed( id, failureMessage == null
+    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem originalItem, final String failureMessage, final Throwable t ) {
+        return failed( originalItem, failureMessage == null
             ? ImmutableList.<String> of()
             : ImmutableList.of( failureMessage ), t );
     }
 
-    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem id, final String failureMessage ) {
-        return failed( id, failureMessage == null
+    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem originalItem, final String failureMessage ) {
+        return failed( originalItem, failureMessage == null
             ? ImmutableList.<String> of()
             : ImmutableList.of( failureMessage ), null );
     }
 
-    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem id, final Iterable<String> failureMessages, final Throwable t ) {
+    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem originalItem, final Iterable<String> failureMessages, final Throwable t ) {
         if ( t != null ) {
-            final String msg = id + " - " + ( failureMessages == null
+            final String msg = originalItem + " - " + ( failureMessages == null
                 ? ""
                 : Joiner.on( " | " ).join( failureMessages ) );
             LOG.error( msg, t );
         }
-        return new Result<OriginalItem, Output>( id, null, true, ImmutableList.of(), failureMessages, t == null
+        return new Result<OriginalItem, Output>( originalItem, null, true, ImmutableList.of(), failureMessages, t == null
             ? ImmutableList.<Throwable> of()
             : ImmutableList.of( t ) );
     }
 
-    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem id, final Iterable<String> failureMessages ) {
-        return failed( id, failureMessages, null );
+    public static <OriginalItem, Output> Result<OriginalItem, Output> failed( final OriginalItem originalItem, final Iterable<String> failureMessages ) {
+        return failed( originalItem, failureMessages, null );
     }
 
     @Override
