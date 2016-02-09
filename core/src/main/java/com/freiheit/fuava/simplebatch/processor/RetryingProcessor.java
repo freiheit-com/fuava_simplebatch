@@ -77,6 +77,9 @@ public abstract class RetryingProcessor<OriginalItem, Input, Output>
         }
         try {
             return doPersist( inputList );
+        } catch ( final java.lang.VirtualMachineError e ) {
+            // there is absolutely no way how those types of errors could be handled, rethrow it
+            throw e;
         } catch ( final Throwable t ) {
             if ( inputList.size() == 1 ) {
                 final Result<OriginalItem, Input> result = inputList.get( 0 );

@@ -34,6 +34,9 @@ public abstract class SingleItemProcessor<OriginalItem, Input, Output> extends
         final OriginalItem ipt = input.getInput();
         try {
             return Result.success( ipt, apply( input.getOutput() ) );
+        } catch ( final java.lang.VirtualMachineError e ) {
+            // there is absolutely no way how those types of errors could be handled, rethrow it
+            throw e;
         } catch ( final Throwable t ) {
             return Result.failed( ipt, t );
         }

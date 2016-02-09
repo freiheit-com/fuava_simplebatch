@@ -147,6 +147,14 @@ public class Result<OriginalItem, Output> {
             final Iterable<String> warningMessages,
             final Iterable<String> failureMessages,
             final Iterable<Throwable> ts ) {
+        if ( ts != null ) {
+            for (final Throwable t : ts) {
+                if (t instanceof VirtualMachineError ) {
+                    // there is no way how those errors could be handled correctly.
+                    throw (VirtualMachineError)t;
+                }
+            }
+        }
         if ( !failed && output == null ) {
             throw new IllegalArgumentException( "Successful results always must contain a result" );
         }
