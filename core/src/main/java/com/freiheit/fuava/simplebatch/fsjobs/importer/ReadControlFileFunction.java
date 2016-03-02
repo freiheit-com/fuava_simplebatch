@@ -28,6 +28,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -39,6 +42,8 @@ import com.google.common.collect.ImmutableList;
  */
 public class ReadControlFileFunction implements Function<Path, ControlFile> {
 
+    private static final Logger LOG = LoggerFactory.getLogger( ReadControlFileFunction.class );
+    
     private final List<Path> baseDirs;
 
     public ReadControlFileFunction( final Path baseDir, final Path... alternativeBaseDirs ) {
@@ -81,7 +86,15 @@ public class ReadControlFileFunction implements Function<Path, ControlFile> {
             try ( BufferedReader br = new BufferedReader( in ) ) {
                 final String firstLine = br.readLine();
                 if ( Strings.isNullOrEmpty( firstLine ) ) {
-                    throw new IllegalArgumentException( "The Control-File " + file + " has no content" );
+                    LOG.info( "The Control-File " + file + " has no content" );
+                    final Path baseDir = getBaseDir( path );
+                    final Path relPathCtlFile = baseDir.relativize( path );
+                    final String ctlFileName = relPathCtlFile.getFileName().toString();
+                    final String fileName = getFileNameFromCtlFileName( ctlFileName );
+                    final Path controlledFileName = relPathCtlFile.resolveSibling( fileName );
+                    final Path logFileName = Paths.get( controlledFileName + ".log" );
+                    return new ControlFile( baseDir, controlledFileName, logFileName, relPathCtlFile );
+
                 } else if ( firstLine.startsWith( "#!VERSION=1" ) ) {
                     return parseNewFormat( path, br );
                 } else {
@@ -94,5 +107,14 @@ public class ReadControlFileFunction implements Function<Path, ControlFile> {
         } catch ( final IOException e ) {
             throw new RuntimeException( e );
         }
+    }
+
+    private String getFileNameFromCtlFileName( final String ctlFileName ) {
+        final int idx = ctlFileName.lastIndexOf( "." );
+        if (idx < 0) {
+            return ctlFileName +".notfound";
+        }
+        
+        return ctlFileName.substring( 0, idx );
     }
 }
