@@ -16,20 +16,22 @@
  */
 package com.freiheit.fuava.sftp.util;
 
-import com.freiheit.fuava.sftp.RemoteFileStatus;
-import com.google.common.annotations.VisibleForTesting;
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
+
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.LoggerFactory;
+
+import com.freiheit.fuava.sftp.RemoteFileStatus;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Util class for any operations on filenames.
@@ -42,7 +44,7 @@ public class FilenameUtil {
 
     @VisibleForTesting
     public static final String DATE_TIME_PATTERN =
-            "((19|20)\\d\\d)(0?[1-9]|1[012])(0?[1-9]|[12][0-9]|3[01])_((0[1-9]|1[0123456789]|2[0123])([0-5][0-9])([0-5][0-9]))";
+            "((19|20)\\d\\d)(0?[1-9]|1[012])(0?[1-9]|[12][0-9]|3[01])_((0[0-9]|1[0123456789]|2[0123])([0-5][0-9])([0-5][0-9]))";
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger( FilenameUtil.class );
 
