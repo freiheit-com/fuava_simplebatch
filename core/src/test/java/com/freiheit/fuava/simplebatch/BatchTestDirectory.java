@@ -11,6 +11,14 @@ import com.freiheit.fuava.simplebatch.util.FileUtils;
 
 public class BatchTestDirectory {
 
+    public static final String FAILS = "fails";
+
+    public static final String ARCHIVE = "archive";
+
+    public static final String PROCESSING = "processing";
+
+    public static final String DOWNLOADS = "downloads";
+
     private static final Logger LOG = LoggerFactory.getLogger( BatchTestDirectory.class );
 
     private final Path testDirBase;
@@ -47,10 +55,10 @@ public class BatchTestDirectory {
             LOG.error( "Couldn't create temp directory " + prefix );
         }
         testDirBase = base;
-        testDirDownloads = testDirBase.resolve( "downloads" );
-        testDirProcessing = testDirBase.resolve( "processing" );
-        testDirArchive = testDirBase.resolve( "archive" );
-        testDirFails = testDirBase.resolve( "fails" );
+        testDirDownloads = testDirBase.resolve( DOWNLOADS );
+        testDirProcessing = testDirBase.resolve( PROCESSING );
+        testDirArchive = testDirBase.resolve( ARCHIVE );
+        testDirFails = testDirBase.resolve( FAILS );
     }
 
     public void cleanup() {
