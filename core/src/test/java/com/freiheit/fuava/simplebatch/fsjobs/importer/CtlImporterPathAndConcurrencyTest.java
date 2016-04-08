@@ -61,7 +61,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
 @Test
-public class CtlImporterPathTest {
+public class CtlImporterPathAndConcurrencyTest {
 
     private final Map<Integer, String> data = ImmutableMap.of(
             1, "eins",
@@ -173,18 +173,20 @@ public class CtlImporterPathTest {
         for (final ExpectedDirState state : testCase.getExpectedDirsAfterDownload()) {
             final Set<String> expectedNames = state.getExpectedNames();
             final Multimap<String, SBFile> impFiles = listFilesInDir( tmp, state.getDir() );
-            Assert.assertEquals( impFiles.keySet(), expectedNames );
+            Assert.assertEquals( impFiles.keySet(), expectedNames, "Wrong State after Download in " + state.dir   );
         }
         
         createImporterJob( tmp, testCase.getProcessor() )
         .setNumParallelThreadsFiles( testCase.getNumConcurrentFiles() )
+        .setParallelFiles( testCase.getNumConcurrentFiles() > 1 )
         .setNumParallelThreadsContent( testCase.getNumConcurrentData() )
+        .setParallelContent( testCase.getNumConcurrentData() > 1 )
         .build().run();
 
         for (final ExpectedDirState state : testCase.getExpectedDirs()) {
             final Set<String> expectedNames = state.getExpectedNames();
             final Multimap<String, SBFile> impFiles = listFilesInDir( tmp, state.getDir() );
-            Assert.assertEquals( impFiles.keySet(), expectedNames );
+            Assert.assertEquals( impFiles.keySet(), expectedNames, "Wrong State after Import in " + state.dir  );
         }
 
         tmp.cleanup();

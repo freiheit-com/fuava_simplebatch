@@ -7,7 +7,7 @@ idea.project.languageLevel = '1.8'
 
 subprojects {
 
-    version='0.6.11'
+    version='0.6.12'
 
     repositories {
         mavenLocal()

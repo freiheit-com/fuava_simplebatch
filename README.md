@@ -275,6 +275,8 @@ client.disconnect();
 ```
 
 ## Changes
+### 0.6.12 (2016-04-08)
+ - IMPORTANT Bugfix: When using parallel processing in CtlImporter, we sometimes did not wait correctly, leaving all files in processing folders.
 
 ### 0.6.8 (2016-01-22)
  - Improved Logging of Job Performance

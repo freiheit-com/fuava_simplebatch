@@ -65,7 +65,7 @@ import com.google.common.collect.Iterables;
  */
 public class BatchJob<OriginalInput, Output> {
     static final Logger LOG = LoggerFactory.getLogger( BatchJob.class );
-    private static final int TERMINATION_TIMEOUT_HOURS = 96;
+    public static final int TERMINATION_TIMEOUT_HOURS = 96;
 
     private final class CallProcessor implements Consumer<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> {
         private final DelegatingProcessingResultListener<OriginalInput, Output> listeners;

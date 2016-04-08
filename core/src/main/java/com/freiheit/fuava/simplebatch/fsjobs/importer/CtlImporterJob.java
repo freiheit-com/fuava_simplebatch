@@ -254,8 +254,8 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
         private Integer numParallelThreadsFiles = Sysprops.FILE_PROCESSING_NUM_THREADS;
         private Integer numParallelThreadsContent = Sysprops.CONTENT_PROCESSING_NUM_THREADS;
         
-        private int parallelTerminationTimeoutHoursContent;
-        private int parallelTerminationTimeoutHoursFiles;
+        private int parallelTerminationTimeoutHoursContent = BatchJob.TERMINATION_TIMEOUT_HOURS;
+        private int parallelTerminationTimeoutHoursFiles = BatchJob.TERMINATION_TIMEOUT_HOURS;
         
         private Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>> fileReader;
 
