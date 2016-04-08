@@ -367,7 +367,9 @@ public class BatchJob<OriginalInput, Output> {
             executorService.shutdown();
             LOG.info( "Waiting for termination of submitted jobs (up to " + parallelTerminationTimeoutHours + " hours)." );
             try {
-                executorService.awaitTermination( parallelTerminationTimeoutHours, TimeUnit.HOURS );
+                if ( !executorService.awaitTermination( parallelTerminationTimeoutHours, TimeUnit.HOURS ) ) {
+                    throw new IllegalStateException( "Processing did not finish within time and was aborted. Timemout was " + parallelTerminationTimeoutHours + " " + TimeUnit.HOURS );
+                }
             } catch ( final InterruptedException e ) {
                 throw new IllegalStateException( "Executor Service did not terminate normally", e );
             }
