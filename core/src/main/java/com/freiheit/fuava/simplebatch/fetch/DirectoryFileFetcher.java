@@ -23,8 +23,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.freiheit.fuava.simplebatch.util.EagernessUtil;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -37,7 +39,8 @@ import com.google.common.collect.Ordering;
  * @author tim.lessner@freiheit.com
  */
 class DirectoryFileFetcher<OriginalInput> implements Fetcher<OriginalInput> {
-
+    private static final Logger LOG = LoggerFactory.getLogger( DirectoryFileFetcher.class );
+    
     private static final class FetchFile<OriginalInput> implements java.util.function.Function<Path, Result<FetchedItem<OriginalInput>, OriginalInput>> {
         private final Function<Path, OriginalInput> func;
         private int counter = FetchedItem.FIRST_ROW;
@@ -93,8 +96,9 @@ class DirectoryFileFetcher<OriginalInput> implements Fetcher<OriginalInput> {
         final FetchFile<OriginalInput> resultCreator = new FetchFile<>( func );
         // the directories are all read eagerly, so we copy the concatenated iterable into a list
         // The caller (BatchJob) may iterate over Collections to collect statistics, but it will not 
-        // iterate over Iterables to not break lazily loaded data
-        return EagernessUtil.preserveEagerness( Iterables.concat( Lists.<DownloadDir, Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>>>transform( 
+        // iterate over Iterables to not break lazily loaded data. Thus we will copy the iterable into a list to preserve that.
+        final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> iter = 
+        Iterables.concat( Lists.<DownloadDir, Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>>>transform( 
                 dirs, 
                 dir -> {
                     try {
@@ -107,8 +111,19 @@ class DirectoryFileFetcher<OriginalInput> implements Fetcher<OriginalInput> {
                     }
                 }
                 ) ) 
-                );
-
+                ;
+        
+        int counter = 0;
+        final ImmutableList.Builder<Result<FetchedItem<OriginalInput>, OriginalInput>> b = ImmutableList.builder();
+        for ( final Result<FetchedItem<OriginalInput>, OriginalInput> r : iter ) {
+            b.add( r );
+            counter++;
+            if ( (counter % 100) == 0) {
+                LOG.info( "fetched " + counter + " / ? files" );
+            }
+        }
+        LOG.info( "Finished: Directory Fetcher fetched " + counter + " files" );
+        return b.build();
     }
 
     private Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> fetchFromDirectory(
