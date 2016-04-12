@@ -77,11 +77,14 @@ public class BatchJob<OriginalInput, Output> {
         @Override
         public void accept( final List<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceResults ) {
 
-            listeners.onFetchResults( sourceResults );
 
-            final Iterable<? extends Result<FetchedItem<OriginalInput>, Output>> processingResults = persistence.process( sourceResults );
-
-            listeners.onProcessingResults( processingResults );
+            try {
+                listeners.onFetchResults( sourceResults );
+                final Iterable<? extends Result<FetchedItem<OriginalInput>, Output>> processingResults = persistence.process( sourceResults );
+                listeners.onProcessingResults( processingResults );
+            } catch ( final Throwable t ) {
+                LOG.error( "FATAL: Exception went through the Processors. You need to ensure that this cannot happen, in order to achieve proper error handling", t );
+            }
         }
     }
 
