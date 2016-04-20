@@ -38,6 +38,7 @@ import com.freiheit.fuava.simplebatch.result.DelegatingProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -66,12 +67,15 @@ import com.google.common.collect.Iterables;
 public class BatchJob<OriginalInput, Output> {
     static final Logger LOG = LoggerFactory.getLogger( BatchJob.class );
     public static final int TERMINATION_TIMEOUT_HOURS = 96;
+    public static final int PANIC_VM_ERROR = 1;
 
     private final class CallProcessor implements Consumer<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> {
         private final DelegatingProcessingResultListener<OriginalInput, Output> listeners;
+        private final PanicCallback panicCallback;
 
-        private CallProcessor( final DelegatingProcessingResultListener<OriginalInput, Output> listeners ) {
+        private CallProcessor( final DelegatingProcessingResultListener<OriginalInput, Output> listeners, final PanicCallback panicCallback ) {
             this.listeners = listeners;
+            this.panicCallback = Preconditions.checkNotNull( panicCallback );
         }
 
         @Override
@@ -82,8 +86,14 @@ public class BatchJob<OriginalInput, Output> {
                 listeners.onFetchResults( sourceResults );
                 final Iterable<? extends Result<FetchedItem<OriginalInput>, Output>> processingResults = persistence.process( sourceResults );
                 listeners.onProcessingResults( processingResults );
+            } catch ( final VirtualMachineError e ) {
+                LOG.error( "FATAL: Exception went through the Processors. You need to ensure that this cannot happen, in order to achieve proper error handling " + e.getMessage(), e );
+                /*
+                 * There is no way we can get out of this. We need to ensure the entire program halts - thus we do a system
+                 */
+                panicCallback.panic( "Virtual Machine Error", PANIC_VM_ERROR );
             } catch ( final Throwable t ) {
-                LOG.error( "FATAL: Exception went through the Processors. You need to ensure that this cannot happen, in order to achieve proper error handling", t );
+                LOG.error( "FATAL: Exception went through the Processors. You need to ensure that this cannot happen, in order to achieve proper error handling" + t.getMessage(), t );
             }
         }
     }
@@ -95,6 +105,7 @@ public class BatchJob<OriginalInput, Output> {
         private int parallelTerminationTimeoutHours = TERMINATION_TIMEOUT_HOURS;
         private boolean printFinalTimeMeasures = true;
         private Fetcher<OriginalInput> fetcher;
+        private PanicCallback panicCallback;
         private Processor<FetchedItem<OriginalInput>, OriginalInput, Output> processor;
 
         private final ArrayList<ProcessingResultListener<OriginalInput, Output>> listeners =
@@ -118,6 +129,17 @@ public class BatchJob<OriginalInput, Output> {
         */
         public Builder<OriginalInput, Output> setParallel( final boolean parallel ) {
             this.parallel = parallel;
+            return this;
+        }
+        
+        /**
+         * Set the callback for 'panic' situations like virtual machine errors where it makes no sense to try and continue processing.
+         * Default behaviour is, that System.exit() is called.
+         * @param panicCallback The callback for panic situations
+         * @return this instance for method chaining
+         */
+        public Builder<OriginalInput, Output> setPanicCallback( final PanicCallback panicCallback ) {
+            this.panicCallback = panicCallback;
             return this;
         }
         
@@ -241,7 +263,12 @@ public class BatchJob<OriginalInput, Output> {
         }
 
         public BatchJob<OriginalInput, Output> build() {
-            return new BatchJob<OriginalInput, Output>( description, processingBatchSize, parallel, numParallelThreads, parallelTerminationTimeoutHours, fetcher, processor, printFinalTimeMeasures, listeners );
+            final PanicCallback panicCallback = getPanicCallback();
+            return new BatchJob<OriginalInput, Output>( description, processingBatchSize, parallel, numParallelThreads, parallelTerminationTimeoutHours, fetcher, processor, printFinalTimeMeasures, listeners, panicCallback );
+        }
+
+        public PanicCallback getPanicCallback() {
+            return this.panicCallback == null ? new DefaultPanicCallback() : this.panicCallback;
         }
 
         public String getDescription() {
@@ -260,7 +287,31 @@ public class BatchJob<OriginalInput, Output> {
     private final String description;
     private final boolean printFinalTimeMeasures;
     private final int parallelTerminationTimeoutHours;
+    private final PanicCallback panicCallback;
 
+    /**
+     * Callback for severe error conditions which should lead to aborting the entire processing.
+     * Called for {@link VirtualMachineError}s such as {@link OutOfMemoryError}.
+     */
+    public interface PanicCallback {
+       void panic( String reason, int code ); 
+    }
+    
+    /**
+     * Default implementation of the panic callback which simply calls System.exit.
+     */
+    public static final class DefaultPanicCallback implements PanicCallback {
+
+        @Override
+        public void panic( final String reason, final int code ) {
+            final String message = "System exit (" + code + ") due to: " + reason;
+            LOG.error( message );
+            System.err.println( message );
+            System.exit( code );
+        }
+        
+    }
+    
     /**
      * @param description The Description of the job
      * @param processingBatchSize How many items from the fetcher are put together in one chunk and processed together
@@ -280,7 +331,9 @@ public class BatchJob<OriginalInput, Output> {
             final Fetcher<OriginalInput> fetcher,
             final Processor<FetchedItem<OriginalInput>, OriginalInput, Output> processor,
             final boolean printFinalTimeMeasures,
-            final List<ProcessingResultListener<OriginalInput, Output>> listeners ) {
+            final List<ProcessingResultListener<OriginalInput, Output>> listeners,
+            final PanicCallback panicCallback
+    ) {
         this.description = description;
         this.processingBatchSize = processingBatchSize;
         this.parallel = parallel;
@@ -290,6 +343,7 @@ public class BatchJob<OriginalInput, Output> {
         this.persistence = processor;
         this.printFinalTimeMeasures = printFinalTimeMeasures;
         this.listeners = ImmutableList.copyOf( listeners );
+        this.panicCallback = Preconditions.checkNotNull( panicCallback, "Panic Callback must be set" );
     }
 
     public static <Input, Output> Builder<Input, Output> builder() {
@@ -351,7 +405,7 @@ public class BatchJob<OriginalInput, Output> {
         
         final Iterable<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> partitions = Iterables.partition( sourceIterable, processingBatchSize );
         
-        StreamSupport.stream( partitions.spliterator(), parallel ).forEach( new CallProcessor( listeners ) );
+        StreamSupport.stream( partitions.spliterator(), parallel ).forEach( new CallProcessor( listeners, panicCallback ) );
     }
     
     protected void processWithExecutor( 
@@ -360,7 +414,7 @@ public class BatchJob<OriginalInput, Output> {
             final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceIterable ) {
         final ExecutorService executorService = Executors.newFixedThreadPool( numParallelThreads );
         try {
-            final CallProcessor callProcessor = new CallProcessor( listeners );
+            final CallProcessor callProcessor = new CallProcessor( listeners, panicCallback );
             final Iterable<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> partitions = Iterables.partition( sourceIterable, processingBatchSize );
             for (final List<Result<FetchedItem<OriginalInput>, OriginalInput>> chunk: partitions) {
                 executorService.submit( () -> callProcessor.accept( chunk ) );

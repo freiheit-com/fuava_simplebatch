@@ -420,6 +420,17 @@ public class CtlDownloaderJob<OriginalInput, Output> extends BatchJob<OriginalIn
             builder.removeListener( listener );
             return this;
         }
+        
+        /**
+         * Set the callback for 'panic' situations like virtual machine errors where it makes no sense to try and continue processing.
+         * Default behaviour is, that System.exit() is called.
+         * @param panicCallback The callback for panic situations
+         * @return this instance for method chaining
+         */
+        public AbstractBuilder<OriginalInput, Input, Output> setPanicCallback( final PanicCallback panicCallback ) {
+            builder.setPanicCallback( panicCallback );
+            return this;
+        }
 
         /**
          * Build a Downloader job with full control over the file writing
@@ -449,7 +460,9 @@ public class CtlDownloaderJob<OriginalInput, Output> extends BatchJob<OriginalIn
                         ? new ConfigurationImpl()
                         : this.configuration,
                     TimeLoggingProcessor.wrap( "File Download", downloader.then( fileWriter ) ),
-                    builder.getListeners() );
+                    builder.getListeners(),
+                    builder.getPanicCallback()
+                    );
         }
 
     }
@@ -463,8 +476,9 @@ public class CtlDownloaderJob<OriginalInput, Output> extends BatchJob<OriginalIn
             final Fetcher<OriginalInput> fetcher,
             final Configuration configuration,
             final Processor<FetchedItem<OriginalInput>, OriginalInput, Output> persistence,
-            final List<ProcessingResultListener<OriginalInput, Output>> listeners ) {
-        super( description, processingBatchSize, parallel, numParallelThreads, parallelTerminationTimeoutHours, fetcher, persistence, true, listeners );
+            final List<ProcessingResultListener<OriginalInput, Output>> listeners,
+            final PanicCallback panicCallback) {
+        super( description, processingBatchSize, parallel, numParallelThreads, parallelTerminationTimeoutHours, fetcher, persistence, true, listeners, panicCallback );
     }
     
 

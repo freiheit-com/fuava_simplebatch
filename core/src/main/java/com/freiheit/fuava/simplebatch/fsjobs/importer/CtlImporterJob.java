@@ -258,6 +258,7 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
         private int parallelTerminationTimeoutHoursFiles = BatchJob.TERMINATION_TIMEOUT_HOURS;
         
         private Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>> fileReader;
+        private com.freiheit.fuava.simplebatch.BatchJob.PanicCallback panicCallback;
 
         public Builder() {
         }
@@ -491,6 +492,22 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
             return this;
         }
 
+        /**
+         * Set the callback for 'panic' situations like virtual machine errors where it makes no sense to try and continue processing.
+         * Default behaviour is, that System.exit() is called.
+         * @param panicCallback The callback for panic situations
+         * @return this instance for method chaining
+         */
+        public Builder<ContentOriginalInput> setPanicCallback(
+                final PanicCallback panicCallback ) {
+            this.panicCallback = panicCallback;
+            return this;
+        }
+
+        private PanicCallback getPanicCallback() {
+            return this.panicCallback == null ? new DefaultPanicCallback() : this.panicCallback;
+        }
+
         public CtlImporterJob<ContentOriginalInput> build() {
             fileProcessingListeners.add( new BatchStatisticsLoggingListener<ControlFile, ResultStatistics>(
                     LOG_NAME_FILE_PROCESSING_BATCH ) );
@@ -546,7 +563,8 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
                             ),
                     timeLoggedContentProcessor,
                     TimeLoggingProcessor.wrap( "File Import", processor ),
-                    fileProcessingListeners );
+                    fileProcessingListeners,
+                    getPanicCallback());
         }
     }
 
@@ -559,8 +577,10 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
             final Fetcher<ControlFile> fetcher,
             final TimeLoggingProcessor<FetchedItem<ContentOriginalInput>, ContentOriginalInput, ContentOriginalInput> timeLoggedContentProcessor,
             final Processor<FetchedItem<ControlFile>, ControlFile, ResultStatistics> processor,
-            final List<ProcessingResultListener<ControlFile, ResultStatistics>> listeners ) {
-        super( description, processingBatchSize, parallel, numParallelThreads, parallelTerminationTimeoutHours, fetcher, processor, true, listeners );
+            final List<ProcessingResultListener<ControlFile, ResultStatistics>> listeners,
+            final PanicCallback panicCallback
+    ) {
+        super( description, processingBatchSize, parallel, numParallelThreads, parallelTerminationTimeoutHours, fetcher, processor, true, listeners, panicCallback );
         this.timeLoggedContentProcessor = timeLoggedContentProcessor;
     }
 
