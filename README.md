@@ -275,6 +275,9 @@ client.disconnect();
 ```
 
 ## Changes
+### 0.7.0 (2016-04-20)
+ - Changed Implementation of Concurrent processing: The fetcher is not drained so quickly any more, this should avoid OOM with lazy fetchers and large datasets.
+
 ### 0.6.12 (2016-04-08)
  - IMPORTANT Bugfix: When using parallel processing in CtlImporter, we sometimes did not wait correctly, leaving all files in processing folders.
 

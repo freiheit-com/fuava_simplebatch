@@ -19,8 +19,6 @@ package com.freiheit.fuava.simplebatch;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
@@ -65,7 +63,7 @@ import com.google.common.collect.Iterables;
  *            The result of the processor
  */
 public class BatchJob<OriginalInput, Output> {
-    static final Logger LOG = LoggerFactory.getLogger( BatchJob.class );
+    private static final Logger LOG = LoggerFactory.getLogger( BatchJob.class );
     public static final int TERMINATION_TIMEOUT_HOURS = 96;
     public static final int PANIC_VM_ERROR = 1;
 
@@ -392,7 +390,7 @@ public class BatchJob<OriginalInput, Output> {
     protected void process( final DelegatingProcessingResultListener<OriginalInput, Output> listeners,
             final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceIterable ) {
         if ( this.parallel && this.numParallelThreads != null && this.numParallelThreads.intValue() > 0 ) {
-            processWithExecutor( listeners, this.numParallelThreads, sourceIterable );
+            processWithBlockingQueue( listeners, this.numParallelThreads, sourceIterable );
         } else {
             processWithStreams( listeners, this.parallel, sourceIterable );
         }
@@ -408,28 +406,32 @@ public class BatchJob<OriginalInput, Output> {
         StreamSupport.stream( partitions.spliterator(), parallel ).forEach( new CallProcessor( listeners, panicCallback ) );
     }
     
-    protected void processWithExecutor( 
+    private void processWithBlockingQueue( 
             final DelegatingProcessingResultListener<OriginalInput, Output> listeners,
             final int numParallelThreads,
             final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceIterable ) {
-        final ExecutorService executorService = Executors.newFixedThreadPool( numParallelThreads );
-        try {
-            final CallProcessor callProcessor = new CallProcessor( listeners, panicCallback );
-            final Iterable<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> partitions = Iterables.partition( sourceIterable, processingBatchSize );
-            for (final List<Result<FetchedItem<OriginalInput>, OriginalInput>> chunk: partitions) {
-                executorService.submit( () -> callProcessor.accept( chunk ) );
-            }
-        } finally {
-            LOG.info( "Shutting down Executor" );
-            executorService.shutdown();
-            LOG.info( "Waiting for termination of submitted jobs (up to " + parallelTerminationTimeoutHours + " hours)." );
-            try {
-                if ( !executorService.awaitTermination( parallelTerminationTimeoutHours, TimeUnit.HOURS ) ) {
-                    throw new IllegalStateException( "Processing did not finish within time and was aborted. Timemout was " + parallelTerminationTimeoutHours + " " + TimeUnit.HOURS );
+        final ThreadGroup threadGroup = new ThreadGroup( "Simplebatch Processing" ) {
+            @Override
+            public void uncaughtException( final Thread t, final Throwable e ) {
+                try {
+                    LOG.error( e.getMessage(), e );
+                } catch (final Throwable t2) {
+                    BatchJob.this.panicCallback.panic( "Thread died while logging", PANIC_VM_ERROR );
+                    return;
                 }
-            } catch ( final InterruptedException e ) {
-                throw new IllegalStateException( "Executor Service did not terminate normally", e );
+                if ( e instanceof VirtualMachineError ) {
+                    BatchJob.this.panicCallback.panic( "Thread died with VirtualMachineError", PANIC_VM_ERROR );
+                }
             }
-        }
+        };
+        
+        new BlockingQueueExecutor<OriginalInput>( 
+                numParallelThreads, 
+                processingBatchSize, 
+                TimeUnit.HOURS.toMillis( this.parallelTerminationTimeoutHours ), 
+                new CallProcessor( listeners, panicCallback ),
+                threadGroup)
+        .accept( sourceIterable );
     }
+    
 }
