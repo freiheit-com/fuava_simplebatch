@@ -425,13 +425,17 @@ public class BatchJob<OriginalInput, Output> {
             }
         };
         
-        new BlockingQueueExecutor<OriginalInput>( 
-                numParallelThreads, 
-                processingBatchSize, 
-                TimeUnit.HOURS.toMillis( this.parallelTerminationTimeoutHours ), 
-                new CallProcessor( listeners, panicCallback ),
-                threadGroup)
-        .accept( sourceIterable );
+        try {
+            new BlockingQueueExecutor<OriginalInput>( 
+                    numParallelThreads, 
+                    processingBatchSize, 
+                    TimeUnit.HOURS.toMillis( this.parallelTerminationTimeoutHours ), 
+                    new CallProcessor( listeners, panicCallback ),
+                    threadGroup)
+            .accept( sourceIterable );
+        } finally {
+            threadGroup.destroy();
+        }
     }
     
 }
