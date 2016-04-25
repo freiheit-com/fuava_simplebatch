@@ -67,6 +67,28 @@ public class BatchJob<OriginalInput, Output> {
     public static final int TERMINATION_TIMEOUT_HOURS = 96;
     public static final int PANIC_VM_ERROR = 1;
 
+    private static final class BatchJobThreadGroup extends ThreadGroup {
+        private final PanicCallback panicCallback;
+
+        private BatchJobThreadGroup( final String name, final PanicCallback callback ) {
+            super( name );
+            this.panicCallback = callback;
+        }
+
+        @Override
+        public void uncaughtException( final Thread t, final Throwable e ) {
+            try {
+                LOG.error( e.getMessage(), e );
+            } catch (final Throwable t2) {
+                panicCallback.panic( "Thread died while logging", PANIC_VM_ERROR );
+                return;
+            }
+            if ( e instanceof VirtualMachineError ) {
+                panicCallback.panic( "Thread died with VirtualMachineError", PANIC_VM_ERROR );
+            }
+        }
+    }
+
     private final class CallProcessor implements Consumer<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> {
         private final DelegatingProcessingResultListener<OriginalInput, Output> listeners;
         private final PanicCallback panicCallback;
@@ -410,20 +432,7 @@ public class BatchJob<OriginalInput, Output> {
             final DelegatingProcessingResultListener<OriginalInput, Output> listeners,
             final int numParallelThreads,
             final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceIterable ) {
-        final ThreadGroup threadGroup = new ThreadGroup( "Simplebatch Processing" ) {
-            @Override
-            public void uncaughtException( final Thread t, final Throwable e ) {
-                try {
-                    LOG.error( e.getMessage(), e );
-                } catch (final Throwable t2) {
-                    BatchJob.this.panicCallback.panic( "Thread died while logging", PANIC_VM_ERROR );
-                    return;
-                }
-                if ( e instanceof VirtualMachineError ) {
-                    BatchJob.this.panicCallback.panic( "Thread died with VirtualMachineError", PANIC_VM_ERROR );
-                }
-            }
-        };
+        final ThreadGroup threadGroup = new BatchJobThreadGroup( "Simplebatch Processing", this.panicCallback );
         
         try {
             new BlockingQueueExecutor<OriginalInput>( 
