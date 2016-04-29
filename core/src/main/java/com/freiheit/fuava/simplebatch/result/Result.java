@@ -19,9 +19,12 @@ package com.freiheit.fuava.simplebatch.result;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -266,6 +269,52 @@ public class Result<OriginalItem, Output> {
             return "FAIL: " + input + " [" + failureMessages.size() + " messages]";
         }
         return "SUCCESS: " + input + " => " + output + " [" + warningMessages.size() + " messages]";
+    }
+
+
+    /**
+     * Create a new result by transforming the output value for success, using null for failure.
+     * 
+     * If this result is failed, the new result will be failed as well. If the success mapping function throws an exception,
+     * the new result will be failed, too.
+     * 
+     * @param successMapper the mapping function
+     * @return the new result.
+     */
+    public <NewOutput> Result<OriginalItem, NewOutput> map( @Nonnull final Function<Output, NewOutput> successMapper ) { 
+        return map( successMapper, o -> null); 
+    }
+
+        
+    /**
+     * Create a new result by transforming the output value for both success and failure cases. 
+     * 
+     * If this result is failed, the new result will be failed as well. If the success mapping function throws an exception,
+     * the new result will be failed, too.
+     * 
+     * @param successMapper the mapping function
+     * @param failureMapper the mapping function
+     * @return the new result.
+     */
+    public <NewOutput> Result<OriginalItem, NewOutput> map( 
+            @Nonnull final Function<Output, NewOutput> successMapper, 
+            @Nonnull final Function<Output, NewOutput> failureMapper 
+    ) {
+        final Builder<OriginalItem, NewOutput> builder = Result.<OriginalItem, NewOutput>builder( this );
+        
+        if (this.isSuccess()) {
+            try {
+                return builder.withOutput( successMapper.apply( output ) ).success();
+            } catch (final Throwable t) {
+                return builder.failed( t );
+            }
+        }
+        // originally failed
+        try {
+            return builder.withOutput( failureMapper.apply( output ) ).failed();
+        } catch (final Throwable t) {
+            return builder.failed( t );
+        }
     }
 
 }
