@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.Writer;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
@@ -57,17 +58,7 @@ public class Processors {
         @Override
         public Result<FetchedItem<Output>, Output> processItem(
                 final Result<FetchedItem<Output>, Input> previous ) {
-            final boolean failed = previous.isFailed();
-            final FetchedItem<Output> item = previous.getInput();
-            final Output input = item == null
-                ? null
-                : item.getValue();
-
-            if ( failed ) {
-                return Result.<FetchedItem<Output>, Output> builder( previous ).withOutput( input ).failed();
-            } else {
-                return Result.<FetchedItem<Output>, Output> builder( previous ).withOutput( input ).success();
-            }
+            return previous.map( o -> Optional.ofNullable( previous.getInput() ).map(FetchedItem::getValue).orElse( null ) );
         }
     }
 
