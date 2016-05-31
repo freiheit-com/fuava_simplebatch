@@ -109,7 +109,7 @@ public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetche
                             FilenameUtil.getAllMatchingFilenames( "", fileType, entryFileNameList, RemoteFileStatus.OK );
                     r.addAll( moveOldFilesToSkippedAndReturnLatestFilename( filteredFileNamesList, fileType ) );
                 } catch ( final Throwable e2 ) {
-                    LOG.error( "Failed to acquire file list from remote server!", e2 );
+                    LOG.error( "Failed to filter file list from remote server! Folder: "  + incomingFilesFolder + ", File Type: " + fileType + " - " + entryFileNameList, e2 );
                     final FetchedItem<SftpFilename> fetchedItem =
                             FetchedItem.of( new SftpFilename( incomingFilesFolder, "", null, "no timestamp" ), 1 );
                     r.addAll( Collections.singletonList(
@@ -118,7 +118,7 @@ public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetche
             }
             return r.build();
         } catch ( final Throwable e ) {
-            LOG.error( "Failed to acquire file list from remote server!", e );
+            LOG.error( "Failed to acquire file list from remote server! Folder: " + incomingFilesFolder, e );
             final FetchedItem<SftpFilename> fetchedItem =
                     FetchedItem.of( new SftpFilename( incomingFilesFolder, "", null, "no timestamp" ), 1 );
             return Collections.singletonList( Result.<FetchedItem<SftpFilename>, SftpFilename>failed( fetchedItem, e ) );
