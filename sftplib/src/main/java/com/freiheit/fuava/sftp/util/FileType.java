@@ -16,9 +16,9 @@
  */
 package com.freiheit.fuava.sftp.util;
 
-import com.google.common.base.MoreObjects;
-
 import javax.annotation.Nonnull;
+
+import com.google.common.base.MoreObjects;
 
 /**
  * Describes the type of files to be processed.
@@ -107,5 +107,67 @@ public class FileType {
                 .add( "fileExtention", fileExtention )
                 .add( "okFileExtention", okFileExtention )
                 .toString();
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = ( prime * result ) + ( ( fileExtention == null )
+            ? 0
+            : fileExtention.hashCode() );
+        result = ( prime * result ) + ( ( fileIdentifierPattern == null )
+            ? 0
+            : fileIdentifierPattern.hashCode() );
+        result = ( prime * result ) + ( ( interfaceName == null )
+            ? 0
+            : interfaceName.hashCode() );
+        result = ( prime * result ) + ( ( okFileExtention == null )
+            ? 0
+            : okFileExtention.hashCode() );
+        return result;
+    }
+
+    @Override
+    public boolean equals( final Object obj ) {
+        if ( this == obj ) {
+            return true;
+        }
+        if ( obj == null ) {
+            return false;
+        }
+        if ( getClass() != obj.getClass() ) {
+            return false;
+        }
+        final FileType other = (FileType) obj;
+        if ( fileExtention == null ) {
+            if ( other.fileExtention != null ) {
+                return false;
+            }
+        } else if ( !fileExtention.equals( other.fileExtention ) ) {
+            return false;
+        }
+        if ( fileIdentifierPattern == null ) {
+            if ( other.fileIdentifierPattern != null ) {
+                return false;
+            }
+        } else if ( !fileIdentifierPattern.equals( other.fileIdentifierPattern ) ) {
+            return false;
+        }
+        if ( interfaceName == null ) {
+            if ( other.interfaceName != null ) {
+                return false;
+            }
+        } else if ( !interfaceName.equals( other.interfaceName ) ) {
+            return false;
+        }
+        if ( okFileExtention == null ) {
+            if ( other.okFileExtention != null ) {
+                return false;
+            }
+        } else if ( !okFileExtention.equals( other.okFileExtention ) ) {
+            return false;
+        }
+        return true;
     }
 }
