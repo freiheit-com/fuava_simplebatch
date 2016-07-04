@@ -112,7 +112,7 @@ public class SftpClient implements RemoteClient {
         session.setPassword( password );
 
         // socket timeout in milliseconds
-        session.setServerAliveInterval( socketTimeoutMs );
+        session.setTimeout( socketTimeoutMs );
 
         return session;
     }
