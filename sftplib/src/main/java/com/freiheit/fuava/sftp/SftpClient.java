@@ -43,7 +43,7 @@ import com.jcraft.jsch.SftpException;
 public class SftpClient implements RemoteClient {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger( SftpClient.class );
 
-    private static final int DEFAULT_SERVER_ALIVE_INTERVAL = 6000; // ms
+    private static final int DEFAULT_SOCKET_TIMEOUT_MS = 6000; // ms
 
     private static final String CHANNEL_TYPE_SFTP = "sftp";
 
@@ -65,7 +65,7 @@ public class SftpClient implements RemoteClient {
         this.port = port;
         this.username = username;
         this.password = password;
-        this.socketTimeoutMs = DEFAULT_SERVER_ALIVE_INTERVAL;
+        this.socketTimeoutMs = DEFAULT_SOCKET_TIMEOUT_MS;
     }
 
     public SftpClient( final String host, final Integer port, final String username, final String password, final int socketTimeoutMs ) {
