@@ -43,12 +43,15 @@ import com.jcraft.jsch.SftpException;
 public class SftpClient implements RemoteClient {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger( SftpClient.class );
 
+    private static final int DEFAULT_SERVER_ALIVE_INTERVAL = 6000; // ms
+
     private static final String CHANNEL_TYPE_SFTP = "sftp";
 
     private final String host;
     private final Integer port;
     private final String username;
     private final String password;
+    private final int socketTimeoutMs;
 
     private ChannelSftp sftpChannel;
 
@@ -56,18 +59,25 @@ public class SftpClient implements RemoteClient {
     /**
      * ctor.
      *
-     * @param configuration
-     *            Environment configuration object
      */
-    public SftpClient( final String host, final Integer port, final String username, final String password) {
+    public SftpClient( final String host, final Integer port, final String username, final String password ) {
         this.host = host;
         this.port = port;
         this.username = username;
         this.password = password;
+        this.socketTimeoutMs = DEFAULT_SERVER_ALIVE_INTERVAL;
+    }
+
+    public SftpClient( final String host, final Integer port, final String username, final String password, final int socketTimeoutMs ) {
+        this.host = host;
+        this.port = port;
+        this.username = username;
+        this.password = password;
+        this.socketTimeoutMs = socketTimeoutMs;
     }
 
 
-    public  String getRemoteSystemType() {
+    public String getRemoteSystemType() {
         return CHANNEL_TYPE_SFTP;
     }
 
@@ -100,6 +110,9 @@ public class SftpClient implements RemoteClient {
         //        jsch will automatically add new host keys to the user known hosts files.
         session.setConfig( "StrictHostKeyChecking", "no" );
         session.setPassword( password );
+
+        // socket timeout in milliseconds
+        session.setServerAliveInterval( socketTimeoutMs );
 
         return session;
     }
