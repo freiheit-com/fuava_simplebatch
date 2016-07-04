@@ -1,6 +1,7 @@
-group='com.freiheit.fuava.simplebatch'
+group='com.freiheit.fuava'
 allprojects {
     apply plugin: 'idea'
+    apply plugin: 'eclipse'
 }
 
 idea.project.languageLevel = '1.8'

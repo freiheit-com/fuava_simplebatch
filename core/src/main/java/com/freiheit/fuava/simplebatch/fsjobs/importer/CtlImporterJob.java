@@ -259,6 +259,7 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
         
         private Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>> fileReader;
         private com.freiheit.fuava.simplebatch.BatchJob.PanicCallback panicCallback;
+        private Fetcher<ControlFile> fetcher;
 
         public Builder() {
         }
@@ -545,26 +546,37 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
                             configuration.getArchivedDirPath(),
                             configuration.getFailedDirPath() ) );
 
+            if ( fetcher == null ) {
+                fetcher = Fetchers.folderFetcher(
+                    new ReadControlFileFunction( this.configuration.getDownloadDirPath(), this.configuration.getProcessingDirPath() ),
+                    // First: process old data from processing for the same instance which was left over when the job got killed
+                    new DownloadDir(
+                            this.configuration.getProcessingDirPath(),
+                            ToProcessingDirMover.createInstanceIdPrefix( this.configuration.getInstanceId() ), 
+                            this.configuration.getControlFileEnding()
+                    ),
+                    new DownloadDir( this.configuration.getDownloadDirPath(), null, this.configuration.getControlFileEnding() )
+                );
+            }
+            
             return new CtlImporterJob<ContentOriginalInput>(
                     description,
                     1 /* process one file at a time, no use for batching */,
                     parallelFiles,
                     numParallelThreadsFiles,
                     parallelTerminationTimeoutHoursFiles,
-                    Fetchers.folderFetcher( 
-                            new ReadControlFileFunction( this.configuration.getDownloadDirPath(), this.configuration.getProcessingDirPath() ),
-                            // First: process old data from processing for the same instance which was left over when the job got killed
-                            new DownloadDir( 
-                                    this.configuration.getProcessingDirPath(), 
-                                    ToProcessingDirMover.createInstanceIdPrefix( this.configuration.getInstanceId() ) , 
-                                    this.configuration.getControlFileEnding() 
-                            ),
-                            new DownloadDir( this.configuration.getDownloadDirPath(), null, this.configuration.getControlFileEnding() )
-                            ),
+                    fetcher,
                     timeLoggedContentProcessor,
                     TimeLoggingProcessor.wrap( "File Import", processor ),
                     fileProcessingListeners,
                     getPanicCallback());
+        }
+
+ 
+
+        public Builder<ContentOriginalInput> setFetcher( Fetcher<ControlFile> fetcher ) {
+            this.fetcher = fetcher;
+            return this;
         }
     }
 
