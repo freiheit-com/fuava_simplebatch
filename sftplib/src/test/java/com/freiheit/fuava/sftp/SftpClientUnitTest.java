@@ -16,10 +16,13 @@
  */
 package com.freiheit.fuava.sftp;
 
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.SftpException;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.SftpException;
 
 /**
  * Tests sftp client class.
@@ -33,7 +36,13 @@ public class SftpClientUnitTest {
     public void testFalseHostNameException() {
 
         try {
-            final SftpClient client = new SftpClient( "local,host", 1234, "user", "pass" );
+            final SftpClient client =
+                new SftpClient.Builder()
+                    .setHost( "local,host" )
+                    .setPort( 1234 )
+                    .setUsername( "user" )
+                    .setPassword( "pass" )
+                    .createSftpClient();
             client.listFolder( "Freiheit_com" );
         } catch ( final SftpException e ) {
             Assert.assertTrue( e.getCause().toString().contains( "UnknownHostException" ) );
@@ -41,6 +50,23 @@ public class SftpClientUnitTest {
             Assert.assertEquals( e.getMessage(), "java.net.UnknownHostException: local,host" );
         }
 
+    }
+
+    @Test
+    public void testDisabledHostkeyCheckingWithKnownHostsFails() {
+
+        try {
+            new SftpClient.Builder()
+                .setHost( "localhost" )
+                .setPort( 1234 )
+                .setUsername( "user" )
+                .setStrictHostkeyChecking( SftpClient.StrictHostkeyChecking.OFF )
+                .setKnownHostsInputStream( new ByteArrayInputStream( "foo".getBytes( StandardCharsets.UTF_8) ) )
+                .createSftpClient();
+            Assert.fail( "No exception thrown despite combination of arguments." );
+        } catch ( final IllegalArgumentException e ) {
+            // pass
+        }
     }
 
 }
