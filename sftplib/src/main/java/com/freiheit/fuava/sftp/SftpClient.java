@@ -21,13 +21,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.annotation.CheckForNull;
-
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
-
 import com.freiheit.fuava.sftp.util.ConvertUtil;
 import com.freiheit.fuava.sftp.util.FileType;
 import com.freiheit.fuava.sftp.util.FilenameUtil;
+import com.google.common.base.Preconditions;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
@@ -41,6 +40,17 @@ import com.jcraft.jsch.SftpException;
  * @author Dmitrijs Barbarins (dmitrijs.barbarins@freiheit.com) on 22.07.15.
  */
 public class SftpClient implements RemoteClient {
+
+    /**
+     * Whether to use StrictHostKeyChecking or not.
+     *
+     * If enabled it will be impossible to connect to any host not present (or with another key than) in the
+     * known hosts file (which you can provide yourself, if you don't want to use the system default).
+     *
+     * You should have good reasons to disable this.
+     */
+    public enum StrictHostkeyChecking { ON, OFF }
+
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger( SftpClient.class );
 
     private static final int DEFAULT_SOCKET_TIMEOUT_MS = 6000; // ms
@@ -52,6 +62,8 @@ public class SftpClient implements RemoteClient {
     private final String username;
     private final String password;
     private final int socketTimeoutMs;
+    private final InputStream knownHostsInputStream;
+    private final StrictHostkeyChecking strictHostkeyChecking;
 
     private ChannelSftp sftpChannel;
 
@@ -61,21 +73,30 @@ public class SftpClient implements RemoteClient {
      *
      */
     public SftpClient( final String host, final Integer port, final String username, final String password ) {
-        this.host = host;
-        this.port = port;
-        this.username = username;
-        this.password = password;
-        this.socketTimeoutMs = DEFAULT_SOCKET_TIMEOUT_MS;
+        this( host, port, username, password, DEFAULT_SOCKET_TIMEOUT_MS );
     }
 
     public SftpClient( final String host, final Integer port, final String username, final String password, final int socketTimeoutMs ) {
+        this( host, port, username, password, socketTimeoutMs, null, StrictHostkeyChecking.ON );
+    }
+
+    SftpClient(
+        final String host,
+        final Integer port,
+        final String username,
+        final String password,
+        final int socketTimeoutMs,
+        final InputStream knownHostsInputStream,
+        final StrictHostkeyChecking strictHostkeyChecking
+    ) {
         this.host = host;
         this.port = port;
         this.username = username;
         this.password = password;
         this.socketTimeoutMs = socketTimeoutMs;
+        this.knownHostsInputStream = knownHostsInputStream;
+        this.strictHostkeyChecking = strictHostkeyChecking;
     }
-
 
     public String getRemoteSystemType() {
         return CHANNEL_TYPE_SFTP;
@@ -97,18 +118,21 @@ public class SftpClient implements RemoteClient {
 
     protected Session createSession() throws JSchException {
         final JSch jsch = new JSch();
-        final Session session = jsch.getSession(
-                username,
-                host,
-                port
-                );
+        final Session session = jsch.getSession( username, host, port );
 
-        //        If this property is set to ``yes'', jsch will never automatically add
-        //        host keys to the $HOME/.ssh/known_hosts file, and refuses to connect
-        //        to hosts whose host key has changed.  This property forces the user
-        //        to manually add all new hosts.  If this property is set to ``no'',
-        //        jsch will automatically add new host keys to the user known hosts files.
-        session.setConfig( "StrictHostKeyChecking", "no" );
+        if ( this.knownHostsInputStream != null ) {
+            jsch.setKnownHosts( this.knownHostsInputStream );
+        }
+
+        if ( this.strictHostkeyChecking == StrictHostkeyChecking.OFF ) {
+            LOG.warn( "Session created with StrictHostKeyChecking disabled." );
+            // If this property is set to ``yes'', jsch will never automatically add
+            // host keys to the $HOME/.ssh/known_hosts file, and refuses to connect
+            // to hosts whose host key has changed.  This property forces the user
+            // to manually add all new hosts.  If this property is set to ``no'',
+            // jsch will automatically add new host keys to the user known hosts files.
+            session.setConfig( "StrictHostKeyChecking", "no" );
+        }
         session.setPassword( password );
 
         // socket timeout in milliseconds
@@ -286,6 +310,66 @@ public class SftpClient implements RemoteClient {
                     channel().cd( dir );
                 }
             }
+        }
+    }
+
+    /**
+     * A builder for SftpClients for your convenience.
+     */
+    public static class Builder {
+
+        private String host;
+        private Integer port;
+        private String username;
+        private String password;
+        private int socketTimeoutMs = DEFAULT_SOCKET_TIMEOUT_MS;
+        private InputStream knownHostsInputStream = null;
+        private SftpClient.StrictHostkeyChecking strictHostkeyChecking = StrictHostkeyChecking.ON;
+
+        public Builder setHost( final String host ) {
+            this.host = host;
+            return this;
+        }
+
+        public Builder setPort( final Integer port ) {
+            this.port = port;
+            return this;
+        }
+
+        public Builder setUsername( final String username ) {
+            this.username = username;
+            return this;
+        }
+
+        public Builder setPassword( final String password ) {
+            this.password = password;
+            return this;
+        }
+
+        public Builder setSocketTimeoutMs( final int socketTimeoutMs ) {
+            this.socketTimeoutMs = socketTimeoutMs;
+            return this;
+        }
+
+        public Builder setKnownHostsInputStream( final InputStream knownHostsInputStream ) {
+            this.knownHostsInputStream = knownHostsInputStream;
+            return this;
+        }
+
+        public Builder setStrictHostkeyChecking( final SftpClient.StrictHostkeyChecking strictHostkeyChecking ) {
+            this.strictHostkeyChecking = strictHostkeyChecking;
+            return this;
+        }
+
+        public SftpClient createSftpClient() {
+            Preconditions.checkNotNull( this.host, "You have to provide a host" );
+            Preconditions.checkNotNull( this.port, "You have to provide a port" );
+            Preconditions.checkNotNull( this.username, "You have to provide a username" );
+            if ( this.strictHostkeyChecking == StrictHostkeyChecking.OFF ) {
+                Preconditions.checkArgument( this.knownHostsInputStream == null,
+                    "You disabled StrictHostKeyChecking but provided knownHosts (which would have no effect)." );
+            }
+            return new SftpClient( host, port, username, password, socketTimeoutMs, knownHostsInputStream, strictHostkeyChecking );
         }
     }
 
