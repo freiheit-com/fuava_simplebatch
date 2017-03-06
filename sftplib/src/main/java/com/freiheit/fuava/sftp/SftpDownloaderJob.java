@@ -16,6 +16,7 @@
  */
 package com.freiheit.fuava.sftp;
 
+import org.apache.commons.lang.StringUtils;
 import com.freiheit.fuava.sftp.util.FileType;
 import com.freiheit.fuava.sftp.util.RemoteConfiguration;
 import com.freiheit.fuava.simplebatch.BatchJob;
@@ -66,7 +67,8 @@ public class SftpDownloaderJob {
 
     /**
      * creates a batch job that fetches the latest file for a given pattern, 
-     * moving older files to a skipped directory.
+     * moving older files to a skipped directory. Moves files to a
+     * processing dir while downloading them.
      *
      * @param config
      *            configuration of downloader job.
@@ -84,15 +86,24 @@ public class SftpDownloaderJob {
             final RemoteClient client,
             final RemoteConfiguration remoteConfiguration,
             final FileType fileType ) {
-        return makeDownloaderJob(
-                config, client, remoteConfiguration,
-                new SftpOldFilesMovingLatestFileFetcher(
+        SftpOldFilesMovingLatestFileFetcher fetcher;
+        if ( remoteConfiguration.isMoveToProcessing() ) {
+            fetcher = new SftpOldFilesMovingLatestFileFetcher(
                     client,
                     remoteConfiguration.getSkippedFolder(),
                     remoteConfiguration.getProcessingFolder(),
                     remoteConfiguration.getIncomingFolder(),
-                    fileType 
-                ) );
+                    fileType );
+
+        } else {
+            fetcher = new SftpOldFilesMovingLatestFileFetcher(
+                    client,
+                    remoteConfiguration.getSkippedFolder(),
+                    remoteConfiguration.getIncomingFolder(),
+                    fileType
+            );
+        }
+        return makeDownloaderJob( config, client, remoteConfiguration, fetcher );
     }
 
     /**
