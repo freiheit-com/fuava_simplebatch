@@ -33,7 +33,6 @@ import com.google.common.collect.ImmutableMap;
 public class SftpOldFilesMovingLatestFileFetcher extends SftpOldFilesMovingLatestMultiFileFetcher {
 
     private final FileType fileType;
-
     /**
      * ctor.
      *
@@ -55,6 +54,28 @@ public class SftpOldFilesMovingLatestFileFetcher extends SftpOldFilesMovingLates
             final String processingFolder,
             final String incomingFilesFolder, final FileType fileType ) {
         super( remoteClient, skippedFolder, processingFolder, incomingFilesFolder );
+        this.fileType = fileType;
+    }
+
+    /**
+     * Constructor for a fetcher that will not move files to a processing-dir.
+     *
+     * @param remoteClient
+     *            SFTP client
+     * @param incomingFilesFolder
+     *            Where to locate files to move.
+     * @param skippedFolder
+     *            Full path to the folder for skipped files. Fetcher moves
+     *            outdated files straight to the skipped folder.
+     * @param fileType
+     *            The type of file to be downloaded.
+     */
+    public SftpOldFilesMovingLatestFileFetcher(
+            final RemoteClient remoteClient,
+            final String skippedFolder,
+            final String incomingFilesFolder,
+            final FileType fileType ) {
+        super( remoteClient, skippedFolder, incomingFilesFolder );
         this.fileType = fileType;
     }
 

@@ -23,7 +23,6 @@ package com.freiheit.fuava.sftp.util;
  */
 public interface RemoteConfiguration {
 
-
     /**
      * Directory on the sftp where the requested files are located.
      *
@@ -54,9 +53,11 @@ public interface RemoteConfiguration {
 
     String getProcessingFolder();
 
-
-
-
-
+    /**
+     * Toggle whether files are moved to the processing folder
+     */
+    default boolean isMoveToProcessing() {
+        return true;
+    }
 
 }

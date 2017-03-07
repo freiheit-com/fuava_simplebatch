@@ -18,6 +18,7 @@ package com.freiheit.fuava.sftp;
 
 import com.freiheit.fuava.sftp.util.RemoteConfiguration;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
+import com.google.common.base.Preconditions;
 
 /**
  * The SFTP-Server Configuration.
@@ -31,6 +32,7 @@ public class RemoteConfigurationWithPlaceholderImpl implements RemoteConfigurati
     private final String remoteProcessingFolder;
     private final String remoteSkippedFolder;
     private final String remoteArchivedFolder;
+    private final boolean moveToProcessing;
 
     /**
      * Server configuration for sftp.
@@ -42,14 +44,36 @@ public class RemoteConfigurationWithPlaceholderImpl implements RemoteConfigurati
      * @param remoteArchivedFolder location of files have been downloaded successfully from sftp server
      *
      */
-    public RemoteConfigurationWithPlaceholderImpl(final String remoteFilesIncomingFolder, final String remoteProcessingFolder, final String remoteSkippedFolder,
-                                                  final String remoteArchivedFolder) {
-
+    public RemoteConfigurationWithPlaceholderImpl(
+            final String remoteFilesIncomingFolder,
+            final String remoteProcessingFolder,
+            final String remoteSkippedFolder,
+            final String remoteArchivedFolder) {
+        Preconditions.checkNotNull( remoteFilesIncomingFolder, "remoteIncomingFolder must be provided, but was null" );
+        Preconditions.checkNotNull( remoteSkippedFolder, "remoteSkippedFolder must be provided, but was null" );
+        Preconditions.checkNotNull( remoteArchivedFolder, "remoteArchivedFolder must be provided, but was null" );
         this.remoteArchivedFolder = FileUtils.substitutePlaceholder( remoteArchivedFolder );
         this.remoteFilesIncomingFolder = FileUtils.substitutePlaceholder( remoteFilesIncomingFolder );
-        this.remoteProcessingFolder = FileUtils.substitutePlaceholder( remoteProcessingFolder );
+        this.remoteProcessingFolder = remoteProcessingFolder == null
+                ? null : FileUtils.substitutePlaceholder( remoteProcessingFolder );
         this.remoteSkippedFolder = FileUtils.substitutePlaceholder( remoteSkippedFolder );
+        this.moveToProcessing = remoteProcessingFolder != null;
+    }
 
+    /**
+     * Server configuration for sftp. This configuration will cause files not to be moved to a processing folder.
+     * NOTE: adds current date to the archived and skipped folders.
+     *
+     * @param remoteFilesIncomingFolder location of files located on sftp server
+     * @param remoteSkippedFolder location of files being skipped on sftp server
+     * @param remoteArchivedFolder location of files have been downloaded successfully from sftp server
+     *
+     */
+    public RemoteConfigurationWithPlaceholderImpl(
+            final String remoteFilesIncomingFolder,
+            final String remoteSkippedFolder,
+            final String remoteArchivedFolder ) {
+        this(remoteFilesIncomingFolder, null, remoteSkippedFolder, remoteArchivedFolder );
     }
 
 
@@ -67,5 +91,10 @@ public class RemoteConfigurationWithPlaceholderImpl implements RemoteConfigurati
 
     public String getArchivedFolder() {
         return remoteArchivedFolder;
+    }
+
+    @Override
+    public boolean isMoveToProcessing() {
+        return moveToProcessing;
     }
 }

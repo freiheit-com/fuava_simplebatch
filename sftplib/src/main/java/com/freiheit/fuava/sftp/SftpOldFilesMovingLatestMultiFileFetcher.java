@@ -16,6 +16,7 @@
  */
 package com.freiheit.fuava.sftp;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.util.Collections;
@@ -32,6 +33,7 @@ import com.freiheit.fuava.sftp.util.FilenameUtil;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.result.Result;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
@@ -56,6 +58,7 @@ public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetche
     private final String skippedFolder;
     private final String processingFolder;
     private final String incomingFilesFolder;
+    private final boolean moveToProcessing;
 
     /**
      * ctor.
@@ -75,10 +78,32 @@ public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetche
             final String skippedFolder,
             final String processingFolder,
             final String incomingFilesFolder ) {
+        Preconditions.checkNotNull( remoteClient, "Remote client must be provided but was null" );
+        Preconditions.checkNotNull( skippedFolder, "Skipped folder must be provided, but was null" );
+        Preconditions.checkNotNull( incomingFilesFolder, "Incoming folder must be provided, but was null" );
         this.remoteClient = remoteClient;
         this.skippedFolder = skippedFolder;
         this.processingFolder = processingFolder;
         this.incomingFilesFolder = incomingFilesFolder;
+        this.moveToProcessing = processingFolder != null;
+    }
+
+    /**
+     * Constructor for a fetcher that does not move files to a processing-dir.
+     *
+     * @param remoteClient
+     *            SFTP client
+     * @param incomingFilesFolder
+     *            Where to locate files to move.
+     * @param skippedFolder
+     *            Full path to the folder for skipped files. Fetcher moves
+     *            outdated files straight to the skipped folder.
+     */
+    public SftpOldFilesMovingLatestMultiFileFetcher(
+            final RemoteClient remoteClient,
+            final String skippedFolder,
+            final String incomingFilesFolder ) {
+        this( remoteClient, skippedFolder, null, incomingFilesFolder );
     }
 
     /**
@@ -165,7 +190,11 @@ public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetche
 
                 final long timestamp = FilenameUtil.getDateFromFilename( okFile );
                 if ( isLatestFile( timestamp, latestTimestamp ) ) {
-                    files.add( moveToProcessing( fileType, latestTimestamp, okFile ) );
+                    if ( moveToProcessing ) {
+                        files.add( moveToProcessing( fileType, latestTimestamp, okFile ) );
+                    } else {
+                        files.add( success( fileType, timestamp, okFile ) );
+                    }
                 } else {
                     // this file is older then the latest one, move it to the skipped folder
                     silentlyMoveToSkipped( fileType, okFile );
@@ -179,6 +208,21 @@ public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetche
             LOG.warn( "Unexpected number of Items in result: " + result );
         }
         return result;
+    }
+
+    private Result<FetchedItem<SftpFilename>, SftpFilename> success(
+            final FileType fileType,
+            final long timestamp,
+            final String okFile ) {
+        // Get file name of latest file for creating the SftpFilename
+        final String dataFilename = FilenameUtil.getDataFileOfOkFile( fileType, okFile );
+        final SftpFilename sftpFilename = new SftpFilename(
+                dataFilename,
+                incomingFilesFolder + File.separator + dataFilename,
+                fileType,
+                Long.toString( timestamp ) );
+        final FetchedItem<SftpFilename> fetchedItem = FetchedItem.of( sftpFilename, 1 );
+        return Result.success( fetchedItem, sftpFilename );
     }
 
     private Result<FetchedItem<SftpFilename>, SftpFilename> moveToProcessing( final FileType fileType, final long latestTimestamp,
