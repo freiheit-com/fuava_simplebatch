@@ -21,10 +21,15 @@ import java.nio.file.Path;
 import com.google.common.base.MoreObjects;
 
 public class ControlFilePersistenceOutputInfo {
+
     private final Path ctrlFile;
 
     public ControlFilePersistenceOutputInfo( final Path ctrlFile ) {
         this.ctrlFile = ctrlFile;
+    }
+
+    public Path getCtrlFile() {
+        return ctrlFile;
     }
 
     @Override
