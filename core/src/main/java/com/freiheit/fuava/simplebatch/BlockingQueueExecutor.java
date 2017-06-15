@@ -16,8 +16,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
 final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>>> {
-    private static final Logger LOG = LoggerFactory.getLogger( BatchJob.class );
-    
+    private static final Logger LOG = LoggerFactory.getLogger( BlockingQueueExecutor.class );
+
     private final AtomicBoolean finished = new AtomicBoolean();
     private final int numParallelThreads;
     private final int processingBatchSize;
@@ -26,12 +26,12 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
     private final long terminationTimeoutMs;
 
     private final ThreadGroup threadGroup;
-    
+
     private static final class BlockingQueueConsumer<OriginalInput> implements Runnable {
         private final AtomicBoolean finished;
         private final LinkedBlockingQueue<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> queue;
         private final Consumer<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> processor;
-        
+
         public BlockingQueueConsumer(
                 final AtomicBoolean aborted,
                 final LinkedBlockingQueue<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> queue,
@@ -41,10 +41,10 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
             this.queue = queue;
             this.processor = processor;
         }
-        
+
         @Override
         public void run() {
-           
+
             while ( true ) {
                 // waiting up to one second for the queue to fill. Normally, we should never wait here.
                 try {
@@ -53,9 +53,9 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
                         processor.accept( list );
                     } else {
                         if ( finished.get() ) {
-                            LOG.info( "Did not find an item to process, and there will not be any more" );
+                            LOG.debug( "Did not find an item to process, and there will not be any more" );
                         } else {
-                            LOG.info( "Did not find an item to process, will try again" );
+                            LOG.debug( "Did not find an item to process, will try again" );
                         }
                     }
                 } catch (final InterruptedException e) {
@@ -74,7 +74,7 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
         }
     }
     public BlockingQueueExecutor(
-            final int numParallelThreads, 
+            final int numParallelThreads,
             final int processingBatchSize,
             final long terminationTimeoutMs,
             final Consumer<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> processor,
@@ -87,16 +87,16 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
         this.processor = processor;
         this.threadGroup = threadGroup;
     }
-    
-    
+
+
     @Override
     public void accept( final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceIterable ) {
         this.finished.set( false );
-        
+
         // Start the consumers
         final List<Thread> threads = createThreads( numParallelThreads, threadGroup );
-        
-        threads.stream().forEach( t -> {LOG.info( "Starting " + t.getName() + "" );t.start();} ); 
+
+        threads.stream().forEach( t -> {LOG.info( "Starting " + t.getName() + "" );t.start();} );
 
         final long maxEndTime = System.currentTimeMillis() + terminationTimeoutMs;
 
@@ -128,7 +128,7 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
             } catch ( final Exception e ) {
                 LOG.error( "Thread interrupted during termination - not all items might have been processed correctly", e );
             }
-        } 
+        }
 
         if (!queue.isEmpty()) {
             throw new IllegalStateException( "Processing did not finish within time and was aborted. Timeout was " + terminationTimeoutMs + " ms " );
@@ -140,7 +140,7 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
     /**
      * The number of milliseconds we can at most wait - but ensures that always a certain minimum time is used for waiting even if the configured time is not available any more.
      * @param maxEndTime The end time we try to reach at most
-     * @return the number ms to wait 
+     * @return the number ms to wait
      */
     private long getTimeoutMs( final long maxEndTime ) {
         return Math.max( maxEndTime - System.currentTimeMillis(), TimeUnit.SECONDS.toMillis( 1 ) );
@@ -152,11 +152,11 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
         for ( int i = 0; i < numParallelThreads; i++ ) {
             final String threadName = "SBProc_" + Strings.padStart( Integer.toString( i ), 2, '0');
             LOG.info( "Creating Processing Thread " + threadName );
-            final Thread t = new Thread(group, new BlockingQueueExecutor.BlockingQueueConsumer<OriginalInput>( finished, queue, processor ), threadName );
+            final Thread t = new Thread(group, new BlockingQueueExecutor.BlockingQueueConsumer<>( finished, queue, processor ), threadName );
             t.setDaemon( false /* VM should not exit while this thread is still alive */ );
             threads.add( t );
         }
         return threads.build();
     }
-    
+
 }
