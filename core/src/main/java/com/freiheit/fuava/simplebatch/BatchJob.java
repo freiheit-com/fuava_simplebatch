@@ -129,7 +129,7 @@ public class BatchJob<OriginalInput, Output> {
         private Processor<FetchedItem<OriginalInput>, OriginalInput, Output> processor;
 
         private final ArrayList<ProcessingResultListener<OriginalInput, Output>> listeners =
-                new ArrayList<ProcessingResultListener<OriginalInput, Output>>();
+                new ArrayList<>();
         private String description;
 
         public Builder() {
@@ -142,7 +142,7 @@ public class BatchJob<OriginalInput, Output> {
         public boolean isParallel() {
             return parallel;
         }
-        
+
         /**
         * Set to false to process in current thread. Set true to use multiple Threads for processing (each chunk is thread confined though).
         * @return this for method chaining
@@ -151,7 +151,7 @@ public class BatchJob<OriginalInput, Output> {
             this.parallel = parallel;
             return this;
         }
-        
+
         /**
          * Set the callback for 'panic' situations like virtual machine errors where it makes no sense to try and continue processing.
          * Default behaviour is, that System.exit() is called.
@@ -162,23 +162,23 @@ public class BatchJob<OriginalInput, Output> {
             this.panicCallback = panicCallback;
             return this;
         }
-        
+
 
         /**
-        * Set the number of hours this jobs waits for the spawned chunks to be processed. 
+        * Set the number of hours this jobs waits for the spawned chunks to be processed.
         * Applies only if you use {@link #setNumParallelThreads(Integer)}.
-        * 
+        *
         * @return this for method chaining
         */
         public Builder<OriginalInput, Output> setParallelTerminationTimeoutHours( final int parallelTerminationTimeoutHours ) {
             this.parallelTerminationTimeoutHours = parallelTerminationTimeoutHours;
             return this;
         }
-        
+
         public int getParallelTerminationTimeoutHours() {
             return parallelTerminationTimeoutHours;
         }
-        
+
         /**
          * The number of threads to use for parallel processing. If set to null and parallel is set to true, Java 8 parallel streaming will be used.
          * @return this for method chaining
@@ -187,16 +187,16 @@ public class BatchJob<OriginalInput, Output> {
             this.numParallelThreads = numParallelThreads;
             return this;
         }
-        
+
         public Integer getNumParallelThreads() {
             return numParallelThreads;
         }
-       
-        
+
+
         public boolean isPrintFinalTimeMeasures() {
             return printFinalTimeMeasures;
         }
-        
+
         /**
         * Whether or not the final performance measures should be printed after run has finished
         * @return this for method chaining
@@ -284,7 +284,7 @@ public class BatchJob<OriginalInput, Output> {
 
         public BatchJob<OriginalInput, Output> build() {
             final PanicCallback panicCallback = getPanicCallback();
-            return new BatchJob<OriginalInput, Output>( description, processingBatchSize, parallel, numParallelThreads, parallelTerminationTimeoutHours, fetcher, processor, printFinalTimeMeasures, listeners, panicCallback );
+            return new BatchJob<>( description, processingBatchSize, parallel, numParallelThreads, parallelTerminationTimeoutHours, fetcher, processor, printFinalTimeMeasures, listeners, panicCallback );
         }
 
         public PanicCallback getPanicCallback() {
@@ -314,9 +314,9 @@ public class BatchJob<OriginalInput, Output> {
      * Called for {@link VirtualMachineError}s such as {@link OutOfMemoryError}.
      */
     public interface PanicCallback {
-       void panic( String reason, int code ); 
+       void panic( String reason, int code );
     }
-    
+
     /**
      * Default implementation of the panic callback which simply calls System.exit.
      */
@@ -329,9 +329,9 @@ public class BatchJob<OriginalInput, Output> {
             System.err.println( message );
             System.exit( code );
         }
-        
+
     }
-    
+
     /**
      * @param description The Description of the job
      * @param processingBatchSize How many items from the fetcher are put together in one chunk and processed together
@@ -367,7 +367,7 @@ public class BatchJob<OriginalInput, Output> {
     }
 
     public static <Input, Output> Builder<Input, Output> builder() {
-        return new Builder<Input, Output>();
+        return new Builder<>();
     }
 
     @CheckReturnValue
@@ -375,7 +375,7 @@ public class BatchJob<OriginalInput, Output> {
         final ResultStatistics.Builder<OriginalInput, Output> resultBuilder = ResultStatistics.builder();
 
         final DelegatingProcessingResultListener<OriginalInput, Output> listeners =
-                new DelegatingProcessingResultListener<OriginalInput, Output>(
+                new DelegatingProcessingResultListener<>(
                         ImmutableList.<ProcessingResultListener<OriginalInput, Output>> builder().add( resultBuilder ).addAll(
                                 this.listeners ).build()
                 );
@@ -388,24 +388,24 @@ public class BatchJob<OriginalInput, Output> {
             // Iterables could be lazy, but if it is a collection it should not be lazy so we can
             // count and report the result of the prepare stage.
             final Collection<?> collection = ( Collection<?> ) sourceIterable;
-            ( ( TimeLoggingProcessor<?,?,?> ) this.persistence ).addNumPreparedItems( 
-                    collection.size(), 
+            ( ( TimeLoggingProcessor<?,?,?> ) this.persistence ).addNumPreparedItems(
+                    collection.size(),
                     FluentIterable.from( collection ).filter( o -> ( ( Result<?, ?> ) o ).isSuccess() ).size(),
                     FluentIterable.from( collection ).filter( o -> ( ( Result<?, ?> ) o ).isFailed() ).size()
             );
         }
-        
+
         process( listeners, sourceIterable );
 
         listeners.onAfterRun();
         resultBuilder.setListenerDelegationFailures( listeners.hasDelegationFailures() );
 
         final ResultStatistics statistics = resultBuilder.build();
-        
+
         if ( this.printFinalTimeMeasures && this.persistence instanceof TimeLoggingProcessor ) {
             ( ( TimeLoggingProcessor<?,?,?> ) this.persistence ).logFinalCounts();
         }
-        
+
         return statistics;
     }
 
@@ -418,33 +418,36 @@ public class BatchJob<OriginalInput, Output> {
         }
     }
 
-    protected void processWithStreams( 
+    protected void processWithStreams(
             final DelegatingProcessingResultListener<OriginalInput, Output> listeners,
             final boolean useParallelStream,
             final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceIterable ) {
-        
+
         final Iterable<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> partitions = Iterables.partition( sourceIterable, processingBatchSize );
-        
+
         StreamSupport.stream( partitions.spliterator(), parallel ).forEach( new CallProcessor( listeners, panicCallback ) );
     }
-    
-    private void processWithBlockingQueue( 
+
+    private void processWithBlockingQueue(
             final DelegatingProcessingResultListener<OriginalInput, Output> listeners,
             final int numParallelThreads,
             final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceIterable ) {
         final ThreadGroup threadGroup = new BatchJobThreadGroup( "Simplebatch Processing", this.panicCallback );
-        
+
         try {
-            new BlockingQueueExecutor<OriginalInput>( 
-                    numParallelThreads, 
-                    processingBatchSize, 
-                    TimeUnit.HOURS.toMillis( this.parallelTerminationTimeoutHours ), 
+            new BlockingQueueExecutor<>(
+                    numParallelThreads,
+                    processingBatchSize,
+                    TimeUnit.HOURS.toMillis( this.parallelTerminationTimeoutHours ),
                     new CallProcessor( listeners, panicCallback ),
                     threadGroup)
             .accept( sourceIterable );
+        } catch ( final Throwable throwable ) {
+            LOG.error( "Error occurred in BlockingQueueExecutor.accept", throwable );
+            throw throwable;
         } finally {
             threadGroup.destroy();
         }
     }
-    
+
 }
