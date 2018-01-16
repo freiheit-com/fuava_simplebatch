@@ -18,6 +18,7 @@ package com.freiheit.fuava.sftp;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.annotation.CheckForNull;
@@ -65,6 +66,8 @@ public class SftpClient implements RemoteClient {
     private final InputStream knownHostsInputStream;
     private final StrictHostkeyChecking strictHostkeyChecking;
 
+    private Session session = null;
+
     private ChannelSftp sftpChannel;
 
 
@@ -111,9 +114,16 @@ public class SftpClient implements RemoteClient {
      */
     private ChannelSftp channel() throws JSchException {
         if ( sftpChannel == null || !sftpChannel.isConnected() ) {
-            sftpChannel = login( createSession() );
+            sftpChannel = login( getSession() );
         }
         return sftpChannel;
+    }
+
+    protected Session getSession() throws JSchException {
+        if( this.session == null ){
+            this.session = createSession();
+        }
+        return this.session;
     }
 
     protected Session createSession() throws JSchException {
