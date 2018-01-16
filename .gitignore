@@ -24,3 +24,5 @@ hs_err_pid*
 # IDEA
 *.iml
 .idea/
+
+hostkey.ser
