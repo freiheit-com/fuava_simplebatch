@@ -96,7 +96,7 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
         // Start the consumers
         final List<Thread> threads = createThreads( numParallelThreads, threadGroup );
 
-        threads.stream().forEach( t -> {LOG.info( "Starting " + t.getName() + "" );t.start();} );
+        threads.stream().forEach( t -> {LOG.debug( "Starting {}", t.getName() );t.start();} );
 
         final long maxEndTime = System.currentTimeMillis() + terminationTimeoutMs;
 
@@ -119,10 +119,10 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
         this.finished.set( true );
 
 
-        LOG.info( "Shutting down Executor" );
+        LOG.debug( "Shutting down Executor" );
         for ( final Thread t: threads ) {
             final long timeoutMs = getTimeoutMs(maxEndTime);
-            LOG.info( "Waiting for " + t.getName() + " to terminate (up to " + timeoutMs + " ms)" );
+            LOG.debug( "Waiting for {} to terminate (up to {} ms)", t.getName(), timeoutMs );
             try {
                 t.join( timeoutMs );
             } catch ( final Exception e ) {
@@ -151,7 +151,7 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
         final ImmutableList.Builder<Thread> threads = ImmutableList.builder();
         for ( int i = 0; i < numParallelThreads; i++ ) {
             final String threadName = "SBProc_" + Strings.padStart( Integer.toString( i ), 2, '0');
-            LOG.info( "Creating Processing Thread " + threadName );
+            LOG.debug( "Creating Processing Thread {}", threadName );
             final Thread t = new Thread(group, new BlockingQueueExecutor.BlockingQueueConsumer<>( finished, queue, processor ), threadName );
             t.setDaemon( false /* VM should not exit while this thread is still alive */ );
             threads.add( t );
