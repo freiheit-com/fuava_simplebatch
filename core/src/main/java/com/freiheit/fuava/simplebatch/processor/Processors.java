@@ -145,6 +145,30 @@ public class Processors {
     }
 
     /**
+     * A processor that processes a single item, allowing access to the original
+     * fetched item.
+     *
+     *
+     * Depending on your setup, you must ensure that your implementation opens a
+     * transaction and performs a rollback if - and only if - an exception is
+     * thrown.
+     *
+     * Please note that in most cases you should use
+     * {@link #retryableBatchedFunction(Function)} and implement that one as
+     * performant as possible.
+     *
+     * Persisting of each item independently usually is a lot slower, so use
+     * this functionality only if it would not be faster to process the data in
+     * a batch.
+     *
+     * @see #retryableBatchedFunction(Function)
+     */
+    public static <OriginalItem, Input, Output> Processor<OriginalItem, Input, Output> singleResultFunction(
+            final Function<Result<OriginalItem, Input>, Output> function ) {
+        return new SingleResultFunctionProcessor<OriginalItem, Input, Output>( function );
+    }
+
+    /**
      * Persists the processed data to files in a directory. Each Item will be
      * written to a single file.
      *
