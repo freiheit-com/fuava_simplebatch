@@ -30,7 +30,7 @@ import com.google.common.base.Function;
  * If persisting of a batch failed, it will be divided into singleton batches
  * and retried.
  *
- * You have to ensure that aborting and retying the function will not lead to
+ * You have to ensure that aborting and retrying the function will not lead to
  * illegal states.
  *
  * If your function persists to databases for example, you may need to ensure

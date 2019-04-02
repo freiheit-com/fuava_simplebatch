@@ -1,5 +1,5 @@
-/*
- * Copyright 2015 freiheit.com technologies gmbh
+/*******************************************************************************
+ * Copyright (c) 2019 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,10 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- */
+ *
+ * @author: sami.emad@freiheit.com
+ ******************************************************************************/
+
 package com.freiheit.fuava.simplebatch.processor;
 
 import com.freiheit.fuava.simplebatch.result.Result;
