@@ -119,7 +119,7 @@ public class SftpClient implements RemoteClient {
         return sftpChannel;
     }
 
-    protected Session getSession() throws JSchException {
+    protected synchronized Session getSession() throws JSchException {
         if( this.session == null ){
             this.session = createSession();
         }
