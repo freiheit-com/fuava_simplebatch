@@ -8,7 +8,7 @@ idea.project.languageLevel = '1.8'
 
 subprojects {
 
-    version='0.9.0'
+    version='0.9.1-SNAPSHOT'
 
 
     repositories {
