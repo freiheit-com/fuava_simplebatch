@@ -66,7 +66,7 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
                  * There are no items available and there will not be any more items put into the queue - return
                  */
                 if ( this.queue.isEmpty() && finished.get() ) {
-                    LOG.info( "No more items, will finish" );
+                    LOG.debug( "No more items, will finish" );
                     return;
                 }
                 // there should be more items, or at least there should be more items to become available when we are waiting longer
