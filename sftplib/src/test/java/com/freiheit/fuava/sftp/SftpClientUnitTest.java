@@ -120,7 +120,7 @@ public class SftpClientUnitTest {
     private SshServer initSFTPServer() {
         final SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setPort( 0 );
-        sshd.setKeyPairProvider( new SimpleGeneratorHostKeyProvider( Paths.get("hostkey.set") ) );
+        sshd.setKeyPairProvider( new SimpleGeneratorHostKeyProvider( Paths.get( "hostkey.set" ) ) );
 
         final List<NamedFactory<UserAuth>> userAuthFactories = ImmutableList.of( UserAuthNoneFactory.INSTANCE );
         sshd.setUserAuthFactories(userAuthFactories);
