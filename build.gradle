@@ -28,7 +28,7 @@ subprojects {
 
     dependencies {
         testCompile 'org.testng:testng:6.9.4'
-        testCompile 'org.apache.sshd:sshd-sftp:0.11.0'
+        testCompile 'org.apache.sshd:sshd-sftp:2.3.0'
     }
 
     checkstyle {
