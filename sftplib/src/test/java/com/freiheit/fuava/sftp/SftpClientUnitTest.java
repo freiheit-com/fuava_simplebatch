@@ -16,25 +16,25 @@
  */
 package com.freiheit.fuava.sftp;
 
+import com.google.common.collect.ImmutableList;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.SftpException;
+import org.apache.sshd.common.NamedFactory;
+import org.apache.sshd.server.SshServer;
+import org.apache.sshd.server.auth.UserAuth;
+import org.apache.sshd.server.auth.UserAuthNoneFactory;
+import org.apache.sshd.server.command.Command;
+import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
+import org.apache.sshd.server.subsystem.sftp.SftpSubsystemFactory;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-
-import org.apache.sshd.SshServer;
-import org.apache.sshd.common.NamedFactory;
-import org.apache.sshd.server.Command;
-import org.apache.sshd.server.UserAuth;
-import org.apache.sshd.server.auth.UserAuthNone;
-import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
-import org.apache.sshd.server.sftp.SftpSubsystem;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-import com.google.common.collect.ImmutableList;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.SftpException;
 
 /**
  * Tests sftp client class.
@@ -120,13 +120,13 @@ public class SftpClientUnitTest {
     private SshServer initSFTPServer() {
         final SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setPort( 0 );
-        sshd.setKeyPairProvider( new SimpleGeneratorHostKeyProvider( "hostkey.ser" ) );
+        sshd.setKeyPairProvider( new SimpleGeneratorHostKeyProvider( Paths.get("hostkey.set") ) );
 
-        final List<NamedFactory<UserAuth>> userAuthFactories = ImmutableList.of( new UserAuthNone.Factory() );
-        sshd.setUserAuthFactories( userAuthFactories );
+        final List<NamedFactory<UserAuth>> userAuthFactories = ImmutableList.of( UserAuthNoneFactory.INSTANCE );
+        sshd.setUserAuthFactories(userAuthFactories);
 
-        final List<NamedFactory<Command>> namedFactoryList = ImmutableList.of( new SftpSubsystem.Factory() );
-        sshd.setSubsystemFactories( namedFactoryList );
+        final List<NamedFactory<Command>> namedFactoryList = ImmutableList.of( new SftpSubsystemFactory() );
+        sshd.setSubsystemFactories(namedFactoryList);
 
         return sshd;
     }
