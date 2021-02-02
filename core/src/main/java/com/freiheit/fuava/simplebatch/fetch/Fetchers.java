@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,20 +16,18 @@
  */
 package com.freiheit.fuava.simplebatch.fetch;
 
-import java.io.InputStream;
-import java.nio.file.Path;
-import java.util.Map;
-
-import org.apache.http.client.HttpClient;
-
 import com.freiheit.fuava.simplebatch.http.HttpFetcher;
 import com.freiheit.fuava.simplebatch.http.HttpFetcherImpl;
 import com.freiheit.fuava.simplebatch.http.HttpPagingFetcher;
 import com.freiheit.fuava.simplebatch.http.PagingRequestSettings;
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.collect.Ordering;
+import org.apache.http.client.HttpClient;
+
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Fetchers {
 
@@ -37,8 +35,8 @@ public class Fetchers {
      * Uses the given iterable to provide the data that will be passed on to the
      * processing stage, treating each item as successful.
      */
-    public static final <OriginalInput> Fetcher<OriginalInput> iterable( final Iterable<OriginalInput> iterable ) {
-        return new SuppliedIterableFetcher<OriginalInput>( Suppliers.ofInstance( iterable ) );
+    public static <OriginalInput> Fetcher<OriginalInput> iterable( final Iterable<OriginalInput> iterable ) {
+        return new SuppliedIterableFetcher<>( () -> iterable );
     }
 
     /**
@@ -46,7 +44,7 @@ public class Fetchers {
      * will be passed on to the processing stage, treating each item as
      * successful.
      */
-    public static final <OriginalInput> Fetcher<OriginalInput> supplied( final Supplier<Iterable<OriginalInput>> supplier ) {
+    public static <OriginalInput> Fetcher<OriginalInput> supplied( final Supplier<Iterable<OriginalInput>> supplier ) {
         return new SuppliedIterableFetcher<OriginalInput>( supplier );
     }
 
@@ -125,7 +123,7 @@ public class Fetchers {
             final int initialFrom,
             final int pageSize
             ) {
-        return new HttpPagingFetcher<OriginalInput>( fetcher, settings, converter, initialFrom, pageSize );
+        return new HttpPagingFetcher<>( fetcher, settings, converter, initialFrom, pageSize );
 
     }
 
@@ -135,15 +133,15 @@ public class Fetchers {
      * specified fileEnding and converts them with the given function.
      */
     public static <OriginalInput> Fetcher<OriginalInput> folderFetcher( final Function<Path, OriginalInput> fileFunction, final DownloadDir dir, final DownloadDir... moreDirs ) {
-        return new DirectoryFileFetcher<OriginalInput>( fileFunction, DirectoryFileFetcher.ORDERING_FILE_BY_PATH, dir, moreDirs );
+        return new DirectoryFileFetcher<>( fileFunction, DirectoryFileFetcher.ORDERING_FILE_BY_PATH, dir, moreDirs );
     }
 
     /**
      * Iterates over all files in the given directories that end with the
      * specified fileEnding and converts them with the given function.
      */
-    public static <OriginalInput> Fetcher<OriginalInput> folderFetcher( final Function<Path, OriginalInput> fileFunction, final Ordering<Path> fileOrdering, final DownloadDir dir, final DownloadDir... moreDirs ) {
-        return new DirectoryFileFetcher<OriginalInput>( fileFunction, fileOrdering, dir, moreDirs );
+    public static <OriginalInput> Fetcher<OriginalInput> folderFetcher( final Function<Path, OriginalInput> fileFunction, final Comparator<Path> fileOrdering, final DownloadDir dir, final DownloadDir... moreDirs ) {
+        return new DirectoryFileFetcher<>( fileFunction, fileOrdering, dir, moreDirs );
     }
 
 }

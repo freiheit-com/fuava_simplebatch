@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,17 +17,17 @@
 package com.freiheit.fuava.simplebatch.processor;
 
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.collect.ImmutableList;
+
+import java.util.Collections;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public abstract class AbstractSingleItemProcessor<OriginalItem, Input, Output> implements Processor<OriginalItem, Input, Output> {
-
     @Override
     public final Iterable<Result<OriginalItem, Output>> process( final Iterable<Result<OriginalItem, Input>> iterable ) {
-        final ImmutableList.Builder<Result<OriginalItem, Output>> b = ImmutableList.builder();
-        for ( final Result<OriginalItem, Input> input : iterable ) {
-            b.add( processItem( input ) );
-        }
-        return b.build();
+        return Collections.unmodifiableList( StreamSupport.stream( iterable.spliterator(), false )
+                .map( this::processItem )
+                .collect( Collectors.toList() ) );
     }
 
     public abstract Result<OriginalItem, Output> processItem( Result<OriginalItem, Input> input );

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,29 +16,6 @@
  */
 package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Writer;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.testng.Assert;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
 import com.freiheit.fuava.simplebatch.BatchTestDirectory;
 import com.freiheit.fuava.simplebatch.MapBasedBatchDownloader;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
@@ -50,20 +27,37 @@ import com.freiheit.fuava.simplebatch.processor.Processor;
 import com.freiheit.fuava.simplebatch.processor.RetryingProcessor;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
-import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
+import com.freiheit.fuava.simplebatch.util.CollectionUtils;
+import org.testng.Assert;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 @Test
 public class CtlImporterPathAndConcurrencyTest {
 
-    private final Map<Integer, String> data = ImmutableMap.of(
+    private final Map<Integer, String> data = CollectionUtils.asMap(
             1, "eins",
             2, "zwei",
             3, "drei",
@@ -75,91 +69,91 @@ public class CtlImporterPathAndConcurrencyTest {
             
             {testCase( "Success" )
                 .successProcessor()
-                .expect( BatchTestDirectory.ARCHIVE, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                .expect( BatchTestDirectory.ARCHIVE, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
             
             {testCase( "Fail All" )
                     .failAllProcessor()
-                    .expect( BatchTestDirectory.FAILS, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                    .expect( BatchTestDirectory.FAILS, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
             
             {testCase( "Fail Some" )
                     .failSomeProcessor()
-                    .expect( BatchTestDirectory.ARCHIVE, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                    .expect( BatchTestDirectory.ARCHIVE, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
             
             {testCase( "Fail Batch")
                 .failBatchProcessor()
-                .expect( BatchTestDirectory.ARCHIVE, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                .expect( BatchTestDirectory.ARCHIVE, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
             
             {testCase( "Success File Concurrent" )
                     .successProcessor()
                     .numConcurrentFiles( 2 )
                     .numConcurrentData( 1 )
-                    .expect( BatchTestDirectory.ARCHIVE, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                    .expect( BatchTestDirectory.ARCHIVE, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
             
             {testCase( "Fail All File Concurrent" )
                     .failAllProcessor()
                     .numConcurrentFiles( 2 )
                     .numConcurrentData( 1 )
-                    .expect( BatchTestDirectory.FAILS, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                    .expect( BatchTestDirectory.FAILS, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
             
             {testCase( "Fail Some File Concurrent" )
                     .failSomeProcessor()
                     .numConcurrentFiles( 2 )
                     .numConcurrentData( 1 )
-                    .expect( BatchTestDirectory.ARCHIVE, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                    .expect( BatchTestDirectory.ARCHIVE, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
             
             {testCase( "Fail Batch File Concurrent")
                 .failBatchProcessor()
                 .numConcurrentFiles( 2 )
                 .numConcurrentData( 1 )
-                .expect( BatchTestDirectory.ARCHIVE, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                .expect( BatchTestDirectory.ARCHIVE, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
            
             {testCase( "Success File And Data Concurrent" )
                 .successProcessor()
                 .numConcurrentFiles( 2 )
                 .numConcurrentData( 1 )
-                .expect( BatchTestDirectory.ARCHIVE, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                .expect( BatchTestDirectory.ARCHIVE, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
                 
                 {testCase( "Fail All File And Data Concurrent" )
                         .failAllProcessor()
                         .numConcurrentFiles( 2 )
                         .numConcurrentData( 2 )
-                        .expect( BatchTestDirectory.FAILS, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                        .expect( BatchTestDirectory.FAILS, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
                 
                 {testCase( "Fail Some File And Data Concurrent" )
                         .failSomeProcessor()
                         .numConcurrentFiles( 2 )
                         .numConcurrentData( 2 )
-                        .expect( BatchTestDirectory.ARCHIVE, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                        .expect( BatchTestDirectory.ARCHIVE, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
                 
                 {testCase( "Fail Batch File And Data Concurrent")
                     .failBatchProcessor()
                     .numConcurrentFiles( 2 )
                     .numConcurrentData( 2 )
-                    .expect( BatchTestDirectory.ARCHIVE, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                    .expect( BatchTestDirectory.ARCHIVE, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
                 
                 {testCase( "Success Data Concurrent" )
                     .successProcessor()
                     .numConcurrentFiles( 1 )
                     .numConcurrentData( 1 )
-                    .expect( BatchTestDirectory.ARCHIVE, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                    .expect( BatchTestDirectory.ARCHIVE, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
                 
                 {testCase( "Fail All Data Concurrent" )
                         .failAllProcessor()
                         .numConcurrentFiles( 1 )
                         .numConcurrentData( 2 )
-                        .expect( BatchTestDirectory.FAILS, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                        .expect( BatchTestDirectory.FAILS, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
                 
                 {testCase( "Fail Some Data Concurrent" )
                         .failSomeProcessor()
                         .numConcurrentFiles( 1 )
                         .numConcurrentData( 2 )
-                        .expect( BatchTestDirectory.ARCHIVE, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
+                        .expect( BatchTestDirectory.ARCHIVE, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )},
                 
                 {testCase( "Fail Batch Data Concurrent")
                     .failBatchProcessor()
                     .numConcurrentFiles( 1 )
                     .numConcurrentData( 2 )
-                    .expect( BatchTestDirectory.ARCHIVE, ImmutableSet.of( "inst_01-1.tmp", "inst_01-2.tmp" ) )}
+                    .expect( BatchTestDirectory.ARCHIVE, CollectionUtils.asSet( "inst_01-1.tmp", "inst_01-2.tmp" ) )}
 
         };
     }
@@ -172,7 +166,7 @@ public class CtlImporterPathAndConcurrencyTest {
         
         for (final ExpectedDirState state : testCase.getExpectedDirsAfterDownload()) {
             final Set<String> expectedNames = state.getExpectedNames();
-            final Multimap<String, SBFile> impFiles = listFilesInDir( tmp, state.getDir() );
+            final Map<String, List<SBFile>> impFiles = listFilesInDir( tmp, state.getDir() );
             Assert.assertEquals( impFiles.keySet(), expectedNames, "Wrong State after Download in " + state.dir   );
         }
         
@@ -185,7 +179,7 @@ public class CtlImporterPathAndConcurrencyTest {
 
         for (final ExpectedDirState state : testCase.getExpectedDirs()) {
             final Set<String> expectedNames = state.getExpectedNames();
-            final Multimap<String, SBFile> impFiles = listFilesInDir( tmp, state.getDir() );
+            final Map<String, List<SBFile>> impFiles = listFilesInDir( tmp, state.getDir() );
             Assert.assertEquals( impFiles.keySet(), expectedNames, "Wrong State after Import in " + state.dir  );
         }
 
@@ -250,7 +244,7 @@ public class CtlImporterPathAndConcurrencyTest {
     static final class TestCase {
         private final String name;
         
-        private Map<Integer, String> data = ImmutableMap.of();
+        private Map<Integer, String> data = Collections.emptyMap();
         private int numConcurrentFiles = 1;
         private int numConcurrentData = 1;
         private int fileBatchSize = 1;
@@ -377,15 +371,15 @@ public class CtlImporterPathAndConcurrencyTest {
         return new TestCase( name )
                 .data( data )
                 .fileBatchSize( 2 )
-                .expectAfterDownload( BatchTestDirectory.ARCHIVE, ImmutableSet.of( ) )
-                .expectAfterDownload( BatchTestDirectory.FAILS, ImmutableSet.of( ) )
-                .expectAfterDownload( BatchTestDirectory.PROCESSING, ImmutableSet.of( ) )
-                .expectAfterDownload( BatchTestDirectory.DOWNLOADS, ImmutableSet.of( "1.tmp", "2.tmp" ) )
+                .expectAfterDownload( BatchTestDirectory.ARCHIVE, Collections.emptySet() )
+                .expectAfterDownload( BatchTestDirectory.FAILS, Collections.emptySet() )
+                .expectAfterDownload( BatchTestDirectory.PROCESSING, Collections.emptySet() )
+                .expectAfterDownload( BatchTestDirectory.DOWNLOADS, CollectionUtils.asSet( "1.tmp", "2.tmp" ) )
                 // at least one of those will be overridden
-                .expect( BatchTestDirectory.ARCHIVE, ImmutableSet.of( ) )
-                .expect( BatchTestDirectory.FAILS, ImmutableSet.of( ) )
-                .expect( BatchTestDirectory.PROCESSING, ImmutableSet.of( ) )
-                .expect( BatchTestDirectory.DOWNLOADS, ImmutableSet.of(  ) )
+                .expect( BatchTestDirectory.ARCHIVE, Collections.emptySet() )
+                .expect( BatchTestDirectory.FAILS, Collections.emptySet() )
+                .expect( BatchTestDirectory.PROCESSING, Collections.emptySet() )
+                .expect( BatchTestDirectory.DOWNLOADS, Collections.emptySet() )
                 ;
     }
     
@@ -401,23 +395,23 @@ public class CtlImporterPathAndConcurrencyTest {
     }
 
     private void assertIsEmpty( final Path dir ) throws IOException {
-        final Multimap<String, SBFile> files = listFilesInDir( dir );
+        final Map<String, List<SBFile>> files = listFilesInDir( dir );
         Assert.assertTrue( files.isEmpty(), "Directory " + dir + " not empty. It contains files " + files );
     }
 
-    private Multimap<String, SBFile> listFilesInDir( final BatchTestDirectory cfg, final String dir ) throws IOException {
+    private Map<String, List<SBFile>> listFilesInDir( final BatchTestDirectory cfg, final String dir ) throws IOException {
         return listFilesInDir( cfg.getTestDirBase().resolve( dir ) );
     }
     
-    private Multimap<String, SBFile> listFilesInDir( final Path dir ) throws IOException {
+    private Map<String, List<SBFile>> listFilesInDir( final Path dir ) throws IOException {
         if ( !dir.toFile().exists() ) {
-            return ImmutableListMultimap.<String, SBFile>builder().build();
+            return Collections.emptyMap();
         }
-        final ImmutableList.Builder<SBFile> b = ImmutableList.builder();
+        final List<SBFile> files = new ArrayList<>();
         Files.walkFileTree( dir,  new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile( final Path file, final BasicFileAttributes attrs ) throws IOException {
-                b.add( new SBFile( file ) );
+                files.add( new SBFile( file ) );
                 return FileVisitResult.CONTINUE;
             }
 
@@ -427,8 +421,7 @@ public class CtlImporterPathAndConcurrencyTest {
             }
 
         });
-        final List<SBFile> files = b.build();
-        return Multimaps.index( files, f -> f.getDataName() );
+        return files.stream().collect( Collectors.groupingBy( SBFile::getDataName ) );
     }
 
     private CtlImporterJob.Builder<String> createImporterJob( final BatchTestDirectory tmp, final Processor<FetchedItem<String>, String, String> processor ) {
@@ -439,20 +432,16 @@ public class CtlImporterPathAndConcurrencyTest {
                         .setFailedDirPath( tmp.getFailsDir() )
                         .setProcessingDirPath( tmp.getProcessingDir() ) 
                 )
-                .setFileInputStreamReader( new Function<InputStream, Iterable<String>>() {
-
-                        @Override
-                        public Iterable<String> apply( final InputStream input ) {
-                            try {
-                                try ( BufferedReader ir =
-                                        new BufferedReader( new InputStreamReader( input, Charsets.UTF_8 ) ) ) {
-                                    return ImmutableList.of( ir.readLine() );
-                                }
-                            } catch ( final IOException e ) {
-                                throw new RuntimeException( e );
-                            }
+                .setFileInputStreamReader( input -> {
+                    try {
+                        try ( BufferedReader ir =
+                                new BufferedReader( new InputStreamReader( input, StandardCharsets.UTF_8 ) ) ) {
+                            return Collections.singletonList( ir.readLine() );
                         }
-                    } 
+                    } catch ( final IOException e ) {
+                        throw new RuntimeException( e );
+                    }
+                }
                 )
                 .setContentProcessor( processor )
                 ;
@@ -470,7 +459,7 @@ public class CtlImporterPathAndConcurrencyTest {
 
                             @Override
                             public void write( final Writer writer, final List<String> data ) throws IOException {
-                                final String string = Joiner.on( '\n' ).join( data );
+                                final String string = String.join( "\n", data );
                                 writer.write( string );
                             }
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +17,9 @@
 package com.freiheit.fuava.simplebatch.fetch;
 
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableList;
+
+import java.util.Collections;
+import java.util.function.Supplier;
 
 public final class SuppliedIterableFetcher<OriginalInput> implements Fetcher<OriginalInput> {
     private final Supplier<Iterable<OriginalInput>> supplier;
@@ -33,8 +34,7 @@ public final class SuppliedIterableFetcher<OriginalInput> implements Fetcher<Ori
             final Iterable<OriginalInput> originalIterable = this.supplier.get();
             return IterableFetcherWrapper.wrap( originalIterable );
         } catch ( final Throwable t ) {
-            return ImmutableList.of( Result.failed( null, t ) );
+            return Collections.singletonList( Result.failed( null, t ) );
         }
     }
-
 }

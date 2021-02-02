@@ -19,12 +19,15 @@
 
 package com.freiheit.fuava.simplebatch.processor;
 
-import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * A processor implementation which delegates processing of lists of
@@ -46,8 +49,6 @@ import com.google.common.collect.ImmutableList;
  */
 public abstract class RetryingResultProcessor<OriginalItem, Input, Output>
         implements Processor<OriginalItem, Input, Output> {
-    private static final Logger LOG = LoggerFactory.getLogger( RetryingResultProcessor.class );
-
     /**
      * Creates a new processor that delegates to the given function.
      *
@@ -68,10 +69,10 @@ public abstract class RetryingResultProcessor<OriginalItem, Input, Output>
 
     @Override
     public Iterable<Result<OriginalItem, Output>> process( final Iterable<Result<OriginalItem, Input>> inputs ) {
-
-        final List<Result<OriginalItem, Input>> inputList = ImmutableList.copyOf( inputs );
+        final List<Result<OriginalItem, Input>> inputList = new ArrayList<>();
+        inputs.forEach( inputList::add );
         if ( inputList.isEmpty() ) {
-            return ImmutableList.of();
+            return Collections.emptyList();
         }
         try {
             return doPersist( inputList );
@@ -81,35 +82,53 @@ public abstract class RetryingResultProcessor<OriginalItem, Input, Output>
         } catch ( final Throwable t ) {
             if ( inputList.size() == 1 ) {
                 final Result<OriginalItem, Input> result = inputList.get( 0 );
-                return ImmutableList.of( Result.<OriginalItem, Output> builder( result ).failed( t ) );
+                return Collections.singletonList( Result.<OriginalItem, Output> builder( result ).failed( t ) );
             }
-            LOG.info( "Caught Exception during processing of batch with " + inputList.size()
-                    + " items, will RETRY in single item batches", t );
-            final ImmutableList.Builder<Result<OriginalItem, Output>> retriedResults = ImmutableList.builder();
+
+            final List<Result<OriginalItem, Output>> retriedResults = new ArrayList<>( inputList.size() );
             for ( final Result<OriginalItem, Input> input : inputList ) {
-                final List<Result<OriginalItem, Output>> outputs = ImmutableList.copyOf( process( ImmutableList.of( input ) ) );
-                if ( outputs.size() != 1 ) {
-                    throw new IllegalStateException( "processing of singletons must return exactly one item, "
-                        + "but " + outputs.size() + " were returned." );
-                }
-                retriedResults.addAll( outputs );
+                final Iterable<Result<OriginalItem, Output>> outputs = process( Collections.singletonList( input ) );
+                checkIterableSize( outputs );
+                outputs.forEach( retriedResults::add );
             }
-            return retriedResults.build();
+            return Collections.unmodifiableList( retriedResults );
+        }
+    }
+
+    private <T> void checkIterableSize( final Iterable<T> iter ) {
+        if ( iter instanceof Collection ) {
+            if ( ( (Collection<?>) iter ).size() != 1 ) {
+                throw new IllegalStateException( "processing of singletons must return exactly one item, but " + ( (Collection<?>) iter ).size() + " were returned." );
+            }
+        } else {
+            final Iterator<T> iterator = iter.iterator();
+            if ( !iterator.hasNext() ) {
+                throw new IllegalStateException( "processing of singletons must return exactly one item, but 0 were returned." );
+            } else {
+                iterator.next();
+                if ( iterator.hasNext() ) {
+                    throw new IllegalStateException( "processing of singletons must return exactly one item, but at least 2 were returned." );
+                }
+            }
         }
     }
 
     private Iterable<Result<OriginalItem, Output>> doPersist( final Iterable<Result<OriginalItem, Input>> iterable ) {
-        final ImmutableList<Result<OriginalItem, Input>> successes = FluentIterable.from( iterable ).filter( Result::isSuccess ).toList();
-        final ImmutableList<Result<OriginalItem, Input>> fails = FluentIterable.from( iterable ).filter( Result::isFailed ).toList();
+        final List<Result<OriginalItem, Input>> successes = StreamSupport.stream( iterable.spliterator(), false )
+                .filter( Result::isSuccess )
+                .collect( Collectors.toList() );
+        final List<Result<OriginalItem, Input>> fails = StreamSupport.stream( iterable.spliterator(), false )
+                .filter( Result::isFailed )
+                .collect( Collectors.toList() );
 
         final List<Output> persistenceResults = successes.isEmpty()
-            ? ImmutableList.of()
-            : apply( successes );
+            ? Collections.emptyList()
+            : apply( Collections.unmodifiableList( successes ) );
 
         if ( persistenceResults.size() != successes.size() ) {
             throw new IllegalStateException( "persistence results of unexpected size produced by " + this );
         }
-        final ImmutableList.Builder<Result<OriginalItem, Output>> b = ImmutableList.builder();
+        final List<Result<OriginalItem, Output>> b = new ArrayList<>( successes.size() + fails.size() );
 
         for ( int i = 0; i < successes.size(); i++ ) {
             final Result<OriginalItem, Input> processingResult = successes.get( i );
@@ -120,8 +139,7 @@ public abstract class RetryingResultProcessor<OriginalItem, Input, Output>
         for ( final Result<OriginalItem, Input> failed : fails ) {
             b.add( Result.<OriginalItem, Output> builder( failed ).failed() );
         }
-
-        return b.build();
+        return Collections.unmodifiableList( b );
     }
 
     protected abstract List<Output> apply( final List<Result<OriginalItem, Input>> input );

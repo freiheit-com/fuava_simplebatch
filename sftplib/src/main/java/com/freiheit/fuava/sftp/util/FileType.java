@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +18,12 @@ package com.freiheit.fuava.sftp.util;
 
 import javax.annotation.Nonnull;
 
-import com.google.common.base.MoreObjects;
-
 /**
  * Describes the type of files to be processed.
  *
  * @author dmitrijs.barbarins@freiheit.com
  */
 public class FileType {
-
     public static final FileType ALL_FILES = new FileType( "all", "*" );
 
     private final String interfaceName;
@@ -101,12 +98,12 @@ public class FileType {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper( this )
-                .add( "interfaceName", interfaceName )
-                .add( "fileIdentifierPattern", fileIdentifierPattern )
-                .add( "fileExtention", fileExtention )
-                .add( "okFileExtention", okFileExtention )
-                .toString();
+        return "FileType{" +
+                "interfaceName='" + interfaceName + '\'' +
+                ", fileIdentifierPattern='" + fileIdentifierPattern + '\'' +
+                ", fileExtention='" + fileExtention + '\'' +
+                ", okFileExtention='" + okFileExtention + '\'' +
+                '}';
     }
 
     @Override

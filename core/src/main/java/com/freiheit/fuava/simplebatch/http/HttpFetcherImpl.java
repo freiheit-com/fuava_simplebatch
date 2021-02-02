@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,24 +16,20 @@
  */
 package com.freiheit.fuava.simplebatch.http;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.freiheit.fuava.simplebatch.exceptions.AuthorizationException;
 import com.freiheit.fuava.simplebatch.exceptions.FetchFailedException;
 import com.freiheit.fuava.simplebatch.util.IOStreamUtils;
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class HttpFetcherImpl implements HttpFetcher {
-    static final Logger LOG = LoggerFactory.getLogger( HttpFetcherImpl.class );
     private final Supplier<HttpClient> _client;
 
     public HttpFetcherImpl( final HttpClient client ) {
@@ -74,7 +70,6 @@ public class HttpFetcherImpl implements HttpFetcher {
 
             try ( InputStream stream = response.getEntity().getContent() ) {
                 final T result = reader.apply( stream );
-                LOG.debug( String.format( "transformed request result: %s", result ) );
                 return result;
             }
         } catch ( final IOException e ) {

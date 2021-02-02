@@ -1,12 +1,11 @@
 package com.freiheit.fuava.simplebatch.result;
 
-import java.util.List;
-
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.google.common.collect.Iterables;
+import java.util.List;
+import java.util.stream.StreamSupport;
 
 public class ResultTest {
     
@@ -25,12 +24,13 @@ public class ResultTest {
     @Test( dataProvider = "dataProviderSuccessMap" )
     public void testSuccessMapping(final Result<String, String> initialResult, final Integer expectedOutput, final boolean expectedSuccess, final boolean expectNewFailure) {
         final List<String> initialMessages = initialResult.getAllMessages();
-        final Result<String, Integer> result = initialResult.map( v -> Integer.parseInt(v) );
+        final Result<String, Integer> result = initialResult.map( Integer::parseInt );
         Assert.assertEquals( result.isSuccess(), expectedSuccess );
         Assert.assertEquals( result.isFailed(), !expectedSuccess );
         Assert.assertEquals( result.getOutput(), expectedOutput );
         if (expectNewFailure) {
-            Assert.assertEquals( Iterables.size( result.getFailureMessages() ), Iterables.size( initialMessages ) + 1 );
+            Assert.assertEquals( StreamSupport.stream( result.getFailureMessages().spliterator(), false ).count(),
+                    (long) initialMessages.size() + 1 );
         } else {
             Assert.assertEquals( result.getFailureMessages(), initialMessages );
         }

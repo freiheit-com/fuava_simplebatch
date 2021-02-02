@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,25 +16,6 @@
  */
 package com.freiheit.fuava.simplebatch.fsjobs.downloader;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.freiheit.fuava.simplebatch.BatchTestDirectory;
 import com.freiheit.fuava.simplebatch.MapBasedBatchDownloader;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
@@ -46,15 +27,32 @@ import com.freiheit.fuava.simplebatch.processor.ControlFilePersistenceOutputInfo
 import com.freiheit.fuava.simplebatch.processor.FileWriterAdapter;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Test
 public class CtlDownloaderTest {
-
     private static BatchTestDirectory tmp = new BatchTestDirectory( "CtlDownloaderTest" );
     private static Gson GSON = new Gson();
+
     public static <Input, Output> CtlDownloaderJob.BatchFileWritingBuilder<Input, Output> newTestDownloaderBuilder() {
         return new CtlDownloaderJob.BatchFileWritingBuilder<Input, Output>().setConfiguration(
                 new ConfigurationImpl().setDownloadDirPath( tmp.getDownloadsDir() ) );
@@ -101,7 +99,7 @@ public class CtlDownloaderTest {
 
                     @Override
                     public void write( final Writer writer, final List<String> data ) throws IOException {
-                        final String string = Joiner.on( '\n' ).join( data );
+                        final String string = String.join( "\n", data );
                         writer.write( string );
                     }
 
@@ -125,10 +123,10 @@ public class CtlDownloaderTest {
         Assert.assertTrue( expected.exists(), "batch file was not created" );
         Assert.assertTrue( expectedLog.exists(), "log file was not created" );
 
-        final ImmutableList.Builder<String> resultsBuilder = ImmutableList.builder();
+        final List<String> resultsList = new ArrayList<>();
         try ( BufferedReader reader = new BufferedReader( new FileReader( expected ) ) ) {
             while ( reader.ready() ) {
-                resultsBuilder.add( reader.readLine() );
+                resultsList.add( reader.readLine() );
             }
         }
 
@@ -158,7 +156,6 @@ public class CtlDownloaderTest {
         Assert.assertEquals( write6.isSuccess(), true );
         Assert.assertNotNull( write6.getTime() );
 
-        final ImmutableList<String> resultsList = resultsBuilder.build();
         Assert.assertEquals( resultsList, data.values() );
 
         tmp.cleanup();
@@ -167,7 +164,6 @@ public class CtlDownloaderTest {
 
     @Test
     public void testBatchPersistenceNoSubdir() throws FileNotFoundException, IOException {
-
         final String targetFileName = "batch";
         final File expected = tmp.getDownloadsDir().resolve( targetFileName + "_1" ).toFile();
         if ( expected.exists() ) {
@@ -199,7 +195,7 @@ public class CtlDownloaderTest {
 
                     @Override
                     public void write( final Writer writer, final List<String> data ) throws IOException {
-                        final String string = Joiner.on( '\n' ).join( data );
+                        final String string = String.join( "\n", data );
                         writer.write( string );
                     }
                     
@@ -222,10 +218,10 @@ public class CtlDownloaderTest {
         Assert.assertTrue( expected.exists(), "batch file was not created" );
         Assert.assertTrue( expectedLog.exists(), "log file was not created" );
 
-        final ImmutableList.Builder<String> resultsBuilder = ImmutableList.builder();
+        final List<String> resultsList = new ArrayList<>();
         try ( BufferedReader reader = new BufferedReader( new FileReader( expected ) ) ) {
             while ( reader.ready() ) {
-                resultsBuilder.add( reader.readLine() );
+                resultsList.add( reader.readLine() );
             }
         }
 
@@ -233,8 +229,6 @@ public class CtlDownloaderTest {
         final List<String> logLines = Files.readAllLines( Paths.get( expectedLog.toURI() ) );
 
         Assert.assertEquals( logLines.size(), 6 );
-
-        final ImmutableList<String> resultsList = resultsBuilder.build();
         Assert.assertEquals( resultsList, data.values() );
 
         tmp.cleanup();

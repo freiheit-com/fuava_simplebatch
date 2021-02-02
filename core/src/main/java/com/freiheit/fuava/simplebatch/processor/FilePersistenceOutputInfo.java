@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,15 +17,13 @@
 package com.freiheit.fuava.simplebatch.processor;
 
 import java.nio.file.Path;
-
-import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
+import java.util.Objects;
 
 public class FilePersistenceOutputInfo {
     private final Path dataFile;
 
     public FilePersistenceOutputInfo( final Path dataFile ) {
-        this.dataFile = Preconditions.checkNotNull( dataFile );
+        this.dataFile = Objects.requireNonNull( dataFile );
     }
 
     public Path getDataFile() {
@@ -34,6 +32,8 @@ public class FilePersistenceOutputInfo {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper( this ).add( "Data File", dataFile ).toString();
+        return "FilePersistenceOutputInfo{" +
+                "Data File=" + dataFile +
+                '}';
     }
 }

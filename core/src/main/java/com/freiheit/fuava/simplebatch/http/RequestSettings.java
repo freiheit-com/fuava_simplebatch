@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +16,11 @@
  */
 package com.freiheit.fuava.simplebatch.http;
 
+import java.util.Collections;
 import java.util.Map;
-
-import com.google.common.collect.ImmutableMap;
 
 public interface RequestSettings {
     default Map<String, String> getRequestHeaders() {
-        return ImmutableMap.<String, String> of();
+        return Collections.emptyMap();
     }
 }

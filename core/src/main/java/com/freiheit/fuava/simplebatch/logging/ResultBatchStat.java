@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,17 +23,16 @@ package com.freiheit.fuava.simplebatch.logging;
  * @author tim.lessner@freiheit.com
  */
 public class ResultBatchStat {
-
     private final Event event;
-    private final int failed;
-    private final int success;
+    private final long failed;
+    private final long success;
     private final String description;
 
-    public static String of( final Event event, final int failed, final int success, final String description ) {
+    public static String of( final Event event, final long failed, final long success, final String description ) {
         return new ResultBatchStat( event, failed, success, description ).toString();
     }
 
-    public ResultBatchStat( final Event event, final int failed, final int success, final String description ) {
+    public ResultBatchStat( final Event event, final long failed, final long success, final String description ) {
         this.event = event;
         this.failed = failed;
         this.success = success;

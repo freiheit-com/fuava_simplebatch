@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,14 +34,14 @@ public final class FailsafeIterator<OriginalInput> implements Iterator<Result<Fe
     @Override
     public boolean hasNext() {
         if ( forceHasNext != null ) {
-            return forceHasNext.booleanValue();
+            return forceHasNext;
         }
         try {
             return iterator.hasNext();
         } catch ( final Throwable t ) {
             forceHasNext = Boolean.TRUE;
             forceNextElement = Result.failed( nextFetchedItem( null ), "Failed to call hasNext on delegate iterator", t );
-            return forceHasNext.booleanValue();
+            return forceHasNext;
         }
     }
 

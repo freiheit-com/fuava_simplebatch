@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +16,14 @@
  */
 package com.freiheit.fuava.simplebatch.result;
 
-import com.google.common.collect.Iterables;
+import com.freiheit.fuava.simplebatch.util.IterableUtils;
+
+import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 public final class ComposedResult<A, B> {
-
-    public static final <A, B> ComposedResult<A, B> of( final Result<A, ?> orig ) {
-        return new ComposedResult<A, B>( orig );
+    public static <A, B> ComposedResult<A, B> of( final Result<A, ?> orig ) {
+        return new ComposedResult<>( orig );
     }
 
     private final Result.Builder<A, B> builder;
@@ -41,10 +43,12 @@ public final class ComposedResult<A, B> {
      * success. Add warnings for any values that exceed.
      */
     public Result<A, B> compose( final Iterable<? extends Result<?, B>> results ) {
-        if ( results == null || Iterables.isEmpty( results ) ) {
+        if ( results == null || IterableUtils.isEmpty( results ) ) {
             return builder.withFailureMessage( "No intermediate results found. Intermediate input was " + intermediateValue ).failed();
         }
-        final Result<?, B> firstSuccess = Iterables.find( results, Result::isSuccess );
+        final Optional<? extends Result<?, B>> firstSuccess = StreamSupport.stream( results.spliterator(), false )
+                .filter( Result::isSuccess )
+                .findFirst();
         for ( final Result<?, B> r : results ) {
             // add everything that was accumulated in the composed results
             builder
@@ -52,9 +56,7 @@ public final class ComposedResult<A, B> {
                     .withWarningMessages( r.getWarningMessages() )
                     .withThrowables( r.getThrowables() );
         }
-        if ( firstSuccess == null ) {
-            return builder.failed();
-        }
-        return builder.withOutput( firstSuccess.getOutput() ).success();
+        return firstSuccess.map( bResult -> builder.withOutput( bResult.getOutput() ).success() )
+                .orElseGet( builder::failed );
     }
 }

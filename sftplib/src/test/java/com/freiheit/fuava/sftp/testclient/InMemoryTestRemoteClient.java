@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,24 +16,25 @@
  */
 package com.freiheit.fuava.sftp.testclient;
 
-import java.io.File;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import com.freiheit.fuava.sftp.RemoteClient;
 import com.freiheit.fuava.sftp.util.FileType;
 import com.freiheit.fuava.sftp.util.FilenameUtil;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Ordering;
 import com.jcraft.jsch.SftpException;
+
+import javax.annotation.Nonnull;
+import java.io.File;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public final class InMemoryTestRemoteClient<T> implements RemoteClient {
 
@@ -55,24 +56,24 @@ public final class InMemoryTestRemoteClient<T> implements RemoteClient {
     }
 
     public Map<String, TestFolder<T>> getStateCopy() {
-        final ImmutableMap.Builder<String, TestFolder<T>> b = ImmutableMap.builder();
-        for (final Map.Entry<String, TestFolder<T>> e : folders.entrySet()) {
-            b.put( e.getKey(), new TestFolder<>( ImmutableMap.copyOf(e.getValue().folderContent )) );
-        }
-        return b.build();
+        return Collections.unmodifiableMap(
+                folders.entrySet().stream()
+                        .collect( Collectors.toMap(
+                                Map.Entry::getKey,
+                                entry -> new TestFolder<>( new LinkedHashMap<>( entry.getValue().folderContent ) )
+                        ) ) );
     }
     
     @Override
-    public void moveFileOnRemoteSystem( final String sourcePath, final String destinationPath ) throws Exception {
+    public void moveFileOnRemoteSystem( final String sourcePath, final String destinationPath ) {
         final TestFolder<T> sourceFolder =
-                Preconditions.checkNotNull( getFolderOfFile( sourcePath ), "folder for source not found" );
+                Objects.requireNonNull( getFolderOfFile( sourcePath ), "folder for source not found" );
         final TestFolder<T> targetFolder =
-                Preconditions.checkNotNull( getFolderOfFile( destinationPath ), "folder for target not found" );
+                Objects.requireNonNull( getFolderOfFile( destinationPath ), "folder for target not found" );
         final String sourceFileName = getFileName( sourcePath );
         final T item = sourceFolder.getItem( sourceFileName );
         targetFolder.addItem( getFileName( destinationPath ), item );
         sourceFolder.removeItem( sourceFileName );
-
     }
 
     @Override
@@ -102,17 +103,20 @@ public final class InMemoryTestRemoteClient<T> implements RemoteClient {
     }
 
     @Override
-    public List<String> listFolder( final String pathToFiles ) throws Exception {
+    @Nonnull
+    public List<String> listFolder( final String pathToFiles ) {
         final TestFolder<T> testFolder = this.folders.get( asFoldersKey( pathToFiles ) );
-        final List<String> content = testFolder == null
-            ? ImmutableList.<String> of()
-            : FluentIterable.from( testFolder.getItemKeys() ).toSortedList( Ordering.natural() );
-        return content;
+        return testFolder == null
+            ? Collections.emptyList()
+            : Collections.unmodifiableList( testFolder.getItemKeys()
+                .stream()
+                .sorted( Comparator.naturalOrder() )
+                .collect( Collectors.toList() ) );
 
     }
 
     @Override
-    public InputStream downloadRemoteFile( final String pathToFile ) throws Exception {
+    public InputStream downloadRemoteFile( final String pathToFile ) {
         final String fileName = getFileName( pathToFile );
         final TestFolder<T> tf = getFolderOfFile( pathToFile );
         final T item = tf == null
@@ -133,17 +137,15 @@ public final class InMemoryTestRemoteClient<T> implements RemoteClient {
     }
 
     private String getDirName( final String pathToFile ) {
-        final String parent = new File( pathToFile ).getParent() +"/";
-        return parent;
+        return new File( pathToFile ).getParent() +"/";
     }
 
     private String getFileName( final String pathToFile ) {
-        final String name = new File( pathToFile ).getName();
-        return name;
+        return new File( pathToFile ).getName();
     }
 
     @Override
-    public void deleteFile( final String pathOfFileToDelete ) throws Exception {
+    public void deleteFile( final String pathOfFileToDelete ) {
         final TestFolder<T> tf = getFolderOfFile( pathOfFileToDelete );
         if ( tf != null ) {
             tf.removeItem( getFileName( pathOfFileToDelete ) );
@@ -151,11 +153,10 @@ public final class InMemoryTestRemoteClient<T> implements RemoteClient {
     }
 
     @Override
-    public void createFolderIfNotExist( final String folderNameToCreate ) throws Exception {
-        final String dirPath = folderNameToCreate;
-        final String key = asFoldersKey( dirPath );
+    public void createFolderIfNotExist( final String folderNameToCreate ) {
+        final String key = asFoldersKey( folderNameToCreate );
         if ( !this.folders.containsKey( key ) ) {
-            this.folders.put( key, new TestFolder<>( ImmutableMap.<String, T> builder().build() ) );
+            this.folders.put( key, new TestFolder<>( Collections.emptyMap() ) );
         }
     }
 

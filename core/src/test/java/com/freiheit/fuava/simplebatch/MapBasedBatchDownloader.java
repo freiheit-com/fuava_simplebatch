@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +16,12 @@
  */
 package com.freiheit.fuava.simplebatch;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.processor.RetryingProcessor;
-import com.google.common.collect.ImmutableList;
 
 public final class MapBasedBatchDownloader<I, O> extends RetryingProcessor<FetchedItem<I>, I, O> {
     private final Map<I, O> map;
@@ -32,11 +32,11 @@ public final class MapBasedBatchDownloader<I, O> extends RetryingProcessor<Fetch
 
     @Override
     public List<O> apply( final List<I> arg0 ) {
-        final ImmutableList.Builder<O> b = ImmutableList.builder();
+        final List<O> b = new ArrayList<>( arg0.size() );
         for ( final I i : arg0 ) {
             b.add( map.get( i ) );
         }
-        return b.build();
+        return b;
     }
 
 }

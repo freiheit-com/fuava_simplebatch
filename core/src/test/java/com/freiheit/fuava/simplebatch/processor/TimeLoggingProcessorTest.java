@@ -1,19 +1,19 @@
 package com.freiheit.fuava.simplebatch.processor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.freiheit.fuava.simplebatch.util.CollectionUtils;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.freiheit.fuava.simplebatch.processor.TimeLoggingProcessor.Counts;
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 
 public class TimeLoggingProcessorTest {
-
     @DataProvider
     public Object[][] durationAsStringsTestData() {
         return new Object[][] {
@@ -83,8 +83,8 @@ public class TimeLoggingProcessorTest {
         final TimeLoggingProcessor<String, String, String> processor = wrap( new AddA() );
         assertResults( processor.process( data( "2", "3" ) ), "2a", "3a" );
         final Map<String, Counts> counts = processor.getCurrentCounts();
-        Assert.assertEquals( ImmutableSet.copyOf( counts.keySet() ),
-                ImmutableSet.of( processor.getStageIdTotal(), processor.getStageIdPrepare(), "Stage 01" ) );
+        Assert.assertEquals( counts.keySet(),
+                CollectionUtils.asSet( processor.getStageIdTotal(), processor.getStageIdPrepare(), "Stage 01" ) );
 
         assertCountsItems( processor, counts, 2 );
 
@@ -107,8 +107,8 @@ public class TimeLoggingProcessorTest {
 
         assertResults( processor.process( data( "2", "3" ) ), "2abcd", "3abcd" );
         final Map<String, Counts> counts = processor.getCurrentCounts();
-        Assert.assertEquals( ImmutableSet.copyOf( counts.keySet() ),
-                ImmutableSet.of( processor.getStageIdTotal(), processor.getStageIdPrepare(), "Stage 01", "Stage 02", "Stage 03",
+        Assert.assertEquals( counts.keySet(),
+                CollectionUtils.asSet( processor.getStageIdTotal(), processor.getStageIdPrepare(), "Stage 01", "Stage 02", "Stage 03",
                         "Stage 04" ) );
         assertCountsItems( processor, counts, 2 );
     }
@@ -132,8 +132,8 @@ public class TimeLoggingProcessorTest {
 
         assertResults( processor.process( data( "2", "3" ) ), "2abcd", "3abcd" );
         final Map<String, Counts> counts = processor.getCurrentCounts();
-        Assert.assertEquals( ImmutableSet.copyOf( counts.keySet() ),
-                ImmutableSet.of( processor.getStageIdTotal(), processor.getStageIdPrepare(), "Stage 01", "Stage 02", "Stage 03",
+        Assert.assertEquals( counts.keySet(),
+                CollectionUtils.asSet( processor.getStageIdTotal(), processor.getStageIdPrepare(), "Stage 01", "Stage 02", "Stage 03",
                         "Stage 04" ) );
         assertCountsItems( processor, counts, 2 );
     }
@@ -150,11 +150,11 @@ public class TimeLoggingProcessorTest {
     }
 
     private Iterable<Result<String, String>> data( final String... values ) {
-        final ImmutableList.Builder<Result<String, String>> b = ImmutableList.builder();
+        final List<Result<String, String>> b = new ArrayList<>();
         for ( final String v : values ) {
             b.add( Result.success( v, v ) );
         }
-        return b.build();
+        return b;
     }
 
     private TimeLoggingProcessor<String, String, String> wrap( final Processor<String, String, String> addA ) {

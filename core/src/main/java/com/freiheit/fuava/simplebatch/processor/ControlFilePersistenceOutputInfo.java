@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,6 @@ package com.freiheit.fuava.simplebatch.processor;
 
 import java.nio.file.Path;
 
-import com.google.common.base.MoreObjects;
-
 public class ControlFilePersistenceOutputInfo {
 
     private final Path ctrlFile;
@@ -34,6 +32,8 @@ public class ControlFilePersistenceOutputInfo {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper( this ).add( "Control File", ctrlFile ).toString();
+        return "ControlFilePersistenceOutputInfo{" +
+                "Control File=" + ctrlFile +
+                '}';
     }
 }

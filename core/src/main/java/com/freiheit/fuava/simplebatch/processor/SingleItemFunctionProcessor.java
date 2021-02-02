@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  */
 package com.freiheit.fuava.simplebatch.processor;
 
-import com.google.common.base.Function;
+import java.util.function.Function;
 
 public class SingleItemFunctionProcessor<OriginalItem, Input, Output> extends
         SingleItemProcessor<OriginalItem, Input, Output> {

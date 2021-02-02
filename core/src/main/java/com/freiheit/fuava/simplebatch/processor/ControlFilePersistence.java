@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +16,14 @@
  */
 package com.freiheit.fuava.simplebatch.processor;
 
+import com.freiheit.fuava.simplebatch.result.Result;
+
 import java.io.File;
 import java.nio.file.Path;
-
-import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Preconditions;
+import java.util.Objects;
 
 /**
  * @param <Input>
- * @param <Output>
  */
 class ControlFilePersistence<Input> extends
         AbstractSingleItemProcessor<Input, FilePersistenceOutputInfo, ControlFilePersistenceOutputInfo> {
@@ -42,7 +41,7 @@ class ControlFilePersistence<Input> extends
     
     public ControlFilePersistence( final Configuration config ) {
         this.config = config;
-        this.downloadDirPath = Preconditions.checkNotNull( config.getDownloadDirPath() );
+        this.downloadDirPath = Objects.requireNonNull( config.getDownloadDirPath() );
     }
 
     @Override

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,13 +16,15 @@
  */
 package com.freiheit.fuava.simplebatch.util;
 
+import com.freiheit.fuava.simplebatch.exceptions.FetchFailedException;
+
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-
-import com.freiheit.fuava.simplebatch.exceptions.FetchFailedException;
-import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 
 /**
  * Utility functions for iostream handling within the fuava simplebatch project.
@@ -31,7 +33,6 @@ import com.google.common.io.CharStreams;
  *
  */
 public final class IOStreamUtils {
-
     private IOStreamUtils() {
         // static util class constructor
     }
@@ -43,10 +44,11 @@ public final class IOStreamUtils {
      */
     public static String consumeAsString( final InputStream istream ) throws FetchFailedException {
         try {
-            try ( InputStream stream = istream ) {
-                return CharStreams.toString( new InputStreamReader( stream, Charsets.UTF_8 ) );
+            try ( final BufferedReader reader = new BufferedReader( new InputStreamReader( istream, StandardCharsets.UTF_8 ) ) ) {
+                return reader.lines()
+                        .collect( Collectors.joining( "\n" ) );
             }
-        } catch ( final IOException e ) {
+        } catch ( final IOException | UncheckedIOException e ) {
             throw new FetchFailedException( e );
         }
     }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,23 +16,6 @@
  */
 package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.freiheit.fuava.simplebatch.BatchTestDirectory;
 import com.freiheit.fuava.simplebatch.MapBasedBatchDownloader;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
@@ -46,19 +29,33 @@ import com.freiheit.fuava.simplebatch.processor.StringFileWriterAdapter;
 import com.freiheit.fuava.simplebatch.processor.ToProcessingDirMover;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
-import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
+import com.freiheit.fuava.simplebatch.util.CollectionUtils;
 import com.google.gson.Gson;
-
+import org.testng.Assert;
+import org.testng.annotations.Test;
 import subdirs.StandardSubdirStrategies;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Test
 public class CtlImporterTest {
 
-    private final Map<Integer, String> data = ImmutableMap.of(
+    private final Map<Integer, String> data = CollectionUtils.asMap(
             1, "eins",
             2, "zwei",
             3, "drei",
@@ -106,20 +103,16 @@ public class CtlImporterTest {
                         .setFailedDirPath( tmp.getFailsDir() )
                         .setProcessingDirPath( tmp.getProcessingDir() ) 
                 )
-                .setFileInputStreamReader( new Function<InputStream, Iterable<String>>() {
-
-                        @Override
-                        public Iterable<String> apply( final InputStream input ) {
-                            try {
-                                try ( BufferedReader ir =
-                                        new BufferedReader( new InputStreamReader( input, Charsets.UTF_8 ) ) ) {
-                                    return ImmutableList.of( ir.readLine() );
-                                }
-                            } catch ( final IOException e ) {
-                                throw new RuntimeException( e );
-                            }
+                .setFileInputStreamReader( input -> {
+                    try {
+                        try ( BufferedReader ir =
+                                new BufferedReader( new InputStreamReader( input, StandardCharsets.UTF_8 ) ) ) {
+                            return Collections.singletonList( ir.readLine() );
                         }
-                    } 
+                    } catch ( final IOException e ) {
+                        throw new RuntimeException( e );
+                    }
+                }
                 )
                 .setContentProcessor( new RetryingProcessor<FetchedItem<String>, String, String>() {
 
@@ -135,7 +128,7 @@ public class CtlImporterTest {
         Assert.assertFalse( importResults.isAllFailed() );
 
         // ignore ordering, because reading of the input files currently is not ordered. 
-        Assert.assertEquals( ImmutableSet.copyOf( importedLines ), ImmutableSet.copyOf( data.values() ) );
+        Assert.assertEquals( new LinkedHashSet<>( importedLines ), new LinkedHashSet<>( data.values() ) );
         Assert.assertTrue( importedLines.size() == 4 );
 
         // test the contents of a control  file
@@ -208,7 +201,7 @@ public class CtlImporterTest {
     public void testImportWithNullItems() throws FileNotFoundException, IOException {
 
         final BatchTestDirectory tmp = new BatchTestDirectory( "CtlImporterTest" );
-        final Map<Integer, String> data = ImmutableMap.of( 1, "test\nshould work again" );
+        final Map<Integer, String> data = Collections.singletonMap( 1, "test\nshould work again" );
 
         final ResultStatistics downloadResults = new CtlDownloaderJob.Builder<Integer, String>()
                 .setConfiguration(
@@ -248,7 +241,7 @@ public class CtlImporterTest {
                     } ) 
                 ).build().run();
 
-        Assert.assertEquals( ImmutableSet.copyOf( importedLines ), ImmutableSet.of( "test", "should work again" ) );
+        Assert.assertEquals( new LinkedHashSet<>( importedLines ), CollectionUtils.asSet( "test", "should work again" ) );
         tmp.cleanup();
     }
     
@@ -256,7 +249,7 @@ public class CtlImporterTest {
     public void testFetchedImport() throws FileNotFoundException, IOException {
 
         final BatchTestDirectory tmp = new BatchTestDirectory( "CtlImporterTest" );
-        final Map<Integer, String> data = ImmutableMap.of( 1, "test\n\nshould work again" );
+        final Map<Integer, String> data = Collections.singletonMap( 1, "test\n\nshould work again" );
 
         final ResultStatistics downloadResults = new CtlDownloaderJob.Builder<Integer, String>()
                 .setConfiguration(
@@ -296,7 +289,7 @@ public class CtlImporterTest {
                     } ) 
                 ).build().run();
 
-        Assert.assertEquals( ImmutableSet.copyOf( importedLines ), ImmutableSet.of( "test", "should work again" ) );
+        Assert.assertEquals( new LinkedHashSet<>( importedLines ), CollectionUtils.asSet( "test", "should work again" ) );
         tmp.cleanup();
     }
 
@@ -304,7 +297,7 @@ public class CtlImporterTest {
     public void testFetchedImportWithSubdirs() throws FileNotFoundException, IOException {
 
         final BatchTestDirectory tmp = new BatchTestDirectory( "CtlImporterTest" );
-        final Map<Integer, String> data = ImmutableMap.of( 1, "test\n\nshould work again" );
+        final Map<Integer, String> data = Collections.singletonMap( 1, "test\n\nshould work again" );
 
         final ResultStatistics downloadResults = new CtlDownloaderJob.Builder<Integer, String>()
                 .setConfiguration(
@@ -357,7 +350,7 @@ public class CtlImporterTest {
                     } ) 
                 ).build().run();
 
-        Assert.assertEquals( ImmutableSet.copyOf( importedLines ), ImmutableSet.of( "test", "should work again" ) );
+        Assert.assertEquals( new LinkedHashSet<>( importedLines ), CollectionUtils.asSet( "test", "should work again" ) );
         tmp.cleanup();
     }
 
@@ -409,7 +402,7 @@ public class CtlImporterTest {
 
         // TODO: assert that only our own exception was thrown, nothing else
 
-        Assert.assertEquals( ImmutableSet.copyOf( importedLines ), ImmutableSet.of( "test" ) );
+        Assert.assertEquals( new LinkedHashSet<>( importedLines ), Collections.singleton( "test" ) );
         tmp.cleanup();
     }
 

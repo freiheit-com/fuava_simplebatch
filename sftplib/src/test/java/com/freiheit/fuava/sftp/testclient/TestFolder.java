@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,7 @@ public final class TestFolder<T> {
     final ConcurrentMap<String, T> folderContent;
 
     public TestFolder( final Map<String, T> folderContent ) {
-        this.folderContent = new ConcurrentHashMap<String, T>( folderContent );
+        this.folderContent = new ConcurrentHashMap<>( folderContent );
     }
 
     public Set<String> getItemKeys() {

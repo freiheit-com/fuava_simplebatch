@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,9 @@ package com.freiheit.fuava.simplebatch.fetch;
 
 import com.freiheit.fuava.simplebatch.fetch.PageFetcher.PagingInput;
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.collect.Iterables;
+
+import java.util.Collection;
+import java.util.stream.StreamSupport;
 
 public interface PageFetchingSettings<T> {
     default boolean hasNext( final int from, final int amount, final Result<PagingInput, T> lastValue ) {
@@ -26,11 +28,14 @@ public interface PageFetchingSettings<T> {
             return false;
         }
         final Object output = lastValue.getOutput();
-        if ( output instanceof Iterable ) {
-            return Iterables.size( (Iterable) output ) >= amount;
+
+        if ( output instanceof Collection ) {
+            return ( (Collection<?>) output ).size() >= amount;
+        } else if ( output instanceof Iterable ) {
+            final long size = StreamSupport.stream( ( (Iterable<?>) output ).spliterator(), false).count();
+            return size >= amount;
         }
         throw new UnsupportedOperationException( "cannot calculate paging for " + output
                 + " - please provide your own implementation" );
-
     }
 }

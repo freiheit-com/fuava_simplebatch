@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 public class FileUtils {
-
     public static final String PLACEHOLDER_DATE = "%(DATE)";
 
     public static void deleteDirectoryRecursively( final File dir ) throws IOException {

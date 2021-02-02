@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,18 +16,6 @@
  */
 package com.freiheit.fuava.simplebatch;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.stream.StreamSupport;
-
-import javax.annotation.CheckReturnValue;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.processor.Processor;
@@ -36,10 +24,18 @@ import com.freiheit.fuava.simplebatch.result.DelegatingProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
+import com.freiheit.fuava.simplebatch.util.IterableUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.CheckReturnValue;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.stream.StreamSupport;
 
 /**
  * Downloads - or more generally, processes - data in two stages, via iterables.
@@ -67,6 +63,9 @@ public class BatchJob<OriginalInput, Output> {
     public static final int TERMINATION_TIMEOUT_HOURS = 96;
     public static final int PANIC_VM_ERROR = 1;
 
+    /**
+     * A thread group implementation for batch jobs.
+     */
     private static final class BatchJobThreadGroup extends ThreadGroup {
         private final PanicCallback panicCallback;
 
@@ -79,7 +78,7 @@ public class BatchJob<OriginalInput, Output> {
         public void uncaughtException( final Thread t, final Throwable e ) {
             try {
                 LOG.error( e.getMessage(), e );
-            } catch (final Throwable t2) {
+            } catch ( final Throwable t2 ) {
                 panicCallback.panic( "Thread died while logging", PANIC_VM_ERROR );
                 return;
             }
@@ -89,19 +88,20 @@ public class BatchJob<OriginalInput, Output> {
         }
     }
 
+    /**
+     *
+     */
     private final class CallProcessor implements Consumer<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> {
         private final DelegatingProcessingResultListener<OriginalInput, Output> listeners;
         private final PanicCallback panicCallback;
 
         private CallProcessor( final DelegatingProcessingResultListener<OriginalInput, Output> listeners, final PanicCallback panicCallback ) {
             this.listeners = listeners;
-            this.panicCallback = Preconditions.checkNotNull( panicCallback );
+            this.panicCallback = Objects.requireNonNull( panicCallback );
         }
 
         @Override
         public void accept( final List<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceResults ) {
-
-
             try {
                 listeners.onFetchResults( sourceResults );
                 final Iterable<? extends Result<FetchedItem<OriginalInput>, Output>> processingResults = persistence.process( sourceResults );
@@ -109,7 +109,7 @@ public class BatchJob<OriginalInput, Output> {
             } catch ( final VirtualMachineError e ) {
                 LOG.error( "FATAL: Exception went through the Processors. You need to ensure that this cannot happen, in order to achieve proper error handling " + e.getMessage(), e );
                 /*
-                 * There is no way we can get out of this. We need to ensure the entire program halts - thus we do a system
+                 * There is no way we can get out of this. We need to ensure the entire program halts - thus we do a system.
                  */
                 panicCallback.panic( "Virtual Machine Error", PANIC_VM_ERROR );
             } catch ( final Throwable t ) {
@@ -362,8 +362,8 @@ public class BatchJob<OriginalInput, Output> {
         this.fetcher = fetcher;
         this.persistence = processor;
         this.printFinalTimeMeasures = printFinalTimeMeasures;
-        this.listeners = ImmutableList.copyOf( listeners );
-        this.panicCallback = Preconditions.checkNotNull( panicCallback, "Panic Callback must be set" );
+        this.listeners = new ArrayList<>( listeners );
+        this.panicCallback = Objects.requireNonNull( panicCallback, "Panic Callback must be set" );
     }
 
     public static <Input, Output> Builder<Input, Output> builder() {
@@ -374,11 +374,11 @@ public class BatchJob<OriginalInput, Output> {
     public ResultStatistics run() {
         final ResultStatistics.Builder<OriginalInput, Output> resultBuilder = ResultStatistics.builder();
 
+        final List<ProcessingResultListener<OriginalInput, Output>> listOfListeners = new ArrayList<>( this.listeners.size() + 1 );
+        listOfListeners.add( resultBuilder );
+        listOfListeners.addAll( this.listeners );
         final DelegatingProcessingResultListener<OriginalInput, Output> listeners =
-                new DelegatingProcessingResultListener<>(
-                        ImmutableList.<ProcessingResultListener<OriginalInput, Output>> builder().add( resultBuilder ).addAll(
-                                this.listeners ).build()
-                );
+                new DelegatingProcessingResultListener<>( listOfListeners );
 
         listeners.onBeforeRun( this.description );
 
@@ -390,8 +390,8 @@ public class BatchJob<OriginalInput, Output> {
             final Collection<?> collection = ( Collection<?> ) sourceIterable;
             ( ( TimeLoggingProcessor<?,?,?> ) this.persistence ).addNumPreparedItems(
                     collection.size(),
-                    FluentIterable.from( collection ).filter( o -> ( ( Result<?, ?> ) o ).isSuccess() ).size(),
-                    FluentIterable.from( collection ).filter( o -> ( ( Result<?, ?> ) o ).isFailed() ).size()
+                    collection.stream().filter( o -> ((Result<?, ?>) o).isSuccess() ).count(),
+                    collection.stream().filter( o -> ((Result<?, ?>) o).isFailed() ).count()
             );
         }
 
@@ -422,10 +422,9 @@ public class BatchJob<OriginalInput, Output> {
             final DelegatingProcessingResultListener<OriginalInput, Output> listeners,
             final boolean useParallelStream,
             final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> sourceIterable ) {
+        final Iterable<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> partitions = IterableUtils.partition( sourceIterable, processingBatchSize );
 
-        final Iterable<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> partitions = Iterables.partition( sourceIterable, processingBatchSize );
-
-        StreamSupport.stream( partitions.spliterator(), parallel ).forEach( new CallProcessor( listeners, panicCallback ) );
+        StreamSupport.stream( partitions.spliterator(), useParallelStream ).forEach( new CallProcessor( listeners, panicCallback ) );
     }
 
     private void processWithBlockingQueue(

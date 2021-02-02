@@ -8,7 +8,6 @@ jar {
 }
 
 dependencies {
-    compile 'com.google.guava:guava:18.0'
     compile 'org.json:json:20141113'
     compile 'org.slf4j:slf4j-api:1.7.12'
     compile 'commons-configuration:commons-configuration:1.10'

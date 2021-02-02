@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,11 @@ package com.freiheit.fuava.simplebatch.http;
 
 import java.io.InputStream;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.freiheit.fuava.simplebatch.exceptions.FetchFailedException;
-import com.google.common.base.Function;
 
 public interface HttpFetcher {
-
     public <T> T fetch(
             final Function<? super InputStream, T> reader,
             final String uri,

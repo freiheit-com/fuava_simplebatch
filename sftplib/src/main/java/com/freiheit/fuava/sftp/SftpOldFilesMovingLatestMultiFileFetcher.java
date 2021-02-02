@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,30 +16,28 @@
  */
 package com.freiheit.fuava.sftp;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.text.ParseException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import javax.annotation.CheckForNull;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.freiheit.fuava.sftp.util.FileType;
 import com.freiheit.fuava.sftp.util.FilenameUtil;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Ordering;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.CheckForNull;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -50,7 +48,6 @@ import com.jcraft.jsch.SftpException;
  * @author Thomas Ostendorf (thomas.ostendorf@freiheit.com)
  */
 public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetcher<SftpFilename> {
-
     private static final Logger LOG = LoggerFactory.getLogger( SftpOldFilesMovingLatestMultiFileFetcher.class );
 
     private final RemoteClient remoteClient;
@@ -78,9 +75,9 @@ public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetche
             final String skippedFolder,
             final String processingFolder,
             final String incomingFilesFolder ) {
-        Preconditions.checkNotNull( remoteClient, "Remote client must be provided but was null" );
-        Preconditions.checkNotNull( skippedFolder, "Skipped folder must be provided, but was null" );
-        Preconditions.checkNotNull( incomingFilesFolder, "Incoming folder must be provided, but was null" );
+        Objects.requireNonNull( remoteClient, "Remote client must be provided but was null" );
+        Objects.requireNonNull( skippedFolder, "Skipped folder must be provided, but was null" );
+        Objects.requireNonNull( incomingFilesFolder, "Incoming folder must be provided, but was null" );
         this.remoteClient = remoteClient;
         this.skippedFolder = skippedFolder;
         this.processingFolder = processingFolder;
@@ -124,7 +121,7 @@ public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetche
 
             final Map<FileType, List<String>> types = byType( all );
 
-            final ImmutableList.Builder<Result<FetchedItem<SftpFilename>, SftpFilename>> r = ImmutableList.builder();
+            final List<Result<FetchedItem<SftpFilename>, SftpFilename>> r = new ArrayList<>();
             for ( final Map.Entry<FileType, List<String>> e : types.entrySet() ) {
                 final FileType fileType = e.getKey();
                 final List<String> entryFileNameList = e.getValue();
@@ -132,21 +129,20 @@ public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetche
                 try {
                     final List<String> filteredFileNamesList =
                             FilenameUtil.getAllMatchingFilenames( "", fileType, entryFileNameList, RemoteFileStatus.OK );
-                    r.addAll( moveOldFilesToSkippedAndReturnLatestFilename( filteredFileNamesList, fileType ) );
+                    moveOldFilesToSkippedAndReturnLatestFilename( filteredFileNamesList, fileType ).forEach( r::add );
                 } catch ( final Throwable e2 ) {
                     LOG.error( "Failed to filter file list from remote server! Folder: "  + incomingFilesFolder + ", File Type: " + fileType + " - " + entryFileNameList, e2 );
                     final FetchedItem<SftpFilename> fetchedItem =
                             FetchedItem.of( new SftpFilename( incomingFilesFolder, "", null, "no timestamp" ), 1 );
-                    r.addAll( Collections.singletonList(
-                            Result.<FetchedItem<SftpFilename>, SftpFilename> failed( fetchedItem, e2 ) ) );
+                    r.add( Result.failed( fetchedItem, e2 ) );
                 }
             }
-            return r.build();
+            return Collections.unmodifiableList( r );
         } catch ( final Throwable e ) {
             LOG.error( "Failed to acquire file list from remote server! Folder: " + incomingFilesFolder, e );
             final FetchedItem<SftpFilename> fetchedItem =
                     FetchedItem.of( new SftpFilename( incomingFilesFolder, "", null, "no timestamp" ), 1 );
-            return Collections.singletonList( Result.<FetchedItem<SftpFilename>, SftpFilename>failed( fetchedItem, e ) );
+            return Collections.singletonList( Result.failed( fetchedItem, e ) );
         }
     }
 
@@ -160,9 +156,6 @@ public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetche
     protected Iterable<Result<FetchedItem<SftpFilename>, SftpFilename>> moveOldFilesToSkippedAndReturnLatestFilename(
             final List<String> fileNamesList,
             final FileType fileType ) throws SftpException, JSchException, ParseException, FileNotFoundException {
-
-        final ImmutableList.Builder<Result<FetchedItem<SftpFilename>, SftpFilename>> files = new ImmutableList.Builder<>();
-
         /*
          * We only extract the filename from the .ok-files in Order to find only
          * files that are ready.
@@ -172,14 +165,16 @@ public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetche
 
         if ( latestDateExtracted == null ) {
             LOG.info( "No .ok file matching the schema found on the server. Nothing to download." );
-            return files.build(); // return an empty list
+            return Collections.emptyList(); // return an empty list
         }
+        final List<Result<FetchedItem<SftpFilename>, SftpFilename>> files = new ArrayList<>( fileNamesList.size() );
 
         // get list of all .ok files fulfilling the pattern defined by file type
         // make sure newer files are processed first
-        final List<String> okFiles = Ordering.natural().reverse().immutableSortedCopy(
-                FilenameUtil.getAllMatchingFilenames(
-                        "", fileType, fileNamesList, RemoteFileStatus.OK ) );
+        final List<String> okFiles = FilenameUtil.getAllMatchingFilenames( "", fileType, fileNamesList, RemoteFileStatus.OK )
+                .stream()
+                .sorted( Comparator.<String>naturalOrder().reversed() )
+                .collect( Collectors.toList() );
 
         // extract the latest timestamp of all ok.-files.
         final long latestTimestamp = FilenameUtil.timestampToLong( latestDateExtracted );
@@ -187,7 +182,6 @@ public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetche
         // move all skipped files to skipped folder, add all files for download to the result list
         for ( final String okFile : okFiles ) {
             if ( okFile != null ) {
-
                 final long timestamp = FilenameUtil.getDateFromFilename( okFile );
                 if ( isLatestFile( timestamp, latestTimestamp ) ) {
                     if ( moveToProcessing ) {
@@ -201,13 +195,11 @@ public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetche
                 }
             }
         }
-
-        final ImmutableList<Result<FetchedItem<SftpFilename>, SftpFilename>> result = files.build();
         // warn if too many or too few items returned
-        if ( result.size() != 1 ) {
-            LOG.warn( "Unexpected number of Items in result: " + result );
+        if ( files.size() != 1 ) {
+            LOG.warn( "Unexpected number of Items in result: " + files );
         }
-        return result;
+        return Collections.unmodifiableList( files );
     }
 
     private Result<FetchedItem<SftpFilename>, SftpFilename> success(
@@ -287,7 +279,7 @@ public abstract class SftpOldFilesMovingLatestMultiFileFetcher implements Fetche
     public static String lsEntryToFilename( final ChannelSftp.LsEntry lsEntry ) {
         if ( lsEntry != null ) {
             final String filename = lsEntry.getFilename();
-            if ( !Strings.isNullOrEmpty( filename ) ) {
+            if ( filename != null && !filename.isEmpty() ) {
                 return filename;
             }
         }

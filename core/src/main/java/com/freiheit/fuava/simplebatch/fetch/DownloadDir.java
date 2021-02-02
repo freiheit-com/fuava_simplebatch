@@ -1,11 +1,10 @@
 package com.freiheit.fuava.simplebatch.fetch;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
-
-import com.google.common.base.Preconditions;
 
 public final class DownloadDir {
     private final Path path;
@@ -13,9 +12,9 @@ public final class DownloadDir {
     private final String suffix;
     
     public DownloadDir( final Path path, @Nullable final String prefix, final String suffix ) {
-        this.path = Preconditions.checkNotNull( path );
+        this.path = Objects.requireNonNull( path );
         this.prefix = prefix;
-        this.suffix = Preconditions.checkNotNull( suffix );
+        this.suffix = Objects.requireNonNull( suffix );
     }
     
     public Path getPath() {

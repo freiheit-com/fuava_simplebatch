@@ -10,7 +10,6 @@ import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 
 public class ImportFileJsonLoggingListener implements ProcessingResultListener<ControlFile, ResultStatistics> {
-
     private final Path downloadDir;
     private final Path archivedDir;
     private final Path failedDir;

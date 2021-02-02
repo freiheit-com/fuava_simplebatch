@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,11 +16,11 @@
  */
 package com.freiheit.fuava.simplebatch.fetch;
 
-import java.util.Iterator;
-
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.util.EagernessUtil;
-import com.google.common.collect.Iterators;
+
+import java.util.Collections;
+import java.util.Iterator;
 
 public final class IterableFetcherWrapper<OriginalInput> implements Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> {
     private final Iterable<OriginalInput> iterable;
@@ -36,9 +36,9 @@ public final class IterableFetcherWrapper<OriginalInput> implements Iterable<Res
     @Override
     public Iterator<Result<FetchedItem<OriginalInput>, OriginalInput>> iterator() {
         try {
-            return new FailsafeIterator<OriginalInput>( iterable.iterator() );
+            return new FailsafeIterator<>( iterable.iterator() );
         } catch ( final Throwable t ) {
-            return Iterators.singletonIterator( Result.failed( null, t ) );
+            return Collections.<Result<FetchedItem<OriginalInput>, OriginalInput>>singletonList( Result.failed( null, t ) ).iterator();
         }
     }
 

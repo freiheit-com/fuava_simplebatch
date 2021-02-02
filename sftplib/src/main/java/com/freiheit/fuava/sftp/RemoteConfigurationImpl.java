@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,8 +25,6 @@ import com.freiheit.fuava.simplebatch.util.FileUtils;
  * @author dmitrijs.barbarins@freiheit.com
  */
 public class RemoteConfigurationImpl implements RemoteConfiguration {
-
-
     private final String remoteFilesIncomingFolder;
     private final String remoteProcessingFolder;
     private final String remoteSkippedFolder;

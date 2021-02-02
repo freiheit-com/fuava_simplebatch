@@ -1,19 +1,19 @@
 package com.freiheit.fuava.simplebatch;
 
+import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
+import com.freiheit.fuava.simplebatch.result.Result;
+import com.freiheit.fuava.simplebatch.util.IterableUtils;
+import com.freiheit.fuava.simplebatch.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
-import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 
 final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>>> {
     private static final Logger LOG = LoggerFactory.getLogger( BlockingQueueExecutor.class );
@@ -44,7 +44,6 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
 
         @Override
         public void run() {
-
             while ( true ) {
                 // waiting up to one second for the queue to fill. Normally, we should never wait here.
                 try {
@@ -96,15 +95,14 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
         // Start the consumers
         final List<Thread> threads = createThreads( numParallelThreads, threadGroup );
 
-        threads.stream().forEach( t -> {LOG.debug( "Starting {}", t.getName() );t.start();} );
+        threads.forEach( t -> { LOG.debug( "Starting {}", t.getName() );t.start(); } );
 
         final long maxEndTime = System.currentTimeMillis() + terminationTimeoutMs;
 
-        final Iterable<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> partitions = Iterables.partition( sourceIterable, processingBatchSize );
+        final Iterable<List<Result<FetchedItem<OriginalInput>, OriginalInput>>> partitions = IterableUtils.partition( sourceIterable, processingBatchSize );
         int total = 0;
         for (final List<Result<FetchedItem<OriginalInput>, OriginalInput>> chunk: partitions) {
             total += chunk.size();
-            LOG.info( "Adding chunk of " + chunk.size() + " items to the queue. Current total: " + total );
             try {
                 final long timeoutMs = getTimeoutMs(maxEndTime);
                 if (!queue.offer( chunk, timeoutMs, TimeUnit.MILLISECONDS ) ) {
@@ -148,15 +146,14 @@ final class BlockingQueueExecutor<OriginalInput> implements Consumer<Iterable<Re
 
 
     private List<Thread> createThreads( final int numParallelThreads, final ThreadGroup group ) {
-        final ImmutableList.Builder<Thread> threads = ImmutableList.builder();
+        final List<Thread> threads = new ArrayList<>( numParallelThreads );
         for ( int i = 0; i < numParallelThreads; i++ ) {
-            final String threadName = "SBProc_" + Strings.padStart( Integer.toString( i ), 2, '0');
-            LOG.debug( "Creating Processing Thread {}", threadName );
+            final String threadName = "SBProc_" + StringUtils.padStart( Integer.toString( i ), 2, '0');
             final Thread t = new Thread(group, new BlockingQueueExecutor.BlockingQueueConsumer<>( finished, queue, processor ), threadName );
             t.setDaemon( false /* VM should not exit while this thread is still alive */ );
             threads.add( t );
         }
-        return threads.build();
+        return Collections.unmodifiableList( threads );
     }
 
 }

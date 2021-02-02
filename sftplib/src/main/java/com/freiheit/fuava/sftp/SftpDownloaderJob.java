@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,6 @@
  */
 package com.freiheit.fuava.sftp;
 
-import org.apache.commons.lang.StringUtils;
 import com.freiheit.fuava.sftp.util.FileType;
 import com.freiheit.fuava.sftp.util.RemoteConfiguration;
 import com.freiheit.fuava.simplebatch.BatchJob;
@@ -35,7 +34,6 @@ import com.freiheit.fuava.simplebatch.processor.TimeLoggingProcessor;
  * @author Thomas Ostendorf (thomas.ostendorf@freiheit.com)
  */
 public class SftpDownloaderJob {
-
     private SftpDownloaderJob() {
     }
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +17,7 @@
 package com.freiheit.fuava.simplebatch.processor;
 
 import java.util.List;
-
-import com.google.common.base.Function;
+import java.util.function.Function;
 
 /**
  * A processor implementation which delegates processing of lists of

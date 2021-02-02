@@ -1,22 +1,21 @@
 package com.freiheit.fuava.simplebatch.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Joiner;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
 
 import subdirs.StandardSubdirStrategies;
 import subdirs.SubdirStrategy;
 
 public class Sysprops {
-    
-    private static final ConcurrentLinkedQueue<Prop<?>> ALL_PROPS = new ConcurrentLinkedQueue<Prop<?>>();
+    private static final ConcurrentLinkedQueue<Prop<?>> ALL_PROPS = new ConcurrentLinkedQueue<>();
     
     public abstract static class Prop<T> {
         private final String key;
@@ -52,7 +51,7 @@ public class Sysprops {
 
         @Override
         public List<String> getPossibleStringValues() {
-            return ImmutableList.of( "true", "false" );
+            return Arrays.asList( "true", "false" );
         }
         
         @Override
@@ -61,7 +60,7 @@ public class Sysprops {
         }
         
         public boolean is() {
-            return getOrDefault( v -> "true".equals( v ), defaultValue );
+            return getOrDefault( "true"::equals, defaultValue );
         }
     }
 
@@ -76,7 +75,7 @@ public class Sysprops {
         
         @Override
         public List<String> getPossibleStringValues() {
-            return ImmutableList.of("<any>");
+            return Collections.singletonList( "<any>" );
         }
         
         @Override
@@ -99,7 +98,7 @@ public class Sysprops {
         
         @Override
         public List<String> getPossibleStringValues() {
-            return ImmutableList.of("1, 2, 3, ... ");
+            return Collections.singletonList("1, 2, 3, ... ");
         }
         
         @Override
@@ -108,7 +107,7 @@ public class Sysprops {
         }
         
         public Integer get() {
-            return getOrDefault( v -> Integer.parseInt( v ), defaultValue );
+            return getOrDefault( Integer::parseInt, defaultValue );
         }
     }
 
@@ -128,11 +127,11 @@ public class Sysprops {
         
         @Override
         public List<String> getPossibleStringValues() {
-            return FluentIterable.of( StandardSubdirStrategies.values() ).transform( e -> e.name() ).toList();
+            return Arrays.stream( StandardSubdirStrategies.values() ).map( Enum::name ).collect( Collectors.toList() );
         }
         
         public SubdirStrategy get() {
-            return getOrDefault( v -> StandardSubdirStrategies.getInstance( v ), defaultValue );
+            return getOrDefault( StandardSubdirStrategies::getInstance, defaultValue );
         }
     }
 
@@ -151,17 +150,17 @@ public class Sysprops {
         if ( LOG.isInfoEnabled() ) {
             final StringBuilder sb = new StringBuilder();
             sb.append( "Simplebatch Java Properties. Use -Dpropname=propvalue to control the parameter" ).append( '\n' );
-            for (final Prop<?> p: properties()) {
+            for ( final Prop<?> p: properties() ) {
                 sb
                 .append( '\n' )
-                .append( "# Possible Values: " ).append( Joiner.on( ", " ).join( p.getPossibleStringValues() ) ).append( '\n' )
-                .append( "-D").append( p.getKey() ).append( "=" )
+                .append( "# Possible Values: " ).append( String.join( ", ", p.getPossibleStringValues() ) ).append( '\n' )
+                .append( "-D" ).append( p.getKey() ).append( "=" )
                 .append( p.getDefaultValueString() ).append( '\n' );
             }
             LOG.info( sb.toString() );
         }
     }
-    static final List<Prop<?>> properties() {
-        return ImmutableList.copyOf( Sysprops.ALL_PROPS );
+    static List<Prop<?>> properties() {
+        return Collections.unmodifiableList( new ArrayList<>( ALL_PROPS ) );
     }
 }

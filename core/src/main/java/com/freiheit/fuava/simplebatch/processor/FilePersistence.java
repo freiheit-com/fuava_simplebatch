@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +16,16 @@
  */
 package com.freiheit.fuava.simplebatch.processor;
 
+import com.freiheit.fuava.simplebatch.result.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Preconditions;
+import java.util.Objects;
 
 /**
  * @param <Input>
@@ -40,7 +39,7 @@ class FilePersistence<Input, Output> extends AbstractSingleItemProcessor<Input, 
     private final Path basePath;
 
     public FilePersistence( final Path dir, final FileOutputStreamAdapter<Input, Output> adapter ) {
-        this.adapter = Preconditions.checkNotNull( adapter );
+        this.adapter = Objects.requireNonNull( adapter );
         final File basedir = dir.toFile();
         if ( !basedir.exists() ) {
             if ( basedir.mkdirs() ) {

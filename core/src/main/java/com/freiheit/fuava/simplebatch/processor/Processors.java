@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,8 @@ import java.io.Writer;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
@@ -35,8 +37,6 @@ import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.freiheit.fuava.simplebatch.util.IOStreamUtils;
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
 
 public class Processors {
 
