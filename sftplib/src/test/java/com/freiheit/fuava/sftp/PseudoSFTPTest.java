@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,7 +43,6 @@ import com.freiheit.fuava.simplebatch.processor.Processors;
 import com.freiheit.fuava.simplebatch.processor.TimeLoggingProcessor;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 
 @Test
@@ -67,17 +67,12 @@ public class PseudoSFTPTest {
 
         };
 
-        final HashMap<String, TestFolder<String>> initialState = new HashMap<String, TestFolder<String>>();
-        initialState.put(
-                "/incoming",
-                new TestFolder<String>(
-                        ImmutableMap.<String, String> builder()
-                                .put( downloadFileName, downloadFileContent )
-                                .put( "test_pseudo_152000_20101010_120000.ok", "" )
-                                .build()
+        final Map<String, String> folderContent = new LinkedHashMap<>();
+        folderContent.put( downloadFileName, downloadFileContent );
+        folderContent.put( "test_pseudo_152000_20101010_120000.ok", "" );
 
-                )
-                );
+        final HashMap<String, TestFolder<String>> initialState = new HashMap<String, TestFolder<String>>();
+        initialState.put( "/incoming", new TestFolder<>( folderContent ) );
 
         //prepare 'remote' state
 
@@ -164,17 +159,12 @@ public class PseudoSFTPTest {
 
         };
 
-        final HashMap<String, TestFolder<String>> initialState = new HashMap<String, TestFolder<String>>();
-        initialState.put(
-                "/incoming",
-                new TestFolder<String>(
-                        ImmutableMap.<String, String> builder()
-                                .put( downloadFileName, downloadFileContent )
-                                .put( "test_pseudo_152000_20101010_120000.ok", "" )
-                                .build()
+        final Map<String, String> folderContent = new LinkedHashMap<>();
+        folderContent.put( downloadFileName, downloadFileContent );
+        folderContent.put( "test_pseudo_152000_20101010_120000.ok", "" );
 
-                )
-                );
+        final HashMap<String, TestFolder<String>> initialState = new HashMap<String, TestFolder<String>>();
+        initialState.put( "/incoming", new TestFolder<>( folderContent ) );
 
         //prepare 'remote' state
 

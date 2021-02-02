@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,28 +16,25 @@
  */
 package com.freiheit.fuava.simplebatch;
 
+import com.freiheit.fuava.simplebatch.processor.Processor;
+import com.freiheit.fuava.simplebatch.processor.Processors;
+import com.freiheit.fuava.simplebatch.result.Result;
+import com.freiheit.fuava.simplebatch.util.CollectionUtils;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-
-import javax.annotation.Nullable;
-
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import com.freiheit.fuava.simplebatch.processor.Processor;
-import com.freiheit.fuava.simplebatch.processor.Processors;
-import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 
 /**
  * @author tim.lessner@freiheit.com
@@ -63,20 +60,18 @@ public class TestComposition {
     private final String f2String = "exF2";
     private final String f3String = "exF3";
 
-    final ImmutableMap<String, FileContentPair> testFileContentPairs = ImmutableMap.of(
+    final Map<String, FileContentPair> testFileContentPairs = CollectionUtils.asMap(
             f1String, new FileContentPair( exF1, f1String ),
             f2String, new FileContentPair( exF2, f2String ),
-            f3String, new FileContentPair( exF3, f3String )
-            );
+            f3String, new FileContentPair( exF3, f3String ) );
 
-    final ImmutableList<Result<File, File>> nonExistingFiles = ImmutableList.of(
-            asResult( new File( "/tmp/a/a" ) )
-            );
+    final List<Result<File, File>> nonExistingFiles = Collections.singletonList(
+            asResult( new File( "/tmp/a/a" ) ) );
 
     @BeforeClass
     public void makeTestData() throws IOException {
         for ( final FileContentPair fileContentPair : testFileContentPairs.values() ) {
-            try ( Writer fos = new OutputStreamWriter( new FileOutputStream( fileContentPair.file ), Charsets.UTF_8 ) ) {
+            try ( Writer fos = new OutputStreamWriter( new FileOutputStream( fileContentPair.file ), StandardCharsets.UTF_8 ) ) {
                 fos.write( fileContentPair.content );
             }
         }
@@ -110,7 +105,7 @@ public class TestComposition {
         final Processor<File, File, String> compose = makeComposedProcessorFileStringProcessor();
 
         final Iterable<Result<File, String>> processed = compose.process( nonExistingFiles );
-        Assert.assertEquals( Arrays.asList( processed ).size(), 1 );
+        Assert.assertEquals( Collections.singletonList( processed ).size(), 1 );
 
         for ( final Result r : processed ) {
             Assert.assertTrue( r.isFailed(), "Failed result did not fail!" );
@@ -122,12 +117,6 @@ public class TestComposition {
     }
 
     private Processor<File, File, String> makeReadFilesToStringTestProcessor() {
-        return Processors.singleItemFunction( new Function<File, String>() {
-            @Nullable
-            @Override
-            public String apply( final File input ) {
-                return input.getName();
-            }
-        } );
+        return Processors.singleItemFunction( File::getName );
     }
 }

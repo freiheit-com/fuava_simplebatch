@@ -2,19 +2,17 @@ package subdirs;
 
 import java.time.LocalDateTime;
 
+import com.freiheit.fuava.simplebatch.util.StringUtils;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.google.common.base.Strings;
-
 public class StandardSubdirStrategiesTest {
-
     @DataProvider
     public Object[][] testStrategies() {
         final LocalDateTime now = LocalDateTime.now();
-        final String hours = Strings.padStart( Integer.toString( now.getHour() ) , 2, '0' );
-        final String minutes = Strings.padStart( Integer.toString( now.getMinute() ) , 2, '0' );
+        final String hours = StringUtils.padStart( Integer.toString( now.getHour() ) , 2, '0' );
+        final String minutes = StringUtils.padStart( Integer.toString( now.getMinute() ) , 2, '0' );
         return new Object[][] {
             { StandardSubdirStrategies.NONE, "foo.txt", "foo.txt" },
             { StandardSubdirStrategies.NONE, "1.ctl", "1.ctl" },

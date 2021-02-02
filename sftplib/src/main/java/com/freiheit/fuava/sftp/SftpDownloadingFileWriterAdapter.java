@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import com.freiheit.fuava.sftp.util.ConvertUtil;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.processor.FileOutputStreamAdapter;
 import com.freiheit.fuava.simplebatch.result.Result;
+import com.freiheit.fuava.simplebatch.util.StringUtils;
 import com.freiheit.fuava.simplebatch.util.Sysprops;
 
 /**
@@ -51,7 +52,7 @@ public class SftpDownloadingFileWriterAdapter implements FileOutputStreamAdapter
     @Override
     public String getFileName( final Result<FetchedItem<SftpFilename>, SftpFilename> result ) {
         final String filename = result.getInput().getValue().getFilename();
-        final String count = com.google.common.base.Strings.padStart( Long.toString( counter.incrementAndGet() ), 3, '0' );
+        final String count = StringUtils.padStart( Long.toString( counter.incrementAndGet() ), 3, '0' );
         return prefix + "_" + count + "_" + filename;
     }
 
@@ -59,7 +60,6 @@ public class SftpDownloadingFileWriterAdapter implements FileOutputStreamAdapter
      * writes InputStream to OutputStream.
      *
      * @param outputStream data written from the sftp server
-     * @param inputStream data from the sftp server
      * @throws IOException when streaming fails.
      */
     @Override

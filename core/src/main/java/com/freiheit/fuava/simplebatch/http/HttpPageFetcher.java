@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,10 +17,10 @@
 package com.freiheit.fuava.simplebatch.http;
 
 import java.io.InputStream;
+import java.util.function.Function;
 
 import com.freiheit.fuava.simplebatch.fetch.PageFetcher;
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Function;
 
 public class HttpPageFetcher<T> implements PageFetcher<T> {
     private final PagingRequestSettings<T> settings;

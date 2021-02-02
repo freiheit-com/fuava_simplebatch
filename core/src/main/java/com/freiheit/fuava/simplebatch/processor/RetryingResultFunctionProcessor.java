@@ -20,8 +20,9 @@
 package com.freiheit.fuava.simplebatch.processor;
 
 import java.util.List;
+import java.util.function.Function;
+
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Function;
 
 /**
  * A processor implementation which delegates processing of lists of

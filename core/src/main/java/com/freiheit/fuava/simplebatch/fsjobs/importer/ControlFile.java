@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,19 +16,14 @@
  */
 package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
-import java.nio.file.Path;
-
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
-
-import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
+import java.nio.file.Path;
 
 /**
  * @author tim.lessner@freiheit.com
  */
 public class ControlFile {
-
     private final Path relControlledFile;
     private final Path relLogFile;
     private final Path relControlFile;
@@ -50,11 +45,19 @@ public class ControlFile {
             @Nullable final String status 
     ) {
         this.originalControlledFileName = originalControlledFileName;
-        Preconditions.checkArgument( controlledFileRelPath == null || !controlledFileRelPath.isAbsolute(), "Controlled File Path must not be absolute" );
-        Preconditions.checkArgument( !logFileRelPath.isAbsolute(), "Log File Path must not be absolute" );
-        Preconditions.checkArgument( !controlFileRelPath.isAbsolute(), "Control File Path must not be absolute" );
-        Preconditions.checkArgument( baseDir.isAbsolute(), "Base Dir Path must be absolute" );
-        
+        if ( controlledFileRelPath != null && controlledFileRelPath.isAbsolute() ) {
+            throw new IllegalArgumentException( "Controlled File Path must not be absolute, but was: " + controlledFileRelPath );
+        }
+        if ( logFileRelPath.isAbsolute() ) {
+            throw new IllegalArgumentException( "Log File Path must not be absolute, but was: " + logFileRelPath );
+        }
+        if ( controlFileRelPath.isAbsolute() ) {
+            throw new IllegalArgumentException( "Control File Path must not be absolute, but was: " + controlFileRelPath );
+        }
+        if ( !baseDir.isAbsolute() ) {
+            throw new IllegalArgumentException( "Base Dir Path must be absolute, but was: " + baseDir );
+        }
+
         this.status = status;
         this.downloadFailed = "DOWNLOAD_FAILED".equals( status );;
         this.baseDir = baseDir;
@@ -122,7 +125,10 @@ public class ControlFile {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper( this ).add( "file", this.relControlledFile ).add( "ctl", this.relControlFile ).add( "log", this.relLogFile ).toString();
+        return "ControlFile{" +
+                "file=" + relControlledFile +
+                ", ctl=" + relControlFile +
+                ", log=" + relLogFile +
+                '}';
     }
-
 }

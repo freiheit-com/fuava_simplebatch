@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,11 +16,11 @@
  */
 package com.freiheit.fuava.sftp;
 
+import com.freiheit.fuava.sftp.util.FileType;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import com.freiheit.fuava.sftp.util.FileType;
-import com.google.common.collect.ImmutableMap;
 
 /**
  *
@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableMap;
  * @author Thomas Ostendorf (thomas.ostendorf@freiheit.com)
  */
 public class SftpOldFilesMovingLatestFileFetcher extends SftpOldFilesMovingLatestMultiFileFetcher {
-
     private final FileType fileType;
     /**
      * ctor.
@@ -82,7 +81,6 @@ public class SftpOldFilesMovingLatestFileFetcher extends SftpOldFilesMovingLates
     @Override
     protected Map<FileType, List<String>> byType( final List<String> filenames ) {
         // TODO: filter for filetype matching names. Not really needed, because the timestamp extraction will filter again.
-        return ImmutableMap.of( this.fileType, filenames );
+        return Collections.singletonMap( this.fileType, filenames );
     }
-
 }

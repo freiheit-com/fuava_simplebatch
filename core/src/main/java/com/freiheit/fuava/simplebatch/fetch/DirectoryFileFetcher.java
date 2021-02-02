@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,32 +16,30 @@
  */
 package com.freiheit.fuava.simplebatch.fetch;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import com.freiheit.fuava.simplebatch.result.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Ordering;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author tim.lessner@freiheit.com
  */
 class DirectoryFileFetcher<OriginalInput> implements Fetcher<OriginalInput> {
     private static final Logger LOG = LoggerFactory.getLogger( DirectoryFileFetcher.class );
-    
-    private static final class FetchFile<OriginalInput> implements java.util.function.Function<Path, Result<FetchedItem<OriginalInput>, OriginalInput>> {
+
+    private static final class FetchFile<OriginalInput> implements Function<Path, Result<FetchedItem<OriginalInput>, OriginalInput>> {
         private final Function<Path, OriginalInput> func;
         private int counter = FetchedItem.FIRST_ROW;
 
@@ -64,10 +62,10 @@ class DirectoryFileFetcher<OriginalInput> implements Fetcher<OriginalInput> {
         }
     }
 
-    public static final Ordering<Path> ORDERING_FILE_BY_PATH = Ordering.natural().onResultOf( path -> path.getFileName().toString() );
+    public static final Comparator<Path> ORDERING_FILE_BY_PATH = Comparator.comparing( path -> path.getFileName().toString(), Comparator.naturalOrder() );
     private final List<DownloadDir> dirs;
     private final Function<Path, OriginalInput> func;
-    private final Ordering<Path> fileOrdering;
+    private final Comparator<Path> fileOrdering;
 
     public DirectoryFileFetcher( final Path uri, final String filter, final Function<Path, OriginalInput> func ) {
         this( func, ORDERING_FILE_BY_PATH, new DownloadDir( uri, null, filter ) );
@@ -75,19 +73,26 @@ class DirectoryFileFetcher<OriginalInput> implements Fetcher<OriginalInput> {
 
     public DirectoryFileFetcher( 
             final Function<Path, OriginalInput> func,
-            final Ordering<Path> fileOrdering, 
+            final Comparator<Path> fileOrdering,
             final DownloadDir dir,
             final DownloadDir... dirs ) {
-        this( func, fileOrdering, ImmutableList.<DownloadDir>builder().add( dir ).addAll( ImmutableList.copyOf( dirs ) ).build() );
+        this( func, fileOrdering, mergeDownloadDirs( dir, dirs ) );
+    }
+
+    private static List<DownloadDir> mergeDownloadDirs( final DownloadDir dir, final DownloadDir[] dirs ) {
+        final List<DownloadDir> results = new ArrayList<>( dirs.length + 1 );
+        results.add( dir );
+        Collections.addAll( results, dirs );
+        return Collections.unmodifiableList( results );
     }
 
     public DirectoryFileFetcher( 
             final Function<Path, OriginalInput> func,
-            final Ordering<Path> fileOrdering, 
+            final Comparator<Path> fileOrdering,
             final List<DownloadDir> dirs ) {
-        this.fileOrdering = Preconditions.checkNotNull( fileOrdering );
+        this.fileOrdering = Objects.requireNonNull( fileOrdering );
         this.dirs = dirs;
-        this.func = Preconditions.checkNotNull( func );
+        this.func = Objects.requireNonNull( func );
     }
 
 
@@ -97,24 +102,24 @@ class DirectoryFileFetcher<OriginalInput> implements Fetcher<OriginalInput> {
         // the directories are all read eagerly, so we copy the concatenated iterable into a list
         // The caller (BatchJob) may iterate over Collections to collect statistics, but it will not 
         // iterate over Iterables to not break lazily loaded data. Thus we will copy the iterable into a list to preserve that.
-        final Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> iter = 
-        Iterables.concat( Lists.<DownloadDir, Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>>>transform( 
-                dirs, 
-                dir -> {
+
+        final List<Result<FetchedItem<OriginalInput>, OriginalInput>> iter = dirs.stream()
+                .map( dir -> {
                     try {
                         if ( !Files.exists( dir.getPath() ) ) {
-                            return ImmutableList.of();
+                            return Collections.<Result<FetchedItem<OriginalInput>, OriginalInput>>emptyList();
                         }
                         return fetchFromDirectory( dir.getPath(), resultCreator, dir.getPrefix(), dir.getSuffix() );
                     } catch ( final IOException e ) {
-                        return ImmutableList.of( Result.failed( FetchedItem.of( null, 0, dirs.toString() ), "Could not traverse download directory") );
+                        List<Result<FetchedItem<OriginalInput>, OriginalInput>> result = Collections.singletonList( Result.failed( FetchedItem.of( null, 0, dirs.toString() ), "Could not traverse download directory" ) );
+                        return result;
                     }
-                }
-                ) ) 
-                ;
-        
+                } )
+                .flatMap( Collection::stream )
+                .collect( Collectors.toList() );
+
         int counter = 0;
-        final ImmutableList.Builder<Result<FetchedItem<OriginalInput>, OriginalInput>> b = ImmutableList.builder();
+        final List<Result<FetchedItem<OriginalInput>, OriginalInput>> b = new ArrayList<>();
         for ( final Result<FetchedItem<OriginalInput>, OriginalInput> r : iter ) {
             b.add( r );
             counter++;
@@ -123,28 +128,27 @@ class DirectoryFileFetcher<OriginalInput> implements Fetcher<OriginalInput> {
             }
         }
         LOG.info( "Finished: Directory Fetcher fetched " + counter + " files" );
-        return b.build();
+        return Collections.unmodifiableList( b );
     }
 
-    private Iterable<Result<FetchedItem<OriginalInput>, OriginalInput>> fetchFromDirectory(
+    private List<Result<FetchedItem<OriginalInput>, OriginalInput>> fetchFromDirectory(
             final Path dir,
             final java.util.function.Function<Path, Result<FetchedItem<OriginalInput>, OriginalInput>> resultCreator,
             final String prefix,
             final String suffix
     ) throws IOException {
         try ( final Stream<Path> files = Files.walk( dir ) ) {
-            final List<Result<FetchedItem<OriginalInput>, OriginalInput>> result = files
+            return files
                     .filter( path -> {
                         final String name = path.getFileName().toString();
-                        if ( !Strings.isNullOrEmpty( prefix ) && !name.startsWith( prefix ) ) {
+                        if ( !(prefix == null || prefix.isEmpty()) && !name.startsWith( prefix ) ) {
                             return false;
                         }
-                        return name.endsWith( suffix ); 
+                        return name.endsWith( suffix );
                     } )
                     .sorted( fileOrdering )
                     .map( resultCreator )
                     .collect( Collectors.toList() );
-            return result;
         }
     }
 }

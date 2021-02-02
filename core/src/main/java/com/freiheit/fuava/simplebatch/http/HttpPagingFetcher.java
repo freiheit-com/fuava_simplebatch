@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,20 +17,19 @@
 package com.freiheit.fuava.simplebatch.http;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.StreamSupport;
 
 import org.apache.http.client.HttpClient;
 
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.PageFetcher.PagingInput;
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
-import com.google.common.collect.Iterators;
 
 public class HttpPagingFetcher<T> extends ConvertingHttpPagingFetcher<T, T> {
-
-
     public HttpPagingFetcher(
             final Supplier<HttpClient> client,
             final PagingRequestSettings<Iterable<T>> settings,
@@ -69,14 +68,18 @@ public class HttpPagingFetcher<T> extends ConvertingHttpPagingFetcher<T, T> {
         @Override
         public Iterator<Result<FetchedItem<T>, T>> apply( final Result<PagingInput, Iterable<T>> input ) {
             if ( input == null ) {
-                return Iterators.singletonIterator( Result.failed( FetchedItem.of( null, counter++ ),
-                        "Transform called with null Input", null ) );
+                return Collections.<Result<FetchedItem<T>, T>>singletonList(
+                        Result.failed( FetchedItem.of( null, counter++ ),
+                        "Transform called with null Input", null ) )
+                        .iterator();
             }
             if ( input.isFailed() ) {
-                return Iterators.singletonIterator( Result.<FetchedItem<T>, T> builder( input, FetchedItem.of( null, counter++ ) ).failed() );
+                return Collections.singletonList( Result.<FetchedItem<T>, T> builder( input, FetchedItem.of( null, counter++ ) ).failed() )
+                        .iterator();
             }
-            return Iterators.transform( input.getOutput().iterator(),
-                    ( final T t ) -> Result.success( FetchedItem.of( t, counter++ ), t ) );
+            return StreamSupport.stream( input.getOutput().spliterator(), false )
+                    .map( ( final T t ) -> Result.success( FetchedItem.of( t, counter++ ), t ) )
+                    .iterator();
         }
 
     }

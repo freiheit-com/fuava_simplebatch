@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +16,12 @@
  */
 package com.freiheit.fuava.simplebatch.processor;
 
+import com.freiheit.fuava.simplebatch.result.Result;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-
-import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Charsets;
+import java.nio.charset.StandardCharsets;
 
 public interface FileWriterAdapter<Input, Output> extends FileOutputStreamAdapter<Input, Output> {
     @Override
@@ -29,7 +29,7 @@ public interface FileWriterAdapter<Input, Output> extends FileOutputStreamAdapte
 
     @Override
     default public void writeToStream( final java.io.OutputStream outputStream, final Output data ) throws IOException {
-        try ( OutputStreamWriter fos = new OutputStreamWriter( outputStream, Charsets.UTF_8 ) ) {
+        try ( OutputStreamWriter fos = new OutputStreamWriter( outputStream, StandardCharsets.UTF_8 ) ) {
             write( fos, data );
             fos.flush();
         }

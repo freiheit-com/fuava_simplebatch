@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +23,6 @@ package com.freiheit.fuava.simplebatch.logging;
  * @author tim.lessner@freiheit.com
  */
 public class ResultItemStat {
-
     private final Event event;
     private final Iterable<String> failureMessage;
     private final Iterable<Throwable> throwables;

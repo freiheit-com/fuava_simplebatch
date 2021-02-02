@@ -20,7 +20,8 @@
 package com.freiheit.fuava.simplebatch.processor;
 
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Function;
+
+import java.util.function.Function;
 
 public class SingleResultFunctionProcessor<OriginalItem, Input, Output> extends
     SingleResultProcessor<OriginalItem, Input, Output> {

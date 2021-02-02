@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,22 +16,18 @@
  */
 package com.freiheit.fuava.sftp.util;
 
-import java.text.ParseException;
-import java.util.List;
-import java.util.Optional;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import com.freiheit.fuava.sftp.RemoteFileStatus;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.LoggerFactory;
-
-import com.freiheit.fuava.sftp.RemoteFileStatus;
-import com.google.common.annotations.VisibleForTesting;
+import java.text.ParseException;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Util class for any operations on filenames.
@@ -41,8 +37,6 @@ import com.google.common.annotations.VisibleForTesting;
  */
 @ParametersAreNonnullByDefault
 public class FilenameUtil {
-
-    @VisibleForTesting
     public static final String DATE_TIME_PATTERN =
             "((19|20)\\d\\d)(0?[1-9]|1[012])(0?[1-9]|[12][0-9]|3[01])_((0[0-9]|1[0123456789]|2[0123])([0-5][0-9])([0-5][0-9]))";
 
@@ -241,7 +235,7 @@ public class FilenameUtil {
      * returned.
      */
     private static String getDateTimePattern( @Nullable final String lastDateTime ) {
-        return StringUtils.isEmpty( lastDateTime )
+        return lastDateTime == null || lastDateTime.isEmpty()
             ? DATE_TIME_PATTERN
             : lastDateTime;
     }

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,11 +19,10 @@ package com.freiheit.fuava.simplebatch.fsjobs.importer;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Function;
 
 /**
  * .

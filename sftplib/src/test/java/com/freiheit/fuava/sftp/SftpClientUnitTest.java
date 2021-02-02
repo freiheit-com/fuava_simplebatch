@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,6 @@
  */
 package com.freiheit.fuava.sftp;
 
-import com.google.common.collect.ImmutableList;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpException;
 import org.apache.sshd.common.NamedFactory;
@@ -34,6 +33,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -122,10 +122,10 @@ public class SftpClientUnitTest {
         sshd.setPort( 0 );
         sshd.setKeyPairProvider( new SimpleGeneratorHostKeyProvider( Paths.get( "hostkey.set" ) ) );
 
-        final List<NamedFactory<UserAuth>> userAuthFactories = ImmutableList.of( UserAuthNoneFactory.INSTANCE );
+        final List<NamedFactory<UserAuth>> userAuthFactories = Collections.singletonList( UserAuthNoneFactory.INSTANCE );
         sshd.setUserAuthFactories(userAuthFactories);
 
-        final List<NamedFactory<Command>> namedFactoryList = ImmutableList.of( new SftpSubsystemFactory() );
+        final List<NamedFactory<Command>> namedFactoryList = Collections.singletonList( new SftpSubsystemFactory() );
         sshd.setSubsystemFactories(namedFactoryList);
 
         return sshd;

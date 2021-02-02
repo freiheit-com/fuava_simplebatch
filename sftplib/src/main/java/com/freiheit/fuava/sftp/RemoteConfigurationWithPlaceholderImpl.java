@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,8 @@ package com.freiheit.fuava.sftp;
 
 import com.freiheit.fuava.sftp.util.RemoteConfiguration;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
-import com.google.common.base.Preconditions;
+
+import java.util.Objects;
 
 /**
  * The SFTP-Server Configuration.
@@ -26,8 +27,6 @@ import com.google.common.base.Preconditions;
  * @author dmitrijs.barbarins@freiheit.com
  */
 public class RemoteConfigurationWithPlaceholderImpl implements RemoteConfiguration {
-
-
     private final String remoteFilesIncomingFolder;
     private final String remoteProcessingFolder;
     private final String remoteSkippedFolder;
@@ -49,9 +48,9 @@ public class RemoteConfigurationWithPlaceholderImpl implements RemoteConfigurati
             final String remoteProcessingFolder,
             final String remoteSkippedFolder,
             final String remoteArchivedFolder) {
-        Preconditions.checkNotNull( remoteFilesIncomingFolder, "remoteIncomingFolder must be provided, but was null" );
-        Preconditions.checkNotNull( remoteSkippedFolder, "remoteSkippedFolder must be provided, but was null" );
-        Preconditions.checkNotNull( remoteArchivedFolder, "remoteArchivedFolder must be provided, but was null" );
+        Objects.requireNonNull( remoteFilesIncomingFolder, "remoteIncomingFolder must be provided, but was null" );
+        Objects.requireNonNull( remoteSkippedFolder, "remoteSkippedFolder must be provided, but was null" );
+        Objects.requireNonNull( remoteArchivedFolder, "remoteArchivedFolder must be provided, but was null" );
         this.remoteArchivedFolder = FileUtils.substitutePlaceholder( remoteArchivedFolder );
         this.remoteFilesIncomingFolder = FileUtils.substitutePlaceholder( remoteFilesIncomingFolder );
         this.remoteProcessingFolder = remoteProcessingFolder == null

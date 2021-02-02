@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +44,23 @@ public final class StringUtils {
         return str.substring( 0, Math.min( 40, length ) ) + ( length > maxLength
             ? "..."
             : "" );
+    }
+
+    /**
+     * Pads a given String with a given character until it reaches a specific targetlength.
+     */
+    public static String padStart( final String str, final int targetLength, final char filler ) {
+        if ( str == null ) {
+            throw new NullPointerException( "The input string may not be null!" );
+        }
+        if ( str.length() >= targetLength ) {
+            return str;
+        }
+        final StringBuilder result = new StringBuilder();
+        for ( int i = 0; i < targetLength - str.length(); i++ ) {
+            result.append( filler );
+        }
+        return result.append( str ).toString();
     }
 
 }

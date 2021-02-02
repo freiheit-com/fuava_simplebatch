@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,13 +17,13 @@
 package com.freiheit.fuava.simplebatch.processor;
 
 import java.util.List;
+import java.util.function.Function;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
-import com.google.common.base.Function;
 
 final class ContentProcessor<Input, Data>
         extends AbstractSingleItemProcessor<Input, Iterable<Result<FetchedItem<Data>, Data>>, ResultStatistics> {

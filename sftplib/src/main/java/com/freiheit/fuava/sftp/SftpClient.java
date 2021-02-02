@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,24 +16,23 @@
  */
 package com.freiheit.fuava.sftp;
 
-import java.io.InputStream;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import javax.annotation.CheckForNull;
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.LoggerFactory;
 import com.freiheit.fuava.sftp.util.ConvertUtil;
 import com.freiheit.fuava.sftp.util.FileType;
 import com.freiheit.fuava.sftp.util.FilenameUtil;
-import com.google.common.base.Preconditions;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.CheckForNull;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Simple SFTP client.
@@ -372,12 +371,11 @@ public class SftpClient implements RemoteClient {
         }
 
         public SftpClient createSftpClient() {
-            Preconditions.checkNotNull( this.host, "You have to provide a host" );
-            Preconditions.checkNotNull( this.port, "You have to provide a port" );
-            Preconditions.checkNotNull( this.username, "You have to provide a username" );
-            if ( this.strictHostkeyChecking == StrictHostkeyChecking.OFF ) {
-                Preconditions.checkArgument( this.knownHostsInputStream == null,
-                    "You disabled StrictHostKeyChecking but provided knownHosts (which would have no effect)." );
+            Objects.requireNonNull( this.host, "You have to provide a host" );
+            Objects.requireNonNull( this.port, "You have to provide a port" );
+            Objects.requireNonNull( this.username, "You have to provide a username" );
+            if ( this.strictHostkeyChecking == StrictHostkeyChecking.OFF && knownHostsInputStream != null ) {
+                throw new IllegalArgumentException( "You disabled StrictHostKeyChecking but provided knownHosts (which would have no effect)." );
             }
             return new SftpClient( host, port, username, password, socketTimeoutMs, knownHostsInputStream, strictHostkeyChecking );
         }

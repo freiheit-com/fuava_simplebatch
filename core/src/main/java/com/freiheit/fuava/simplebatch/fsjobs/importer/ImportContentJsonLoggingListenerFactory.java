@@ -1,14 +1,15 @@
 package com.freiheit.fuava.simplebatch.fsjobs.importer;
 
-import java.nio.file.Path;
-
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.logging.JsonLogger;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
+
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
 
 public class ImportContentJsonLoggingListenerFactory<Data>
         implements Function<FetchedItem<ControlFile>, ProcessingResultListener<Data, Data>> {
@@ -31,10 +32,12 @@ public class ImportContentJsonLoggingListenerFactory<Data>
                     ? null
                     : fetchedItem.getIdentifier();
 
+                final List<String> messages = new ArrayList<>();
+                result.getWarningMessages().forEach( messages::add );
+                result.getFailureMessages().forEach( messages::add );
+
                 logger.logImportItem( result.isSuccess(), result.getInput().getNum(),
-                        ImmutableList.copyOf(
-                                Iterables.concat( result.getWarningMessages(), result.getFailureMessages() ) ),
-                        identifier );
+                        Collections.unmodifiableList( messages ), identifier );
             }
         };
     }

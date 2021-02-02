@@ -5,19 +5,20 @@ package com.freiheit.fuava.simplebatch.logging;
  * Created on Nov 17, 2015 by
  * Benjamin Teuber (benjamin.teuber@freiheit.com)
  */
+
+import com.freiheit.fuava.simplebatch.util.StringUtils;
+import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
 
 /**
  * This class sets up per-file json logging for the importer, downloader etc
@@ -33,7 +34,7 @@ public class JsonLogger {
 
     public static Path nextFailedDownloadsName() {
         final String prefix = "" + System.currentTimeMillis();
-        final String count = com.google.common.base.Strings.padStart(
+        final String count = StringUtils.padStart(
                 Long.toString( counter.incrementAndGet() ),
                 3,
                 '0' );
@@ -63,7 +64,7 @@ public class JsonLogger {
     }
 
     public void logImportStart( final String identifier ) {
-        log( new JsonLogEntry( "import", "start", null, null, null, ImmutableList.of(), identifier ) );
+        log( new JsonLogEntry( "import", "start", null, null, null, Collections.emptyList(), identifier ) );
     }
 
     public void logImportEnd( final boolean isSuccess, final List<String> messages, final String identifier ) {

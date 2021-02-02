@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,13 +15,6 @@
  * under the License.
  */
 package com.freiheit.fuava.simplebatch.fsjobs.importer;
-
-import java.io.File;
-import java.io.InputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.DownloadDir;
@@ -42,9 +35,15 @@ import com.freiheit.fuava.simplebatch.result.Result;
 import com.freiheit.fuava.simplebatch.result.ResultStatistics;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
 import com.freiheit.fuava.simplebatch.util.Sysprops;
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
-import com.google.common.collect.ImmutableList;
+
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
 
 /**
  * An importer that imports files from the file system, adhering to the control
@@ -416,28 +415,23 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
          */
         @Deprecated
         public Builder<ContentOriginalInput> setFileProcessor( final Processor<FetchedItem<ControlFile>, File, Iterable<ContentOriginalInput>> processor ) {
-            this.fileReader = new Processor<FetchedItem<ControlFile>, File, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>>() {
-
-                @Override
-                public Iterable<Result<FetchedItem<ControlFile>, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>>> process(
-                        final Iterable<Result<FetchedItem<ControlFile>, File>> iterable ) {
-                    final Iterable<Result<FetchedItem<ControlFile>, Iterable<ContentOriginalInput>>> origResult = processor.process( iterable );
-                    final ImmutableList.Builder<Result<FetchedItem<ControlFile>, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>>> b =
-                            ImmutableList.builder();
-                    for ( final Result<FetchedItem<ControlFile>, Iterable<ContentOriginalInput>> r : origResult ) {
-                        final Iterable<ContentOriginalInput> output = r.getOutput();
-                        final Result.Builder<FetchedItem<ControlFile>, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>> builder =
-                                Result.builder( r );
-                        if ( r.isSuccess() ) {
-                            b.add( builder.withOutput( output == null
-                                ? null
-                                : IterableFetcherWrapper.wrap( output ) ).success() );
-                        } else {
-                            b.add( builder.failed() );
-                        }
+            this.fileReader = iterable -> {
+                final Iterable<Result<FetchedItem<ControlFile>, Iterable<ContentOriginalInput>>> origResult = processor.process( iterable );
+                final List<Result<FetchedItem<ControlFile>, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>>> b =
+                        new ArrayList<>();
+                for ( final Result<FetchedItem<ControlFile>, Iterable<ContentOriginalInput>> r : origResult ) {
+                    final Iterable<ContentOriginalInput> output = r.getOutput();
+                    final Result.Builder<FetchedItem<ControlFile>, Iterable<Result<FetchedItem<ContentOriginalInput>, ContentOriginalInput>>> builder =
+                            Result.builder( r );
+                    if ( r.isSuccess() ) {
+                        b.add( builder.withOutput( output == null
+                            ? null
+                            : IterableFetcherWrapper.wrap( output ) ).success() );
+                    } else {
+                        b.add( builder.failed() );
                     }
-                    return b.build();
                 }
+                return Collections.unmodifiableList( b );
             };
             return this;
         }
@@ -483,7 +477,7 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
         }
 
         public Builder<ContentOriginalInput> addContentProcessingListener( final ProcessingResultListener<ContentOriginalInput, ContentOriginalInput> listener ) {
-            contentProcessingListenerFactories.add( Functions.<ProcessingResultListener<ContentOriginalInput, ContentOriginalInput>> constant( listener ) );
+            contentProcessingListenerFactories.add( x -> listener );
             return this;
         }
 
@@ -520,9 +514,9 @@ public class CtlImporterJob<ContentOriginalInput> extends BatchJob<ControlFile, 
                     Builder.this.configuration.getFailedDirPath() ) );
 
             contentProcessingListenerFactories.add(
-                    Functions.constant( new BatchStatisticsLoggingListener<ContentOriginalInput, ContentOriginalInput>( LOG_NAME_CONTENT_PROCESSING_BATCH ) ) );
+                    x -> new BatchStatisticsLoggingListener<ContentOriginalInput, ContentOriginalInput>( LOG_NAME_CONTENT_PROCESSING_BATCH ) );
             contentProcessingListenerFactories.add(
-                    Functions.constant( new ItemProgressLoggingListener<ContentOriginalInput, ContentOriginalInput>( LOG_NAME_CONTENT_PROCESSING_ITEM ) ) );
+                    x -> new ItemProgressLoggingListener<ContentOriginalInput, ContentOriginalInput>( LOG_NAME_CONTENT_PROCESSING_ITEM ) );
             contentProcessingListenerFactories.add(
                     new ImportContentJsonLoggingListenerFactory<ContentOriginalInput>( Builder.this.configuration.getProcessingDirPath() ) );
 

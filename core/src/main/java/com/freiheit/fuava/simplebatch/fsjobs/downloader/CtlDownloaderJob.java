@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@ package com.freiheit.fuava.simplebatch.fsjobs.downloader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 
 import com.freiheit.fuava.simplebatch.BatchJob;
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
@@ -34,7 +35,6 @@ import com.freiheit.fuava.simplebatch.processor.TimeLoggingProcessor;
 import com.freiheit.fuava.simplebatch.result.ProcessingResultListener;
 import com.freiheit.fuava.simplebatch.util.FileUtils;
 import com.freiheit.fuava.simplebatch.util.Sysprops;
-import com.google.common.base.Preconditions;
 
 /**
  * An importer that imports files from the file system, adhering to the control
@@ -163,8 +163,8 @@ public class CtlDownloaderJob<OriginalInput, Output> extends BatchJob<OriginalIn
 
         public CtlDownloaderJob<OriginalInput, ControlFilePersistenceOutputInfo> build() {
             final Configuration configuration = getConfiguration();
-            Preconditions.checkNotNull( configuration, "Configuration missing" );
-            Preconditions.checkNotNull( persistenceAdapter, "File Writer Adapter missing" );
+            Objects.requireNonNull( configuration, "Configuration missing" );
+            Objects.requireNonNull( persistenceAdapter, "File Writer Adapter missing" );
 
             return build( Processors.controlledFileWriter(
                     configuration.getDownloadDirPath(),
@@ -327,8 +327,8 @@ public class CtlDownloaderJob<OriginalInput, Output> extends BatchJob<OriginalIn
 
         public CtlDownloaderJob<Input, BatchProcessorResult<ControlFilePersistenceOutputInfo>> build() {
             final Configuration configuration = getConfiguration();
-            Preconditions.checkNotNull( configuration, "Configuration missing" );
-            Preconditions.checkNotNull( persistenceAdapter, "File Writer Adapter missing" );
+            Objects.requireNonNull( configuration, "Configuration missing" );
+            Objects.requireNonNull( persistenceAdapter, "File Writer Adapter missing" );
 
             return build( Processors.controlledBatchFileWriter(
                     configuration.getDownloadDirPath(),
@@ -441,10 +441,10 @@ public class CtlDownloaderJob<OriginalInput, Output> extends BatchJob<OriginalIn
          * @return the job
          */
         public CtlDownloaderJob<OriginalInput, Output> build( final Processor<FetchedItem<OriginalInput>, Input, Output> fileWriter ) {
-            Preconditions.checkNotNull( fileWriter, "You need to call setFileWriterAdapter first" );
-            Preconditions.checkNotNull( downloader, "You need to set a downloader" );
+            Objects.requireNonNull( fileWriter, "You need to call setFileWriterAdapter first" );
+            Objects.requireNonNull( downloader, "You need to set a downloader" );
             final Fetcher<OriginalInput> fetcher = builder.getFetcher();
-            Preconditions.checkNotNull( fetcher, "Fetcher missing." );
+            Objects.requireNonNull( fetcher, "Fetcher missing." );
 
             builder.addListener( new BatchStatisticsLoggingListener<OriginalInput, Output>( LOG_NAME_BATCH ) );
             builder.addListener( new ItemProgressLoggingListener<OriginalInput, Output>( LOG_NAME_ITEM ) );

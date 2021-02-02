@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,8 @@
 package com.freiheit.fuava.simplebatch.processor;
 
 import java.io.InputStream;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.apache.http.client.HttpClient;
 
@@ -24,11 +26,8 @@ import com.freiheit.fuava.simplebatch.http.HttpDownloaderSettings;
 import com.freiheit.fuava.simplebatch.http.HttpFetcher;
 import com.freiheit.fuava.simplebatch.http.HttpFetcherImpl;
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
 
 class HttpDownloader<Input, Id, T> extends AbstractSingleItemProcessor<Input, Id, T> {
-
     private final HttpFetcher fetcher;
     private final HttpDownloaderSettings<Id> settings;
     private final Function<InputStream, T> converter;

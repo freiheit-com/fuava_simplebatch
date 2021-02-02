@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015 freiheit.com technologies gmbh
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,20 +16,22 @@
  */
 package com.freiheit.fuava.simplebatch.http;
 
-import java.io.InputStream;
-import java.util.Iterator;
-
-import org.apache.http.client.HttpClient;
-
 import com.freiheit.fuava.simplebatch.fetch.FetchedItem;
 import com.freiheit.fuava.simplebatch.fetch.Fetcher;
 import com.freiheit.fuava.simplebatch.fetch.LazyPageFetchingIterable;
 import com.freiheit.fuava.simplebatch.fetch.PageFetcher;
 import com.freiheit.fuava.simplebatch.fetch.PageFetcher.PagingInput;
 import com.freiheit.fuava.simplebatch.result.Result;
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
-import com.google.common.collect.Iterators;
+import org.apache.http.client.HttpClient;
+
+import javax.annotation.Nonnull;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class ConvertingHttpPagingFetcher<Raw, T> implements Fetcher<T> {
 
@@ -93,50 +95,54 @@ public class ConvertingHttpPagingFetcher<Raw, T> implements Fetcher<T> {
         @Override
         public Iterator<Result<FetchedItem<T>, T>> apply( final Result<PagingInput, Iterable<Result<I, T>>> input ) {
             if ( input == null ) {
-                return Iterators.singletonIterator( Result.failed( FetchedItem.of( null, counter++ ),
-                        "Transform called with null Input", null ) );
+                return Collections.<Result<FetchedItem<T>, T>>singletonList( Result.failed( FetchedItem.of( null, counter++ ),
+                        "Transform called with null Input", null ) )
+                        .iterator();
             }
             if ( input.isFailed() ) {
-                return Iterators.singletonIterator( Result.<FetchedItem<T>, T> builder( input, FetchedItem.of( null, counter++ ) ).failed() );
+                return Collections.singletonList( Result.<FetchedItem<T>, T> builder( input, FetchedItem.of( null, counter++ ) ).failed() ).iterator();
             }
-            final Iterator<Result<I, T>> fetchedItems = input.getOutput().iterator();
-            return Iterators.transform( fetchedItems, new Function<Result<I, T>, Result<FetchedItem<T>, T>>() {
-                @Override
-                public Result<FetchedItem<T>, T> apply( final Result<I, T> input ) {
-                    final String identifier = getIdentifier( input );
-                    if (input.isFailed()) {
-                        return Result.<FetchedItem<T>, T>builder()
-                                .withInput( FetchedItem.of( null, counter++, identifier ) )
-                                .withFailureMessages( input.getFailureMessages() )
-                                .withThrowables( input.getThrowables() )
-                                .failed();
-                        
-                    }
-                    return Result.<FetchedItem<T>, T>builder()
-                            .withInput( FetchedItem.of( input.getOutput(), counter++, identifier ) )
-                            .withOutput( input.getOutput() )
-                            .withWarningMessages( input.getWarningMessages() )
-                            .withFailureMessages( input.getFailureMessages() )
-                            .success();
-                }
-            } );
-        }
+            return StreamSupport.stream( input.getOutput().spliterator(), false )
+                    .map( i -> {
+                        final String identifier = getIdentifier( i );
+                        if (i.isFailed()) {
+                            return Result.<FetchedItem<T>, T>builder()
+                                    .withInput( FetchedItem.of( null, counter++, identifier ) )
+                                    .withFailureMessages( i.getFailureMessages() )
+                                    .withThrowables( i.getThrowables() )
+                                    .failed();
 
+                        }
+                        return Result.<FetchedItem<T>, T>builder()
+                                .withInput( FetchedItem.of( i.getOutput(), counter++, identifier ) )
+                                .withOutput( i.getOutput() )
+                                .withWarningMessages( i.getWarningMessages() )
+                                .withFailureMessages( i.getFailureMessages() )
+                                .success();
+                    } )
+                    .iterator();
+        }
     }
 
     @Override
     public Iterable<Result<FetchedItem<T>, T>> fetchAll() {
         return new Iterable<Result<FetchedItem<T>, T>>() {
-
             @Override
+            @Nonnull
             public Iterator<Result<FetchedItem<T>, T>> iterator() {
                 final Iterator<Result<PagingInput, Iterable<Raw>>> iterator = new LazyPageFetchingIterable<Iterable<Raw>>(
                         new HttpPageFetcher<Iterable<Raw>>( fetcher, settings, converter ),
                         initialFrom,
                         pageSize,
-                        settings
-                        );
-                return Iterators.concat( Iterators.transform( iterator, resultTransformer ) );
+                        settings );
+                return toStream( iterator )
+                        .flatMap( i -> toStream( resultTransformer.apply( i ) ) )
+                        .iterator();
+            }
+
+            private <X> Stream<X> toStream( final Iterator<X> iter ) {
+                final Iterable<X> iterable = () -> iter;
+                return StreamSupport.stream( iterable.spliterator(), false );
             }
 
         };
