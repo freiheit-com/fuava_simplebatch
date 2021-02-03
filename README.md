@@ -275,6 +275,12 @@ client.disconnect();
 ```
 
 ## Changes
+### 1.0.0 (2021-02-03)
+ - Removed Guava as a dependency completely from both the core and the sftplib.
+ - Functional interfaces such as Function and Supplier now come from `java.util.function` instead from Guava.
+   When upgrading they need to be replaced in the codebase.
+ - `TimeLoggingProcessor.Counts` now uses the type `long` for counting instead of `int`.
+
 ### 0.7.0 (2016-04-20)
  - Changed Implementation of Concurrent processing: The fetcher is not drained so quickly any more, this should avoid OOM with lazy fetchers and large datasets.
 
