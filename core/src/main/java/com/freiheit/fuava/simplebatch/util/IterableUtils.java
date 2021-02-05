@@ -48,7 +48,7 @@ public class IterableUtils {
      * @param batchSize This batchSize has to be larger tha 0! It determines how many items can be found in each batch.
      */
     public static <T> Iterable<List<T>> partition( final Iterable<T> iterable, final int batchSize ) {
-        if ( iterable == null || isEmpty( iterable ) ) {
+        if ( iterable == null ) {
             return Collections.emptyList();
         }
         if ( batchSize <= 0 ) {
