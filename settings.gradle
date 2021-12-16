@@ -1,2 +1,11 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url = uri("https://plugins.gradle.org/m2/") }
+        maven { url "https://artifactory.metrosystems.net/artifactory/plugins-release" }
+    }
+}
+
 include ':core'
 include ':sftplib'
+enableFeaturePreview('STABLE_PUBLISHING')

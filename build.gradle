@@ -10,10 +10,10 @@ subprojects {
 
     version='1.0.3-SNAPSHOT'
 
-
     repositories {
         mavenLocal()
         mavenCentral()
+        maven { url "https://artifactory.metrosystems.net/artifactory/plugins-release" }
     }
 
     apply plugin: 'java'

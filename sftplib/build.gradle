@@ -33,10 +33,16 @@ publishing {
 
         }
     }
-
     repositories {
         maven {
-            url "build/maven_repo"
+            credentials {
+                username = "${artifactory_user}"
+                password = "${artifactory_password}"
+            }
+            if (project.version.endsWith('-SNAPSHOT'))
+                url 'https://artifactory.metrosystems.net/artifactory/libs-snapshot-local'
+            else
+                url 'https://artifactory.metrosystems.net/artifactory/libs-release-local'
         }
     }
 }
