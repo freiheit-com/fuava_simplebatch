@@ -275,6 +275,9 @@ client.disconnect();
 ```
 
 ## Changes
+### 1.0.2 (2021-12-16)
+ - Upgrade Logback version to 1.2.8 to mitigate security vulnerability
+
 ### 1.0.0 (2021-02-03)
  - Removed Guava as a dependency completely from both the core and the sftplib.
  - Functional interfaces such as Function and Supplier now come from `java.util.function` instead from Guava.
