@@ -1,5 +1,4 @@
 apply plugin: 'java'
-apply plugin: 'jacoco'
 
 jar {
     baseName 'fuava-simplebatch-core'
